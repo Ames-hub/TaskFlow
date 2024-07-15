@@ -54,6 +54,12 @@ To view a specific task, use `/grouptasks view <task_id>` or `/grouptasks view <
 However, if you're viewing by name, if there's two similarly named tasks, it will show both,
 and we won't know which one you want to interact with.
 
+### Live Task List
+The live task list is a consistently auto-updated list of tasks that are incomplete and newly completed tasks.<br>
+To enable the live task list, use `/taskchannel *<channel>`<br>
+When setting a valid channel, a list of the status of all relevant tasks will be sent to that channel.<br>
+A newly completed task is no longer considered newly completed after 7 days.
+
 ### "Seriously pls help" moments
 If you find you're having a lot of trouble with the bot and the guide does not help enough, please don't hesitate to ask for help.<br>
 You can find me on discord @friendlyfox.exe
