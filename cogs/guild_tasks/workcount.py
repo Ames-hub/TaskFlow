@@ -7,7 +7,7 @@ import io
 plugin = lightbulb.Plugin(__name__)
 
 @group.child
-@lightbulb.app_command_permissions(dm_enabled=True)
+@lightbulb.app_command_permissions(dm_enabled=False)
 @lightbulb.option(
     name='user',
     description='The user to count the amount of tasks contributed to.',

@@ -29,23 +29,25 @@ async def on_reaction_add(event: hikari.ReactionAddEvent):
 
         guild_id = plugin.bot.d['watched_messages'][event.message_id][1]
         try:
-            task_name, task_desc, is_completed, _, _, _ = dataMan().get_todo_items(guild_id=guild_id, identifier=task_id)[0]
+            task_name, task_desc, is_completed, _, _, added_by = dataMan().get_todo_items(guild_id=guild_id, identifier=task_id)[0]
         except IndexError:
             # No tasks found. Therefore, no tasks to contribute to.
             # If the code managed to get this far, that's a bug.
             return
 
         # Checks if the task is already completed.
-        if is_completed:
-            dm_channel = await event.app.rest.create_dm_channel(event.user_id)
-            await dm_channel.send("This task is already completed and cannot be contributed to any longer.")
-            return
+        if not dataMan().get_allow_late_contrib(guild_id):
+            if is_completed:
+                dm_channel = await event.app.rest.create_dm_channel(event.user_id)
+                await dm_channel.send("This task is already completed and cannot be contributed to any longer.")
+                return
 
         completed_text = "Completed: ✅"
         task_desc = f"{task_desc}\n{completed_text}" if task_desc != "..." else completed_text
+        task_desc += f"\nAdded by: <@{added_by}>"
         embed = (
             hikari.Embed(
-                title="Incompleted Tasks",
+                title="Found Tasks",
                 description=None,
             )
             .add_field(
@@ -54,7 +56,7 @@ async def on_reaction_add(event: hikari.ReactionAddEvent):
                 inline=False
             )
             .set_footer(
-                "React with ✅ to mark this task as completed. Unreact to undo.\n"
+                "React with ✅ to mark this task as completed/incomplete. Unreact to undo.\n"
                 "React with 🔔 to indicate you intend to contribute to the completion of this task."
             )
         )

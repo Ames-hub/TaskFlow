@@ -7,7 +7,7 @@ import hikari
 plugin = lightbulb.Plugin(__name__)
 
 @group.child
-@lightbulb.app_command_permissions(dm_enabled=True)
+@lightbulb.app_command_permissions(dm_enabled=False)
 @lightbulb.option(
     name='name_or_id',
     description='What is the name or ID for the task you want to view?',
@@ -21,7 +21,7 @@ async def view_cmd(ctx: lightbulb.SlashContext):
     incompleted_task_list = dataMan().get_todo_items(
         guild_id=ctx.guild_id,
         identifier=task_name,
-        filter_for='incompleted'
+        filter_for='incompleted' if not task_name.isnumeric() else "*"
     )
 
     task_count = len(incompleted_task_list)
@@ -70,7 +70,7 @@ async def view_cmd(ctx: lightbulb.SlashContext):
     else:
         # To prevent the 'app did not respond' error from showing up.
         embed.set_footer(
-            "React with ✅ to mark this task as completed. Unreact to undo.\n"
+            "React with ✅ to mark this task as completed/incomplete. Unreact to undo.\n"
             "React with 🔔 to indicate you intend to contribute to the completion of this task."
         )
         # Doing this because for some reason ctx.respond doesn't let us have the msg id

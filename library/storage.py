@@ -35,6 +35,7 @@ def modernize_db():
         'guild_settings': {
             'uid': 'INT PRIMARY KEY',
             'task_channel': 'INT DEFAULT NULL',
+            'allow_late_contrib': 'BOOLEAN DEFAULT FALSE',
         },
         'user_contribution_log': {
             'contributed_task_uid': 'INT NOT NULL REFERENCES todo_items(uid)',
@@ -81,6 +82,37 @@ def modernize_db():
 modernize_db()
 
 class sqlite_storage:
+    @staticmethod
+    def get_allow_late_contrib(guild_id:int):
+        conn = sqlite3.connect(guild_filepath)
+        cur = conn.cursor()
+
+        query = """
+        SELECT allow_late_contrib
+        FROM guild_settings
+        WHERE uid = ?
+        """
+        cur.execute(query, (guild_id,))
+        data = cur.fetchone()
+        conn.close()
+
+        return data[0] if data else False
+
+    @staticmethod
+    def set_allow_late_contrib(guild_id:int, allow_late_contrib:bool):
+        conn = sqlite3.connect(guild_filepath)
+        cur = conn.cursor()
+
+        query = """
+        INSERT OR REPLACE INTO guild_settings (uid, allow_late_contrib)
+        VALUES (?, ?)
+        """
+        cur.execute(query, (guild_id, allow_late_contrib))
+        conn.commit()
+        conn.close()
+
+        return True
+
     @staticmethod
     def add_todo_item(name, description, user_id=None, guild_id=None, added_by:int=None):
         assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"
@@ -344,6 +376,26 @@ class dataMan:
     def __init__(self):
         self.storage = sqlite_storage
 
+    def get_allow_late_contrib(self, guild_id:int):
+        """
+        Guild only command. Gets the setting for allowing late contributions.
+        :param guild_id: The guild ID to get the setting for.
+        :return: The setting for allowing late contributions.
+        """
+        assert type(guild_id) is int, "Guild ID must be an integer"
+        return self.storage.get_allow_late_contrib(guild_id)
+
+    def set_allow_late_contrib(self, guild_id:int, allow_late_contrib:bool):
+        """
+        Guild only command. Sets the setting for allowing late contributions.
+        :param guild_id: The guild ID to set the setting for.
+        :param allow_late_contrib: The setting for allowing late contributions.
+        :return:
+        """
+        assert type(guild_id) is int, "Guild ID must be an integer"
+        assert type(allow_late_contrib) is bool, "Allow late contrib must be a boolean"
+        return self.storage.set_allow_late_contrib(guild_id, allow_late_contrib)
+
     def get_user_contributions(self, user_id:int, guild_id:int=-1):
         assert type(user_id) is int, "User ID must be an integer"
         assert type(guild_id) is int, "Guild ID must be an integer"
@@ -404,7 +456,7 @@ class dataMan:
 
     def get_todo_items(self, filter_for='incompleted', user_id=None, guild_id=None, identifier=None):
         assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"
-        assert filter_for in ['incompleted', 'completed'], "Filter must be either 'incompleted' or 'completed'"
+        assert filter_for in ['incompleted', 'completed', '*'], "Filter must be either 'incompleted' or 'completed'"
         uid = int(user_id if user_id else guild_id)
         if user_id:
             return self.storage.get_todo_items(filter_for, user_id=uid, identifier=identifier)

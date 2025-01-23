@@ -27,13 +27,14 @@ async def on_reaction_add(event: hikari.ReactionAddEvent):
         message = await plugin.bot.rest.fetch_message(event.channel_id, event.message_id)
 
         guild_id = plugin.bot.d['watched_messages'][event.message_id][1]
-        task_name, task_desc, _, _, _, _ = dataMan().get_todo_items(guild_id=guild_id, identifier=task_id)[0]
+        task_name, task_desc, _, _, _, added_by = dataMan().get_todo_items(guild_id=guild_id, identifier=task_id, filter_for='*')[0]
 
         completed_text = "Completed: ✅"
         task_desc = f"{task_desc}\n{completed_text}" if task_desc != "..." else completed_text
+        task_desc += f"\nAdded by: <@{added_by}>"
         embed = (
             hikari.Embed(
-                title="Incompleted Tasks",
+                title="Found Tasks",
                 description=None,
             )
             .add_field(
@@ -42,8 +43,8 @@ async def on_reaction_add(event: hikari.ReactionAddEvent):
                 inline=False
             )
             .set_footer(
-                "React with ✅ to mark this task as completed. Unreact to undo.\n"
-                "React with ℹ️ to indicate you intend to contribute to the completion of this task."
+                "React with ✅ to mark this task as completed/incomplete. Unreact to undo.\n"
+                "React with 🔔 to indicate you intend to contribute to the completion of this task."
             )
         )
         dataMan().mark_todo_finished(task_id, guild_id=guild_id)
