@@ -40,15 +40,15 @@ async def workcount_cmd(ctx: lightbulb.SlashContext, user: hikari.User = None):
 
     datafile = None
     if task_contrib_msg == "":
-        task_contrib_msg = "This user has not contributed to any tasks."
+        task_contrib_msg = "This user has not contributed to any tasks in present or past."
     elif len(task_contrib_msg) > 2000:
         datafile = io.BytesIO(task_contrib_msg.encode("utf-8"))
-        task_contrib_msg = "This user has contributed to too many tasks to display here. Sending file..."
+        task_contrib_msg = "This user has or is contributing to too many tasks to display here. Sending file..."
 
     embed = (
         hikari.Embed(
             title="Data retrieved.",
-            description=f"{len(contrib_tasks)} Tasks Contributed to by {user.username}",
+            description=f"{len(contrib_tasks)} Tasks are being contributed to by {user.username}",
         )
     )
     if task_contrib_msg != "This user has not contributed to any tasks.":

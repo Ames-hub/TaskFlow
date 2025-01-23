@@ -29,10 +29,16 @@ async def on_reaction_add(event: hikari.ReactionAddEvent):
 
         guild_id = plugin.bot.d['watched_messages'][event.message_id][1]
         try:
-            task_name, task_desc, _, _, _, _ = dataMan().get_todo_items(guild_id=guild_id, identifier=task_id)[0]
+            task_name, task_desc, is_completed, _, _, _ = dataMan().get_todo_items(guild_id=guild_id, identifier=task_id)[0]
         except IndexError:
             # No tasks found. Therefore, no tasks to contribute to.
             # If the code managed to get this far, that's a bug.
+            return
+
+        # Checks if the task is already completed.
+        if is_completed:
+            dm_channel = await event.app.rest.create_dm_channel(event.user_id)
+            await dm_channel.send("This task is already completed and cannot be contributed to any longer.")
             return
 
         completed_text = "Completed: ✅"
