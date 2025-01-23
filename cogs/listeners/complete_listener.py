@@ -17,9 +17,9 @@ async def on_reaction_add(event: hikari.ReactionAddEvent):
 
     if event.emoji_name == "✅":
         task_id = plugin.bot.d['watched_messages'][event.message_id][0]
-        # Wont edit if its been edited in the last 5 seconds
+        # Won't edit if it's been edited in the last 5 seconds
         last_edited = plugin.bot.d['last_edited'][event.message_id]
-        if last_edited.timestamp() - datetime.datetime.now().timestamp() > 5:
+        if datetime.datetime.now().timestamp() - last_edited.timestamp() < 5:
             return
 
         # Edit the message to mark it as incomplete.
@@ -41,7 +41,10 @@ async def on_reaction_add(event: hikari.ReactionAddEvent):
                 value=task_desc,
                 inline=False
             )
-            .set_footer("React with ✅ to mark this task as completed. Unreact to undo.")
+            .set_footer(
+                "React with ✅ to mark this task as completed. Unreact to undo.\n"
+                "React with ℹ️ to indicate you intend to contribute to the completion of this task."
+            )
         )
         dataMan().mark_todo_finished(task_id, guild_id=guild_id)
         await message.edit(embed)

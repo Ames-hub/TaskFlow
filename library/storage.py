@@ -8,42 +8,77 @@ DEBUG = os.environ.get("DEBUG", False)
 key_seperator = "."
 settings_path = "settings.json"
 user_file = "data/users.sqlite"
-guild_file = "data/guilds.sqlite"
+guild_filepath = "data/guilds.sqlite"
 
 os.makedirs("data", exist_ok=True)
-# Create the sqlite file if it doesn't exist and create the tables
-conn = sqlite3.connect(user_file)
-cur = conn.cursor()
 
-cur.execute("CREATE TABLE IF NOT EXISTS todo_items \
-(id INTEGER PRIMARY KEY AUTOINCREMENT, uid INT, name TEXT, description TEXT, completed BOOLEAN)")
-
-conn.commit()
-conn.close()
-
-conn = sqlite3.connect(guild_file)
-cur = conn.cursor()
-
-# UID is the guild ID and added_by is the user ID of the person who added the item.
-cur.execute(
+def modernize_db():
     """
-    CREATE TABLE IF NOT EXISTS todo_items 
-    (id INTEGER PRIMARY KEY AUTOINCREMENT,
-    uid INT,
-    name TEXT,
-    description TEXT,
-    completed BOOLEAN,
-    completed_on DATE DEFAULT NULL,
-    added_by INT NOT NULL)
-    """)
+    This function is used to modernize the database to the current version. It will check if the tables exist and
+    if they don't, it will create them. If the tables do exist, it will check if the columns are up to date and if
+    they aren't, it will update them.
 
-cur.execute(
-    """CREATE TABLE IF NOT EXISTS guild_settings
-    (uid INT PRIMARY KEY, task_channel INT DEFAULT NULL)"""  # Task_channel will be either None or an Int.
-)
+    :return:
+    """
+    # Function I pulled from another project.
+    # Using this dict, it formats the SQL query to create the tables if they don't exist
+    table_dict = {
+        'todo_items': {
+            'id': 'INTEGER PRIMARY KEY AUTOINCREMENT',
+            'uid': 'INT',
+            'name': 'TEXT',
+            'description': 'TEXT',
+            'completed': 'BOOLEAN',
+            'completed_on': 'DATE DEFAULT NULL',
+            'added_by': 'INT NOT NULL',
+        },
+        'guild_settings': {
+            'uid': 'INT PRIMARY KEY',
+            'task_channel': 'INT DEFAULT NULL',
+        },
+        'user_contribution_log': {
+            'contributed_task_uid': 'INT NOT NULL REFERENCES todo_items(uid)',
+            'contributor_uuid': 'INT NOT NULL',
+            'contribution_date': 'DATE DEFAULT CURRENT_TIMESTAMP',
+            'task_for_guild_id': 'INT NOT NULL',
+        },
+    }
 
-conn.commit()
-del conn, cur
+    for table_name, columns in table_dict.items():
+        with sqlite3.connect(guild_filepath) as conn:
+            cur = conn.cursor()
+            cur.execute(f'''
+                    SELECT name
+                    FROM sqlite_master
+                    WHERE type='table' AND name='{table_name}';
+                ''')
+            table_exist = cur.fetchone() is not None
+
+        # If the table exists, check and update columns
+        if table_exist:
+            for column_name, column_properties in columns.items():
+                # Check if the column exists
+                cur.execute(f'''
+                        PRAGMA table_info({table_name});
+                    ''')
+                columns_info = cur.fetchall()
+                column_exist = any(column_info[1] == column_name for column_info in columns_info)
+
+                # If the column doesn't exist, add it
+                if not column_exist:
+                    cur.execute(f'ALTER TABLE {table_name} ADD COLUMN {column_name} {column_properties};')
+
+        # If the table doesn't exist, create it with columns
+        else:
+            columns_str = ', '.join(
+                [f'{column_name} {column_properties}' for column_name, column_properties in columns.items()]
+            )
+            try:
+                cur.execute(f'CREATE TABLE {table_name} ({columns_str});')
+            except sqlite3.OperationalError:
+                exit(1)
+
+modernize_db()
 
 class sqlite_storage:
     @staticmethod
@@ -52,7 +87,7 @@ class sqlite_storage:
         assert type(name) is str and type(description) is str, "Name and description must be strings"
         assert type(added_by) is int or user_id is not None, "Added by must be an integer if user_id is None."
         assert added_by is not None if guild_id is not None else True, "Added by is needed if guild_id is provided."
-        conn = sqlite3.connect(user_file if user_id is not None else guild_file)
+        conn = sqlite3.connect(user_file if user_id is not None else guild_filepath)
         cur = conn.cursor()
 
         uid = user_id if user_id else guild_id
@@ -69,7 +104,7 @@ class sqlite_storage:
     @staticmethod
     def mark_todo_finished(identifier, user_id=None, guild_id=None):
         assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"
-        conn = sqlite3.connect(user_file if user_id is not None else guild_file)
+        conn = sqlite3.connect(user_file if user_id is not None else guild_filepath)
         cur = conn.cursor()
 
         uid = user_id if user_id else guild_id
@@ -106,7 +141,7 @@ class sqlite_storage:
     def undo_mark_todo_finished(identifier, user_id=None, guild_id=None):
         assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"
         assert type(identifier) is str or type(identifier) is int, "Identifier must be a string or an integer"
-        conn = sqlite3.connect(user_file if user_id is not None else guild_file)
+        conn = sqlite3.connect(user_file if user_id is not None else guild_filepath)
         cur = conn.cursor()
 
         uid = user_id if user_id else guild_id
@@ -132,7 +167,7 @@ class sqlite_storage:
     def get_todo_items(filter_for='*', guild_id=None, user_id=None, identifier=None):
         assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"
         assert filter_for in ['incompleted', 'completed', '*'], "Filter must be either 'incompleted', 'completed' or *"
-        conn = sqlite3.connect(user_file if user_id is not None else guild_file)
+        conn = sqlite3.connect(user_file if user_id is not None else guild_filepath)
         cur = conn.cursor()
 
         uid = user_id if user_id else guild_id
@@ -166,7 +201,7 @@ class sqlite_storage:
 
     @staticmethod
     def set_taskchannel(guild_id, channel_id):
-        conn = sqlite3.connect(guild_file)
+        conn = sqlite3.connect(guild_filepath)
         cur = conn.cursor()
 
         query = """
@@ -181,7 +216,7 @@ class sqlite_storage:
 
     @staticmethod
     def get_taskchannel(guild_id):
-        conn = sqlite3.connect(guild_file)
+        conn = sqlite3.connect(guild_filepath)
         cur = conn.cursor()
 
         query = """
@@ -202,7 +237,7 @@ class sqlite_storage:
         :param guild_id: The guild ID to clear the task channel for.
         :return:
         """
-        conn = sqlite3.connect(guild_file)
+        conn = sqlite3.connect(guild_filepath)
         cur = conn.cursor()
 
         query = """
@@ -216,9 +251,129 @@ class sqlite_storage:
 
         return True
 
+    @staticmethod
+    def mark_user_as_contributing(user_id:int, task_id:int, guild_id:int):
+        conn = sqlite3.connect(guild_filepath)
+        cur = conn.cursor()
+
+        query = """
+        INSERT INTO user_contribution_log (contributed_task_uid, contributor_uuid, task_for_guild_id)
+        VALUES (?, ?, ?)
+        """
+        cur.execute(query, (task_id, user_id, guild_id))
+        conn.commit()
+        conn.close()
+
+        return True
+
+    @staticmethod
+    def remove_contributor(user_id:int, task_id:int):
+        conn = sqlite3.connect(guild_filepath)
+        cur = conn.cursor()
+
+        query = """
+        DELETE FROM user_contribution_log
+        WHERE contributed_task_uid = ? AND contributor_uuid = ?
+        """
+        cur.execute(query, (task_id, user_id))
+        conn.commit()
+        conn.close()
+
+        return True
+
+    @staticmethod
+    def get_contributors(task_id:int):
+        conn = sqlite3.connect(guild_filepath)
+        cur = conn.cursor()
+
+        query = """
+        SELECT contributor_uuid
+        FROM user_contribution_log
+        WHERE contributed_task_uid = ?
+        """
+        cur.execute(query, (task_id,))
+        data = cur.fetchall()
+        conn.close()
+
+        return [x[0] for x in data]  # Example output: [123456789, 987654321] (user IDs)
+
+    @staticmethod
+    def get_user_contributions(user_id:int, guild_id:int=-1):
+        conn = sqlite3.connect(guild_filepath)
+        cur = conn.cursor()
+
+        query = f"""
+        SELECT contributed_task_uid
+        FROM user_contribution_log
+        WHERE contributor_uuid = ?
+        {'AND task_for_guild_id = ?' if guild_id != -1 else ''}
+        """
+        cur.execute(query, (user_id, guild_id) if guild_id != -1 else (user_id,))
+        data = cur.fetchall()
+
+        task_ids = [x[0] for x in data]  # Example output: [1, 2, 3] (task IDs)
+
+        # get all the data for the tasks
+        query = """
+        SELECT name, description, completed, id, completed_on, added_by
+        FROM todo_items
+        WHERE id = ?
+        """
+        task_data = []
+        for task_id in task_ids:
+            cur.execute(query, (task_id,))
+            task_data.append(cur.fetchone())
+
+        conn.close()
+
+        # Organize the data into a dictionary
+        data = {}
+        for task in task_data:
+            data[task[3]] = {
+                "name": task[0],
+                "description": task[1],
+                "completed": task[2],
+                "uid": task[3],
+                "completed_on": task[4],
+                "added_by": task[5]
+            }
+
+        return data
+
 class dataMan:
     def __init__(self):
         self.storage = sqlite_storage
+
+    def get_user_contributions(self, user_id:int, guild_id:int=-1):
+        assert type(user_id) is int, "User ID must be an integer"
+        assert type(guild_id) is int, "Guild ID must be an integer"
+
+        return self.storage.get_user_contributions(user_id, guild_id)
+
+    def mark_user_as_contributing(self, user_id:int, task_id:int, guild_id:int):
+        assert type(user_id) is int, "User ID must be an integer"
+        assert type(task_id) is int, "Task ID must be an integer"
+
+        # Ensure the user is not already contributing
+        if user_id in self.get_contributors(task_id):
+            return False
+
+        return self.storage.mark_user_as_contributing(user_id, task_id, guild_id=int(guild_id))
+
+    def remove_contributor(self, user_id:int, task_id:int):
+        assert type(user_id) is int, "User ID must be an integer"
+        assert type(task_id) is int, "Task ID must be an integer"
+
+        # Ensure the user is contributing
+        if user_id not in self.get_contributors(task_id):
+            return False
+
+        return self.storage.remove_contributor(user_id, task_id)
+
+    def get_contributors(self, task_id:int) -> list[int]:
+        assert type(task_id) is int, "Task ID must be an integer"
+
+        return self.storage.get_contributors(task_id)
 
     def add_todo_item(self, name, description, added_by:int, user_id=None, guild_id=None):
         assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"

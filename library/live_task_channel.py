@@ -37,7 +37,7 @@ class livetasks:
             )
         )
 
-        # Adds all the completed tasks to the top of the embed
+        # Adds all the completed tasks to the top of the embed (seemingly less important, as we see bottom-to-top)
         for task in completed_tasks:
             embed = livetasks.add_task_field(task, embed)
         # Adds all the completed tasks to the bottom of the embed
@@ -66,9 +66,12 @@ class livetasks:
         else:
             task_desc = f"{task_desc}\n\b"
 
+        # Get task contributors
+        contributors = dataMan().get_contributors(task_id=identifier)
+
         embed.add_field(
             name=f"{task_name}\n(ID: {identifier})",
-            value=f"{task_desc}{completed_text}\nAdded by: <@{added_by}>",
+            value=f"{task_desc}{completed_text}\nAdded by: <@{added_by}>\n{len(contributors)} Contributors",
             inline=False
         )
         return embed

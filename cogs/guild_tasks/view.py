@@ -69,13 +69,20 @@ async def view_cmd(ctx: lightbulb.SlashContext):
         )
     else:
         # To prevent the 'app did not respond' error from showing up.
-        await ctx.respond("Fetching the data now, please wait a moment.")
-        embed.set_footer("React with ✅ to mark this task as completed. Unreact to undo.")
+        embed.set_footer(
+            "React with ✅ to mark this task as completed. Unreact to undo.\n"
+            "React with 🔔 to indicate you intend to contribute to the completion of this task."
+        )
         # Doing this because for some reason ctx.respond doesn't let us have the msg id
+        await ctx.respond("Please wait a moment, we're getting the data for you.", flags=hikari.MessageFlag.EPHEMERAL)
         msg = await ctx.bot.rest.create_message(channel=ctx.channel_id, embed=embed)
         plugin.bot.d['watched_messages'][msg.id] = [incompleted_task_list[0][3], ctx.guild_id]  # msg id, task id, guid
-        plugin.bot.d['last_edited'][msg.id] = datetime.datetime.now()
+
+        # We remove 5 seconds so that the cooldown is not triggered.
+        plugin.bot.d['last_edited'][msg.id] = datetime.datetime.now() - datetime.timedelta(seconds=5)
         await msg.add_reaction('✅')
+        # Information mark to indicate "I'm gonna contribute to this task!"
+        await msg.add_reaction('🔔')
 
 def load(bot: lightbulb.BotApp) -> None:
     bot.add_plugin(plugin)

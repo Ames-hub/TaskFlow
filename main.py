@@ -28,6 +28,7 @@ botapp = lightbulb.BotApp(
 
 # Loads the commands
 botapp.load_extensions_from("cogs/guild_tasks/")
+botapp.load_extensions_from("cogs/listeners/")
 botapp.load_extensions_from("cogs/other")
 botapp.load_extensions_from("library/")
 
@@ -35,7 +36,7 @@ botapp.load_extensions_from("library/")
 # Inspect a message's reactions to determine its completion status (and a couple other things)
 botapp.d['watched_messages'] = {}
 
-# A dict to track when we last edited a watched message. This is so if someone spams the reactions, it wont spam discord
+# A dict to track when we last edited a watched message. This is so if someone spams the reactions, it won't spam discord
 botapp.d['last_edited'] = {}
 
 botapp.run()
