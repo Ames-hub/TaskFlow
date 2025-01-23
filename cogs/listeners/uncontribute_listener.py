@@ -28,8 +28,8 @@ async def on_reaction_remove(event: hikari.ReactionDeleteEvent):
 
         guild_id = plugin.bot.d['watched_messages'][event.message_id][1]
         try:
-            task_name, task_desc, _, _, _, added_by = dataMan().get_todo_items(
-                filter_for='completed',
+            task_name, task_desc, is_completed, _, _, added_by = dataMan().get_todo_items(
+                filter_for='*',
                 identifier=task_id,
                 guild_id=guild_id,
             )[0]
@@ -38,7 +38,7 @@ async def on_reaction_remove(event: hikari.ReactionDeleteEvent):
             await livetasks.update(guild_id)
             return
 
-        completed_text = "Completed: ❌"
+        completed_text = "Completed: ✅ " if is_completed else "Completed: ❌"
         task_desc = f"{task_desc}\n{completed_text}" if task_desc != "..." else completed_text
         task_desc += f"\nAdded by: <@{added_by}>"
         embed = (
@@ -57,10 +57,12 @@ async def on_reaction_remove(event: hikari.ReactionDeleteEvent):
             )
         )
         unmark_success = dataMan().remove_contributor(user_id=int(event.user_id), task_id=int(task_id))
+        dm_channel = await event.app.rest.create_dm_channel(event.user_id)
         if not unmark_success:
-            dm_channel = await event.app.rest.create_dm_channel(event.user_id)
             await dm_channel.send("You are already not contributing to this task.")
             return
+        else:
+            await dm_channel.send("You are no longer contributing to this task.")
         await message.edit(embed)
         await livetasks.update(guild_id)
 

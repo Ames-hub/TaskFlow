@@ -17,6 +17,7 @@ async def on_reaction_add(event: hikari.ReactionAddEvent):
         return
 
     if event.emoji_name == "🔔":
+        guild_id = int(plugin.bot.d['watched_messages'][event.message_id][1])
         task_id = plugin.bot.d['watched_messages'][event.message_id][0]
         # Won't edit if it's been edited in the last 5 seconds
         last_edited = plugin.bot.d['last_edited'][event.message_id]
@@ -27,22 +28,25 @@ async def on_reaction_add(event: hikari.ReactionAddEvent):
         plugin.bot.d['last_edited'][event.message_id] = datetime.datetime.now()
         message = await plugin.bot.rest.fetch_message(event.channel_id, event.message_id)
 
-        guild_id = plugin.bot.d['watched_messages'][event.message_id][1]
         try:
-            task_name, task_desc, is_completed, _, _, added_by = dataMan().get_todo_items(guild_id=guild_id, identifier=task_id)[0]
+            task_name, task_desc, is_completed, _, _, added_by = dataMan().get_todo_items(
+                guild_id=guild_id,
+                identifier=task_id,
+                filter_for='*'
+            )[0]
         except IndexError:
             # No tasks found. Therefore, no tasks to contribute to.
             # If the code managed to get this far, that's a bug.
             return
 
         # Checks if the task is already completed.
-        if not dataMan().get_allow_late_contrib(guild_id):
+        if bool(dataMan().get_allow_late_contrib(guild_id)) is False:
             if is_completed:
                 dm_channel = await event.app.rest.create_dm_channel(event.user_id)
                 await dm_channel.send("This task is already completed and cannot be contributed to any longer.")
                 return
 
-        completed_text = "Completed: ✅"
+        completed_text = "Completed: ✅ " if is_completed else "Completed: ❌"
         task_desc = f"{task_desc}\n{completed_text}" if task_desc != "..." else completed_text
         task_desc += f"\nAdded by: <@{added_by}>"
         embed = (
@@ -65,10 +69,13 @@ async def on_reaction_add(event: hikari.ReactionAddEvent):
             task_id=int(task_id),
             guild_id=guild_id
         )
+
+        dm_channel = await event.app.rest.create_dm_channel(event.user_id)
         if not mark_success:
-            dm_channel = await event.app.rest.create_dm_channel(event.user_id)
             await dm_channel.send("You have already indicated that you intend to contribute to this task.")
             return
+        else:
+            await dm_channel.send("You are now contributing to that task.")
 
         await message.edit(embed)
         await livetasks.update(guild_id)
