@@ -5,6 +5,7 @@ A Task management bot for discord
 - Create tasks
 - Complete or undo completion of tasks
 - Toggleable live list of tasks
+- Mark/unmark self as a contributor to a task
 
 ## Self-hosting Installation
 If you don't know how to do some of the steps in this installation guide, look up how to do it.
