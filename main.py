@@ -12,18 +12,26 @@ if not os.path.exists('secrets.env'):
 
 dotenv.load_dotenv('secrets.env')
 
+run_update = False
 if bool(os.environ.get('AUTO_UPDATE', True)) is True:
-    upt_file = 'data/last_update'
-    os.makedirs('data', exist_ok=True)
-    if os.path.exists(upt_file):
-        with open(upt_file, 'r') as f:
-            last_update = f.read()
-        if last_update:
-            last_update = datetime.datetime.fromisoformat(last_update)
-            if datetime.datetime.now() - last_update < datetime.timedelta(days=2):
-                print("Last update was less than 2 days ago. Skipping update.")
-                exit(0)
+    if bool(os.environ.get('FORCE_UPDATE', False)) is False:
+        upt_file = 'data/last_update'
+        os.makedirs('data', exist_ok=True)
+        if os.path.exists(upt_file):
+            with open(upt_file, 'r') as f:
+                last_update = f.read()
+            if last_update:
+                last_update = datetime.datetime.fromisoformat(last_update)
+                if datetime.datetime.now() - last_update < datetime.timedelta(days=2):
+                    print("Last update was less than 2 days ago. Skipping update.")
+                else:
+                    run_update = True
+            else:
+                run_update = True
+    else:
+        run_update = True
 
+if run_update:
     update_service.run_update()
     os.makedirs('data', exist_ok=True)
     with open('data/last_update', 'w+') as f:
