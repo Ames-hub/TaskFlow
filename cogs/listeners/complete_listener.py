@@ -22,12 +22,17 @@ async def on_reaction_add(event: hikari.ReactionAddEvent):
         if datetime.datetime.now().timestamp() - last_edited.timestamp() < 5:
             return
 
+        # Checks if its already completed as a task (meaning they want to undo the completion)
+        task_complete = dataMan().get_todo_items(filter_for='*', identifier=task_id)[0][2]
+        if task_complete is True:
+            return  # Allow other listener to handle
+
         # Edit the message to mark it as incomplete.
         plugin.bot.d['last_edited'][event.message_id] = datetime.datetime.now()
         message = await plugin.bot.rest.fetch_message(event.channel_id, event.message_id)
 
         guild_id = plugin.bot.d['watched_messages'][event.message_id][1]
-        task_name, task_desc, _, _, _, added_by = dataMan().get_todo_items(guild_id=guild_id, identifier=task_id, filter_for='*')[0]
+        task_name, task_desc, _, _, _, added_by, _ = dataMan().get_todo_items(guild_id=guild_id, identifier=task_id, filter_for='*')[0]
 
         completed_text = "Completed: ✅"
         task_desc = f"{task_desc}\n{completed_text}" if task_desc != "..." else completed_text

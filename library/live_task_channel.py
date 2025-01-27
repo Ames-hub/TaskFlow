@@ -1,6 +1,7 @@
 from library.storage import dataMan
 import lightbulb
 import datetime
+import logging
 import hikari
 
 plugin = lightbulb.Plugin(__name__)
@@ -48,7 +49,13 @@ class livetasks:
                        "To interact with a task, use /grouptasks view (task id)")
         embed.set_footer(text=footer_text)
 
-        await plugin.bot.rest.create_message(embed=embed, channel=task_channel)
+        try:
+            await plugin.bot.rest.create_message(embed=embed, channel=task_channel)
+        except hikari.errors.NotFoundError:
+            logging.info(f"Task channel for guild {guild_id} not found. Disabling live task list.")
+            dataMan().clear_taskchannel(guild_id)
+            return False
+
         return True
 
     @staticmethod

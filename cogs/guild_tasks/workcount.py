@@ -34,7 +34,7 @@ async def workcount_cmd(ctx: lightbulb.SlashContext, user: hikari.User = None):
         task = contrib_tasks[task_id]
         desc = task['description']
         task_contrib_msg += (f"Name: **{task['name']}** ({task_id})\n"
-                             f"{desc if desc != "..." else "No description"}\n"
+                             f"{desc if desc != '...' else "No description"}\n"
                              f"Completed: {'✅' if task['completed'] else '❌'}\n"
                              f"\n")
 

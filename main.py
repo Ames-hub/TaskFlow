@@ -1,5 +1,6 @@
-import lightbulb
-import hikari
+from updater import update_service
+import datetime
+import logging
 import dotenv
 import os
 
@@ -11,24 +12,42 @@ if not os.path.exists('secrets.env'):
 
 dotenv.load_dotenv('secrets.env')
 
-intents = [
-    hikari.Intents.MESSAGE_CONTENT,
-    hikari.Intents.GUILD_MESSAGE_REACTIONS,
-    hikari.Intents.DM_MESSAGE_REACTIONS
-]
-# Calculates perm bits for the bot's intents.
-intent_val = 0
-for intent in intents:
-    intent_val += intent
+if bool(os.environ.get('AUTO_UPDATE', True)) is True:
+    upt_file = 'data/last_update'
+    os.makedirs('data', exist_ok=True)
+    if os.path.exists(upt_file):
+        with open(upt_file, 'r') as f:
+            last_update = f.read()
+        if last_update:
+            last_update = datetime.datetime.fromisoformat(last_update)
+            if datetime.datetime.now() - last_update < datetime.timedelta(days=2):
+                print("Last update was less than 2 days ago. Skipping update.")
+                exit(0)
 
-botapp = lightbulb.BotApp(
-    token=os.environ.get("TOKEN", None),
-    intents=intent_val
+    update_service.run_update()
+    os.makedirs('data', exist_ok=True)
+    with open('data/last_update', 'w+') as f:
+        f.write(str(datetime.datetime.now()))
+    exit(0)  # Reboot the bot at this point.
+
+os.makedirs('logs', exist_ok=True)
+logging.basicConfig(
+    level=logging.INFO,
+    filename=f'logs/{datetime.datetime.now().strftime("%Y-%m-%d")}.log',
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
+logging.basicConfig(
+    level=logging.ERROR,
+    filename=f'logs/{datetime.datetime.now().strftime("%Y-%m-%d")}.log',
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+from library.botapp import botapp
 
 # Loads the commands
 botapp.load_extensions_from("cogs/guild_tasks/")
 botapp.load_extensions_from("cogs/listeners/")
+botapp.load_extensions_from("cogs/tasks/")
 botapp.load_extensions_from("cogs/other")
 botapp.load_extensions_from("library/")
 

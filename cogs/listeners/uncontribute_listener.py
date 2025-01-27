@@ -28,7 +28,7 @@ async def on_reaction_remove(event: hikari.ReactionDeleteEvent):
 
         guild_id = plugin.bot.d['watched_messages'][event.message_id][1]
         try:
-            task_name, task_desc, is_completed, _, _, added_by = dataMan().get_todo_items(
+            task_name, task_desc, is_completed, _, _, added_by, _ = dataMan().get_todo_items(
                 filter_for='*',
                 identifier=task_id,
                 guild_id=guild_id,

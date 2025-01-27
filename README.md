@@ -20,6 +20,11 @@ This will activate the virtual environment
 7. Run `python main.py` in the terminal to start the bot<br>
 It will then take you through a very quick setup process.
 
+### Secrets.env
+The file accepts the following KWARGS
+- TOKEN : str (Discord bot token)
+- AUTO_UPDATE : bool (True/False)
+
 ## Usage
 This bot runs entirely on slash commands and reaction events.<br>
 Honestly, the bot is pretty self-explanatory, but just incase it's not, here's a quick guide.<br>

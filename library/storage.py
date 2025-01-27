@@ -1,3 +1,4 @@
+from datetime import datetime
 import lightbulb
 import sqlite3
 import os
@@ -31,6 +32,7 @@ def modernize_db():
             'completed': 'BOOLEAN',
             'completed_on': 'DATE DEFAULT NULL',
             'added_by': 'INT NOT NULL',
+            'deadline': 'DATETIME DEFAULT NULL',
         },
         'guild_settings': {
             'uid': 'INT PRIMARY KEY',
@@ -43,6 +45,10 @@ def modernize_db():
             'contribution_date': 'DATE DEFAULT CURRENT_TIMESTAMP',
             'task_for_guild_id': 'INT NOT NULL',
         },
+        'guild_task_crossref': {
+            'task_id': 'INT PRIMARY KEY NOT NULL REFERENCES todo_items(id)',
+            'guild_id': 'INT NOT NULL',
+        }
     }
 
     for table_name, columns in table_dict.items():
@@ -114,7 +120,7 @@ class sqlite_storage:
         return True
 
     @staticmethod
-    def add_todo_item(name, description, user_id=None, guild_id=None, added_by:int=None):
+    def add_todo_item(name, description, user_id=None, guild_id=None, added_by:int=None, deadline:datetime=None):
         assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"
         assert type(name) is str and type(description) is str, "Name and description must be strings"
         assert type(added_by) is int or user_id is not None, "Added by must be an integer if user_id is None."
@@ -124,10 +130,37 @@ class sqlite_storage:
 
         uid = user_id if user_id else guild_id
         query = """
-        INSERT INTO todo_items (uid, name, description, completed, added_by)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO todo_items (uid, name, description, completed, added_by, deadline)
+        VALUES (?, ?, ?, ?, ?, ?)
         """
-        cur.execute(query, (uid, name, description, False, added_by))
+        cur.execute(query, (uid, name, description, False, added_by, deadline))
+        conn.commit()
+
+        # Adds it as a crossref
+        if guild_id is not None:
+            # Get the task ID
+            query = """
+            SELECT id FROM todo_items WHERE uid = ? AND name = ? AND description = ? AND added_by = ? ORDER BY id DESC
+            """
+            cur.execute(query, (uid, name, description, added_by))
+            task_id = cur.fetchone()[0]
+
+            sqlite_storage.add_crossref_task(guild_id=guild_id, task_id=task_id)
+
+        conn.close()
+
+        return True
+
+    @staticmethod
+    def add_crossref_task(task_id, guild_id):
+        conn = sqlite3.connect(guild_filepath)
+        cur = conn.cursor()
+
+        query = """
+        INSERT INTO guild_task_crossref (task_id, guild_id)
+        VALUES (?, ?)
+        """
+        cur.execute(query, (task_id, guild_id))
         conn.commit()
         conn.close()
 
@@ -197,21 +230,28 @@ class sqlite_storage:
 
     @staticmethod
     def get_todo_items(filter_for='*', guild_id=None, user_id=None, identifier=None):
-        assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"
         assert filter_for in ['incompleted', 'completed', '*'], "Filter must be either 'incompleted', 'completed' or *"
         conn = sqlite3.connect(user_file if user_id is not None else guild_filepath)
         cur = conn.cursor()
 
+        if guild_id is None:
+            guild_id = "*"
+        if user_id is None:
+            user_id = "*"
+
         uid = user_id if user_id else guild_id
-        arguments = (uid,)
-        query = """
-        SELECT name, description, completed, id, completed_on, added_by
+        arguments = (uid,) if uid != "*" else ()
+        query = f"""
+        SELECT name, description, completed, id, completed_on, added_by, deadline
         FROM todo_items
-        WHERE uid = ?
+        {"WHERE uid = ?" if uid != "*" else ""}
         """
 
+        WHERE_OR_AND_TEXT = "and" if uid != "*" else "where"
+
         if filter_for.lower() != "*":  # excluding complete status filter when filter_for is '*'
-            query += "AND completed = ?"
+            query += f"{WHERE_OR_AND_TEXT} completed = ?"
+            WHERE_OR_AND_TEXT = "and"
             if filter_for.lower() == "incompleted":
                 arguments += (False,)
             else:
@@ -219,13 +259,18 @@ class sqlite_storage:
 
         if identifier is not None:
             if str(identifier).isnumeric():
-                query += "AND id = ?"
+                query += f"{WHERE_OR_AND_TEXT} id = ?"
                 arguments += (identifier,)
             else:
-                query += "AND name LIKE ? "
+                query += f"{WHERE_OR_AND_TEXT} name LIKE ? "
                 arguments += (identifier,)
 
-        cur.execute(query, arguments)
+        try:
+            cur.execute(query, arguments)
+        except sqlite3.OperationalError as e:
+            print(e)
+            print(query, arguments)
+            raise e
         data = cur.fetchall()
         conn.close()
 
@@ -372,9 +417,34 @@ class sqlite_storage:
 
         return data
 
+    @staticmethod
+    def crossref_task(task_id):
+        conn = sqlite3.connect(guild_filepath)
+        cur = conn.cursor()
+
+        query = """
+        SELECT guild_id
+        FROM guild_task_crossref
+        WHERE task_id = ?
+        """
+        cur.execute(query, (task_id,))
+        data = cur.fetchone()
+        conn.close()
+
+        return data[0] if data else None
+
 class dataMan:
     def __init__(self):
         self.storage = sqlite_storage
+
+    def crossref_task(self, task_id:int):
+        """
+        Gets the guild ID for a task.
+        :param task_id: The task ID to get the guild ID for.
+        :return: The guild ID for the task.
+        """
+        assert type(task_id) is int, "Task ID must be an integer"
+        return self.storage.crossref_task(task_id)
 
     def get_allow_late_contrib(self, guild_id:int):
         """
@@ -427,14 +497,14 @@ class dataMan:
 
         return self.storage.get_contributors(task_id)
 
-    def add_todo_item(self, name, description, added_by:int, user_id=None, guild_id=None):
+    def add_todo_item(self, name, description, added_by:int, user_id=None, guild_id=None, deadline:datetime=None):
         assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"
         assert type(name) is str and type(description) is str, "Name and description must be strings"
         uid = int(user_id if user_id else guild_id)
         if user_id:
-            return self.storage.add_todo_item(name, description, user_id=uid)
+            return self.storage.add_todo_item(name, description, user_id=uid, deadline=deadline)
         else:
-            return self.storage.add_todo_item(name, description, guild_id=uid, added_by=int(added_by))
+            return self.storage.add_todo_item(name, description, guild_id=uid, added_by=int(added_by), deadline=deadline)
 
     def mark_todo_finished(self, name_or_id, user_id=None, guild_id=None):
         assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"
@@ -455,9 +525,8 @@ class dataMan:
             return self.storage.undo_mark_todo_finished(name_or_id, guild_id=uid)
 
     def get_todo_items(self, filter_for='incompleted', user_id=None, guild_id=None, identifier=None):
-        assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"
         assert filter_for in ['incompleted', 'completed', '*'], "Filter must be either 'incompleted' or 'completed'"
-        uid = int(user_id if user_id else guild_id)
+        uid = int(user_id if user_id else guild_id) if user_id or guild_id else None
         if user_id:
             return self.storage.get_todo_items(filter_for, user_id=uid, identifier=identifier)
         else:

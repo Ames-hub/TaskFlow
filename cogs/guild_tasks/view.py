@@ -14,7 +14,7 @@ plugin = lightbulb.Plugin(__name__)
     required=False,
     default=None
 )
-@lightbulb.command(name='view', description='Create an item for the groups to-do list.')
+@lightbulb.command(name='view', description="View a tasks details.")
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def view_cmd(ctx: lightbulb.SlashContext):
     task_name = ctx.options['name_or_id']
