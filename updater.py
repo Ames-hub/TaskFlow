@@ -50,9 +50,9 @@ class update_service:
         for item in os.listdir():
             if item != 'autobackup':
                 if os.path.isdir(item):
-                    shutil.copytree(item, os.path.join('autobackup', item))
+                    shutil.copytree(item, os.path.join(backup_dir, item))
                 else:
-                    shutil.copy(item, os.path.join('autobackup', item))
+                    shutil.copy(item, os.path.join(backup_dir, item))
 
         print("Backed up current version to './autobackup' (2/9)")
 
