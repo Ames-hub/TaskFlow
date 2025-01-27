@@ -96,4 +96,3 @@ class update_service:
         print("Updated files (9/9)")
 
         print("Update complete! Please restart the bot.")
-        raise KeyboardInterrupt  # Reboot the bot at this point.

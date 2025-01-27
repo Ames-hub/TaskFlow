@@ -51,7 +51,7 @@ if run_update:
     os.makedirs('data', exist_ok=True)
     with open('data/last_update', 'w+') as f:
         f.write(str(datetime.datetime.now()))
-    exit(0)  # Reboot the bot at this point.
+    exit(1)  # Reboot the bot at this point.
 
 os.makedirs('logs', exist_ok=True)
 logging.basicConfig(
