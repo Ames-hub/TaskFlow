@@ -13,23 +13,38 @@ if not os.path.exists('secrets.env'):
 dotenv.load_dotenv('secrets.env')
 
 run_update = False
-if bool(os.environ.get('AUTO_UPDATE', True)) is True:
-    if bool(os.environ.get('FORCE_UPDATE', False)) is False:
-        upt_file = 'data/last_update'
-        os.makedirs('data', exist_ok=True)
-        if os.path.exists(upt_file):
-            with open(upt_file, 'r') as f:
-                last_update = f.read()
-            if last_update:
-                last_update = datetime.datetime.fromisoformat(last_update)
-                if datetime.datetime.now() - last_update < datetime.timedelta(days=2):
-                    print("Last update was less than 2 days ago. Skipping update.")
-                else:
-                    run_update = True
+auto_update = bool(os.environ.get('AUTO_UPDATE', True))
+force_update = bool(os.environ.get('FORCE_UPDATE', False))
+
+print("Auto update is set to", auto_update)
+print("Force update is set to", force_update)
+
+# Auto update logic
+if auto_update is True:
+    upt_file = 'data/last_update'
+    os.makedirs('data', exist_ok=True)
+    print("Running update check...")
+    if os.path.exists(upt_file):
+        with open(upt_file, 'r') as f:
+            last_update = f.read()
+        print(upt_file)
+        print(last_update, len(last_update))
+        if len(last_update) > 1:
+            last_update = datetime.datetime.fromisoformat(last_update)
+            if datetime.datetime.now() - last_update < datetime.timedelta(days=2):
+                print("Last update was less than 2 days ago. Skipping update.")
             else:
+                print("Last update was more than 2 days ago. Running update.")
                 run_update = True
+        else:
+            print("Last update was never recorded. Running update.")
+            run_update = True
     else:
+        print("Last update was never recorded. Running update.")
         run_update = True
+
+if force_update is True:
+    run_update = True
 
 if run_update:
     update_service.run_update()

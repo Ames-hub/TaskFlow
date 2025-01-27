@@ -94,3 +94,6 @@ class update_service:
         shutil.rmtree('temp', ignore_errors=True)
         print("Cleaned up temp folder (8/9)")
         print("Updated files (9/9)")
+
+        print("Update complete! Please restart the bot.")
+        raise KeyboardInterrupt  # Reboot the bot at this point.
