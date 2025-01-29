@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import requests
 import zipfile
 import hashlib
@@ -8,8 +8,9 @@ import os
 import re
 
 repo_url = 'https://github.com/Ames-hub/TaskFlow.git'
-repo_name = re.search(r'/([^/]+)\.git$', repo_url).group(1)
-temp_dir = os.path.join(os.getcwd(), 'temp', repo_name)  # temp/<repo_name>
+repo_name = f"{re.search(r'/([^/]+)\.git$', repo_url).group(1)}-main"
+repo_clone_dir = os.path.join(os.getcwd(), repo_name)  # temp/<repo_name>
+backup_dir = os.path.join(f'{os.getcwd()}', 'autobackup',)
 
 delete_only = [
     'requirements.txt',
@@ -24,7 +25,7 @@ delete_only = [
 
 class update_service:
     @staticmethod
-    def clone_repository(repo_url=repo_url, destination_folder='temp'):
+    def clone_repository(repo_url=repo_url, destination_folder=repo_clone_dir):
         # Convert GitHub URL to the zip download URL
         if repo_url.endswith(".git"):
             repo_url = repo_url[:-4]
@@ -59,18 +60,45 @@ class update_service:
             print(f"Failed to download repository. HTTP Status: {response.status_code}")
 
     @staticmethod
+    def delete_old_backups() -> int:
+        """
+        Finds backups of date older than 7 days and deletes them when the number of backups exceeds 5.
+        :return:
+        """
+        if not os.path.exists(backup_dir):
+            return 0
+        dir_list = os.listdir(backup_dir)
+        if len(dir_list) <= 5:
+            return 0
+
+        delete_count = 0
+        for item_name in dir_list:
+            if datetime.strptime(item_name, "%Y-%m-%d %H:%M:%S") > datetime.now() - timedelta(days=7):
+                continue
+
+            item_path = os.path.join(backup_dir, item_name)
+            if not os.path.isdir(item_path):
+                continue
+
+            shutil.rmtree(item_path, ignore_errors=True)
+            delete_count += 1
+            continue
+
+        return delete_count
+
+    @staticmethod
     def determine_is_modern(delete_clone:bool=True) -> bool:
         """
         Determines if the current version of the bot is the most recent version.
         :return: True if the current version is the most recent, False otherwise.
         """
         did_clone = False
-        if not os.path.exists(temp_dir):
+        if not os.path.exists(repo_clone_dir):
             update_service.clone_repository()
             did_clone = True
 
         for item in delete_only:
-            temp_item_hash = update_service.hash(os.path.join(temp_dir, item))
+            temp_item_hash = update_service.hash(os.path.join(repo_clone_dir, item))
             current_item_hash = update_service.hash(os.path.join(os.getcwd(), item))
 
             if temp_item_hash is None or current_item_hash != temp_item_hash:
@@ -78,7 +106,7 @@ class update_service:
 
         if did_clone:
             if delete_clone:
-                shutil.rmtree(temp_dir, ignore_errors=True)
+                shutil.rmtree(repo_clone_dir, ignore_errors=True)
 
         return True
 
@@ -114,25 +142,36 @@ class update_service:
 
     @staticmethod
     def run_update():
+        """
+        Updates the bot to the latest version.
+        :return:
+        """
+        if update_service.determine_is_modern(delete_clone=False):
+            print("Bot is already up to date.")
+
+        print("Checking for old backups and deleting them...")
+        del_count = update_service.delete_old_backups()
+        print(f"Deleted {del_count} old backups.")
+
         print("Running update... (1/7)")
 
         # Makes a backup of what's currently in the project root directory
-        backup_dir = os.path.join(f'{os.getcwd()}', 'autobackup', f'{datetime.now()}')
-        os.makedirs(backup_dir, exist_ok=True)
+        current_backup_dir = os.path.join(backup_dir, f'{datetime.now()}')
+        os.makedirs(current_backup_dir, exist_ok=True)
         for item in os.listdir():
             if item != 'autobackup':
                 if os.path.isdir(item):
-                    shutil.copytree(item, os.path.join(backup_dir, item))
+                    shutil.copytree(item, os.path.join(current_backup_dir, item))
                 else:
-                    shutil.copy(item, os.path.join(backup_dir, item))
+                    shutil.copy(item, os.path.join(current_backup_dir, item))
 
         print("Backed up current version to './autobackup' (2/7)")
 
-        shutil.rmtree(temp_dir, ignore_errors=True)
-        if not os.path.exists(temp_dir):
+        shutil.rmtree(repo_clone_dir, ignore_errors=True)
+        if not os.path.exists(repo_clone_dir):
             print("Cloning repository to temp directory... (3/7)")
-            update_service.clone_repository(repo_url, temp_dir)
-            if not os.path.exists(temp_dir):
+            update_service.clone_repository()
+            if not os.path.exists(repo_clone_dir):
                 print("Failed to clone repository")
                 return
 
@@ -153,15 +192,17 @@ class update_service:
         print("Removed all old files (5/7)")
 
         # Move the contents of the temp folder to the project root
-        for item in os.listdir(temp_dir):
+        for item in os.listdir(repo_clone_dir):
+            if item == repo_name:
+                continue
             shutil.move(
-                src=os.path.join(temp_dir, item),
+                src=os.path.join(repo_clone_dir, item),
                 dst=os.path.join(os.getcwd(), item),
             )
 
         # Clean up the temp folder
         print("Cleaned up temp folder (6/7)")
-        shutil.rmtree('temp', ignore_errors=True)
+        shutil.rmtree(repo_name, ignore_errors=True)
         # shutil.rmtree(repo_name, ignore_errors=True)
         print("Updated files (7/7)")
 
