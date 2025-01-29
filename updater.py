@@ -42,7 +42,7 @@ class update_service:
 
     @staticmethod
     def run_update():
-        print("Running update... (1/9)")
+        print("Running update... (1/7)")
 
         # Makes a backup of what's currently in the project root directory
         backup_dir = os.path.join(f'{os.getcwd()}', 'autobackup', f'{datetime.now()}')
@@ -54,45 +54,56 @@ class update_service:
                 else:
                     shutil.copy(item, os.path.join(backup_dir, item))
 
-        print("Backed up current version to './autobackup' (2/9)")
+        print("Backed up current version to './autobackup' (2/7)")
 
         # Ensure the temp folder exists (with the repository contents)
+        temp_dir = os.path.join(os.getcwd(), 'temp', os.listdir('temp')[0])  # temp/<repo_name>
         while True:  # retry logic
-            if not os.path.exists('temp'):
-                print("Cloning repository to temp directory... (3/9)")
-                update_service.clone_repository(repo_url, 'temp')
-                if not os.path.exists('temp'):
+            if not os.path.exists(temp_dir):
+                print("Cloning repository to temp directory... (3/7)")
+                update_service.clone_repository(repo_url, temp_dir)
+                if not os.path.exists(temp_dir):
                     print("Failed to clone repository")
                     return
                 break
             else:
-                shutil.rmtree('temp', ignore_errors=True)
+                shutil.rmtree(temp_dir, ignore_errors=True)
                 continue
+
+        delete_only = [
+            'requirements.txt',
+            'main.py',
+            'README.md',
+            'LICENSE',
+            '.gitignore',
+            'library',
+            'logs',
+            'cogs',
+        ]
 
         # Deletes all folders in proj root directory except for temp, logs, .git and secrets.env
         for item in os.listdir():
-            for exemption in ['temp', 'logs', '.git', '.env', 'venv', 'data', 'autobackup']:
-                if exemption in item or item.startswith('.'):  # Ignore hidden files
-                    print(f"Item '{item}' is exempted (4/9)")
+            for del_item in delete_only:
+                if del_item not in item or item.startswith('.'):  # Ignore hidden files
+                    print(f"Item '{item}' is exempted (4/7)")
                     break
             else:
                 if os.path.isdir(item):
                     shutil.rmtree(item, ignore_errors=True)
-                    print(f"Removed folder '{item}' (5/9)")
+                    print(f"Removed folder '{item}' (4/7)")
                 else:
                     os.remove(item)
-                    print(f"Removed file '{item}' (6/9)")
+                    print(f"Removed file '{item}' (4/7)")
 
-        print("Removed all old files (7/9)")
+        print("Removed all old files (5/7)")
 
         # Move the contents of the temp folder to the project root
-        tempdir = os.path.join(os.getcwd(), 'temp', os.listdir('temp')[0])  # temp/<repo_name>
-        for item in os.listdir(tempdir):
-            shutil.move(os.path.join(tempdir, item), os.path.join(os.getcwd(), item))
+        for item in os.listdir(temp_dir):
+            shutil.move(os.path.join(temp_dir, item), os.path.join(os.getcwd(), item))
 
         # Clean up the temp folder
+        print("Cleaned up temp folder (6/7)")
         shutil.rmtree('temp', ignore_errors=True)
-        print("Cleaned up temp folder (8/9)")
-        print("Updated files (9/9)")
+        print("Updated files (7/7)")
 
         print("Update complete! Please restart the bot.")

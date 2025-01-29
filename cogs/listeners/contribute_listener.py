@@ -10,7 +10,6 @@ plugin = lightbulb.Plugin(__name__)
 async def on_reaction_add(event: hikari.ReactionAddEvent):
     # Only watch watched messages
     if event.message_id not in plugin.bot.d['watched_messages'].keys():
-        print("Message not in watched messages")
         return
     # Dont interact with self
     if event.user_id == plugin.bot.get_me().id:
