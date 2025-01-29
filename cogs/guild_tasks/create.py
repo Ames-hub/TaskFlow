@@ -62,6 +62,8 @@ async def create_cmd(ctx: lightbulb.SlashContext):
     elif deadline_hms_obj is not None:
         await ctx.respond("Please enter a date to go with the time.")
         return
+    elif deadline_date is None and deadline_hms is None:
+        deadline_obj = None
     else:
         await ctx.respond(
             "Something went wrong with the logic of setting the deadline.\n"

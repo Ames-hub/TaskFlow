@@ -13,8 +13,20 @@ if not os.path.exists('secrets.env'):
 dotenv.load_dotenv('secrets.env')
 
 run_update = False
-auto_update = bool(os.environ.get('AUTO_UPDATE', True))
-force_update = bool(os.environ.get('FORCE_UPDATE', False))
+# Returns as strings.
+auto_update = os.environ.get('AUTO_UPDATE', "True")
+force_update = os.environ.get('FORCE_UPDATE', "False")
+
+# Convert the strings to booleans.
+if auto_update.lower() == "false":
+    auto_update = False
+else:
+    auto_update = True
+
+if force_update.lower() == "false":
+    force_update = False
+else:
+    force_update = True
 
 print("Auto update is set to", auto_update)
 print("Force update is set to", force_update)

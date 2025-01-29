@@ -18,13 +18,19 @@ plugin = lightbulb.Plugin(__name__)
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def view_cmd(ctx: lightbulb.SlashContext):
     task_name = ctx.options['name_or_id']
-    incompleted_task_list = dataMan().get_todo_items(
+
+    try:
+        filter_for = 'incompleted' if not task_name.isnumeric() else "*"
+    except AttributeError:
+        filter_for = '*'
+
+    task_list = dataMan().get_todo_items(
         guild_id=ctx.guild_id,
         identifier=task_name,
-        filter_for='incompleted' if not task_name.isnumeric() else "*"
+        filter_for=filter_for
     )
 
-    task_count = len(incompleted_task_list)
+    task_count = len(task_list)
     if task_count != 1:
         desc_value = f"We found {task_count} tasks that meet the requested criteria."
     else:
@@ -38,7 +44,7 @@ async def view_cmd(ctx: lightbulb.SlashContext):
     )
 
     task_counter = 0
-    for task in incompleted_task_list:
+    for task in task_list:
         name = task[0]
         description = task[1]
         completed = task[2]
@@ -76,7 +82,7 @@ async def view_cmd(ctx: lightbulb.SlashContext):
         # Doing this because for some reason ctx.respond doesn't let us have the msg id
         await ctx.respond("Please wait a moment, we're getting the data for you.", flags=hikari.MessageFlag.EPHEMERAL)
         msg = await ctx.bot.rest.create_message(channel=ctx.channel_id, embed=embed)
-        plugin.bot.d['watched_messages'][msg.id] = [incompleted_task_list[0][3], ctx.guild_id]  # msg id, task id, guid
+        plugin.bot.d['watched_messages'][msg.id] = [task_list[0][3], ctx.guild_id]  # msg id, task id, guid
 
         # We remove 5 seconds so that the cooldown is not triggered.
         plugin.bot.d['last_edited'][msg.id] = datetime.datetime.now() - datetime.timedelta(seconds=5)
