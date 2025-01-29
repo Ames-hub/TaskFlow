@@ -1,6 +1,6 @@
 from library.storage import dataMan
 from lightbulb.ext import tasks
-from datetime import datetime
+from datetime import datetime, timedelta
 from library.botapp import botapp
 import lightbulb
 import logging
@@ -18,6 +18,11 @@ async def task() -> None:
         uuid = task[3]
         if completed:
             continue
+
+        if botapp.d['dl_notif_cooldown'].get(uuid) is not None:
+            # Make sure to not continue unless it has been 2 hours since the last notification
+            if datetime.now() - botapp.d['dl_notif_cooldown'][uuid] < timedelta(hours=2):
+                continue
 
         deadline: str = task[6]
 
@@ -71,11 +76,11 @@ async def task() -> None:
             continue
 
         try:
-
             await botapp.rest.create_message(
                 hikari.Snowflake(livetask_channel_id),
                 embed=embed
             )
+            botapp.d['dl_notif_cooldown'][uuid] = datetime.now()
         except hikari.errors.ForbiddenError:
             logging.info(f"I can't send messages in {guild_id}!")
             continue

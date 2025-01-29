@@ -91,4 +91,6 @@ botapp.d['watched_messages'] = {}
 # A dict to track when we last edited a watched message. This is so if someone spams the reactions, it won't spam discord
 botapp.d['last_edited'] = {}
 
+botapp.d['dl_notif_cooldown'] = {}
+
 botapp.run()

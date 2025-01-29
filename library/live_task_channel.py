@@ -65,6 +65,7 @@ class livetasks:
         completed = task[2]
         identifier = task[3]
         added_by = task[5]
+        deadline = task[6]
 
         completed_text = f"Completed: {'❌' if not completed else '✅'}"
 
@@ -75,6 +76,10 @@ class livetasks:
 
         # Get task contributors
         contributors = dataMan().get_contributors(task_id=identifier)
+
+        if deadline is not None:
+            deadline = deadline.strftime("%d/%m/%Y %I:%M %p")
+            task_desc += f"Deadline: {deadline}\n"
 
         embed.add_field(
             name=f"{task_name}\n(ID: {identifier})",

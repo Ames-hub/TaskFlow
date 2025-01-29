@@ -10,8 +10,8 @@ plugin = lightbulb.Plugin(__name__)
 @group.child
 @lightbulb.app_command_permissions(dm_enabled=False)
 @lightbulb.option(
-    name='deadline_hms',
-    description="Enter a specific time in the format: HH:MM:SS",
+    name='deadline_hmp',
+    description="Enter a specific time in the format: HH:MM AM/PM",
     type=hikari.OptionType.STRING,
     required=False,
     default=None
@@ -38,39 +38,66 @@ plugin = lightbulb.Plugin(__name__)
 async def create_cmd(ctx: lightbulb.SlashContext):
     task_name = ctx.options.name
     task_desc = ctx.options.description
-    deadline_hms = ctx.options.deadline_hms
+    deadline_hmp = ctx.options.deadline_hmp
     deadline_date = ctx.options.deadline_date
 
-    deadline_hms_obj = None
+    deadline_hmp_obj = None
     deadline_date_obj = None
-    if deadline_hms is not None:
-        if not deadline_hms.replace(':', '').isnumeric():
-            await ctx.respond("Please enter a valid time in the format: HH:MM:SS")
+    if deadline_hmp is not None:
+        time_set = str(deadline_hmp[:-3]).replace(':', '')
+        if not time_set.isnumeric() or len(time_set) != 4:
+            await ctx.respond("Please enter a valid time in the format: HH:MM AM/PM, eg: 05:30 PM")
             return
-        deadline_hms_obj = datetime.strptime(deadline_hms, "%H:%M:%S")
+        elif " " not in deadline_hmp:
+            await ctx.respond("There must be a space in-between HH:MM and AM/PM. Eg: 05:30 PM")
+            return
+        elif not deadline_hmp[-2:].lower() in ['am', 'pm']:
+            await ctx.respond("You did not enter AM or PM. Please use this example: 05:30 PM")
+            return
+        elif not deadline_hmp[:-3].replace(':', '').isnumeric():
+            await ctx.respond("Please enter a valid time in the format: HH:MM AM/PM, eg: 05:30 PM")
+            return
+        elif int(time_set) > 1259 or int(time_set) < 100:
+            await ctx.respond("The range for the time is between 01:00 AM and 12:59 PM. Please enter a valid time.")
+            return
+        deadline_hmp_obj = datetime.strptime(deadline_hmp, "%I:%M %p")
 
     if deadline_date is not None:
-        if not deadline_date.replace('/', '').isnumeric():
-            await ctx.respond("Please enter a valid date in the format: DD/MM/YYYY")
+        date_set = deadline_date.replace('/', '')
+        if not date_set.isnumeric():
+            await ctx.respond("Please enter a valid date in the format: DD/MM/YYYY, eg 05/11/2025")
+            return
+        elif len(date_set) != 8:
+            await ctx.respond("Please enter a valid date in the format: DD/MM/YYYY, eg 05/11/2025")
+            return
+        elif str(date_set)[:2] not in [
+            "01", "02", "03", "04", "05", "06", "07", "08", "09", "10",
+            "11", "12", "13", "14", "15", "16", "17", "18", "19", "20",
+            "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31"
+            ]:
+            await ctx.respond(f"Please enter a valid day between 01 and 31. You entered, {str(date_set)[:2]}")
+            return
+        elif str(date_set)[2:4] not in ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]:
+            await ctx.respond(f"Please enter a valid month between 01 and 12. You entered, {str(date_set)[2:4]}")
             return
         deadline_date_obj = datetime.strptime(deadline_date, "%d/%m/%Y")
 
-    if deadline_hms_obj is not None and deadline_date_obj is not None:
-        deadline_obj = deadline_date_obj.replace(hour=deadline_hms_obj.hour, minute=deadline_hms_obj.minute, second=deadline_hms_obj.second)
+    if deadline_hmp_obj is not None and deadline_date_obj is not None:
+        deadline_obj = deadline_date_obj.replace(hour=deadline_hmp_obj.hour, minute=deadline_hmp_obj.minute, second=deadline_hmp_obj.second)
     elif deadline_date_obj is not None:
         deadline_obj = deadline_date_obj
-    elif deadline_hms_obj is not None:
+    elif deadline_hmp_obj is not None:
         await ctx.respond("Please enter a date to go with the time.")
         return
-    elif deadline_date is None and deadline_hms is None:
+    elif deadline_date is None and deadline_hmp is None:
         deadline_obj = None
     else:
         await ctx.respond(
             "Something went wrong with the logic of setting the deadline.\n"
             "DEBUG INFO:\n"
-            f"deadline_hms_obj: {deadline_hms_obj} | {type(deadline_hms_obj)}\n"
+            f"deadline_hms_obj: {deadline_hmp_obj} | {type(deadline_hmp_obj)}\n"
             f"deadline_date_obj: {deadline_date_obj} | {type(deadline_date_obj)}\n"
-            f"deadline_hms: {deadline_hms} | {type(deadline_hms)}\n"
+            f"deadline_hmp: {deadline_hmp} | {type(deadline_hmp)}\n"
             f"deadline_date: {deadline_date} | {type(deadline_date)}"
         )
         return
