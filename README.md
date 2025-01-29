@@ -12,7 +12,7 @@ If you don't know how to do some of the steps in this installation guide, look u
 
 1. Clone the repository to a folder on your computer
 2. Open a terminal in the folder
-3. Run `python3.11 -m venv venv` in the terminal to create a virtual environment
+3. Run `python3.12 -m venv venv` in the terminal to create a virtual environment
 4. Run `./venv/scripts/activate` if your on windows, else run `source venv/bin/activate`<br>
 This will activate the virtual environment
 5. Run `pip install -r requirements.txt` in the terminal to install the required packages
@@ -24,6 +24,7 @@ It will then take you through a very quick setup process.
 The file accepts the following KWARGS
 - TOKEN : str (Discord bot token)
 - AUTO_UPDATE : bool (True/False)
+- FORCE_UPDATE : bool (True/False)  (If AUTO_UPDATE is True, this will force an update every start-up)
 
 ## Usage
 This bot runs entirely on slash commands and reaction events.<br>
