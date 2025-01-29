@@ -41,10 +41,10 @@ if auto_update is True:
             last_update = f.read()
         if len(last_update) > 1:
             last_update = datetime.datetime.fromisoformat(last_update)
-            if datetime.datetime.now() - last_update < datetime.timedelta(days=2):
-                print("Last update was less than 2 days ago. Skipping update.")
+            if datetime.datetime.now() - last_update < datetime.timedelta(days=1):
+                print("Last update check was less than 1 day ago. Skipping update.")
             else:
-                print("Last update was more than 2 days ago. Running update.")
+                print("Last update check was more than 1 day ago. Running update.")
                 run_update = True
         else:
             print("Last update was never recorded. Running update.")
