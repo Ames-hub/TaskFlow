@@ -4,6 +4,7 @@ import zipfile
 import shutil
 import io
 import os
+import re
 
 repo_url = 'https://github.com/Ames-hub/TaskFlow.git'
 
@@ -57,7 +58,8 @@ class update_service:
         print("Backed up current version to './autobackup' (2/7)")
 
         # Ensure the temp folder exists (with the repository contents)
-        temp_dir = os.path.join(os.getcwd(), 'temp', os.listdir('temp')[0])  # temp/<repo_name>
+        repo_name = re.search(r'/([^/]+)\.git$', repo_url).group(1)
+        temp_dir = os.path.join(os.getcwd(), 'temp', repo_name)  # temp/<repo_name>
         while True:  # retry logic
             if not os.path.exists(temp_dir):
                 print("Cloning repository to temp directory... (3/7)")
@@ -104,6 +106,7 @@ class update_service:
         # Clean up the temp folder
         print("Cleaned up temp folder (6/7)")
         shutil.rmtree('temp', ignore_errors=True)
+        shutil.rmtree(repo_name, ignore_errors=True)
         print("Updated files (7/7)")
 
         print("Update complete! Please restart the bot.")

@@ -27,8 +27,6 @@ if auto_update is True:
     if os.path.exists(upt_file):
         with open(upt_file, 'r') as f:
             last_update = f.read()
-        print(upt_file)
-        print(last_update, len(last_update))
         if len(last_update) > 1:
             last_update = datetime.datetime.fromisoformat(last_update)
             if datetime.datetime.now() - last_update < datetime.timedelta(days=2):
