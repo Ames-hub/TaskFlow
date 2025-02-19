@@ -8,7 +8,7 @@ import hikari
 
 plugin = lightbulb.Plugin(__name__)
 
-@tasks.task(s=4, wait_before_execution=False, auto_start=True)
+@tasks.task(s=4, wait_before_execution=True, auto_start=True)
 async def task() -> None:
     task_list = dataMan().get_todo_items(filter_for='incompleted')
     for task in task_list:

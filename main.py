@@ -4,13 +4,13 @@ import logging
 import dotenv
 import os
 
-if not os.path.exists('secrets.env'):
+if not os.path.exists('.env'):
     print("Welcome to the setup process for the bot. To continue, please enter the token for the bot you want to use.")
     token = input(">>> ")
-    with open('secrets.env', 'w') as f:
+    with open('.env', 'w') as f:
         f.write(f"TOKEN={token}")
 
-dotenv.load_dotenv('secrets.env')
+dotenv.load_dotenv('.env')
 
 run_update = False
 # Returns as strings.

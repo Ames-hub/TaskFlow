@@ -1,0 +1,10 @@
+owner=Ames-hub
+name=TaskFlow
+description=A Bot designed to track tasks
+uuid=639f3c21-a480-4a8f-94ea-b28f6a80089f
+visibility=private
+created_at=2025-02-20 00:47:26.162326
+last_update_at=2025-02-20 00:47:26.162326
+v_major=0
+v_minor=0
+v_patch=0

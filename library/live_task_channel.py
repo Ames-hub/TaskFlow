@@ -78,8 +78,10 @@ class livetasks:
         contributors = dataMan().get_contributors(task_id=identifier)
 
         if deadline is not None:
-            deadline = deadline.strftime("%d/%m/%Y %I:%M %p")
-            task_desc += f"Deadline: {deadline}\n"
+            deadline = datetime.datetime.strptime(deadline, "%Y-%m-%d %H:%M:%S")
+            task_desc += f"Deadline: {deadline.strftime("%d/%m/%Y %I:%M %p")}\n"
+            if deadline < datetime.datetime.now():
+                task_desc += "⚠️ Deadline has passed!\n"
 
         embed.add_field(
             name=f"{task_name}\n(ID: {identifier})",
