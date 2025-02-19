@@ -1,4 +1,3 @@
-from updater import update_service
 import datetime
 import logging
 import dotenv
@@ -11,57 +10,6 @@ if not os.path.exists('.env'):
         f.write(f"TOKEN={token}")
 
 dotenv.load_dotenv('.env')
-
-run_update = False
-# Returns as strings.
-auto_update = os.environ.get('AUTO_UPDATE', "True")
-force_update = os.environ.get('FORCE_UPDATE', "False")
-
-# Convert the strings to booleans.
-if auto_update.lower() == "false":
-    auto_update = False
-else:
-    auto_update = True
-
-if force_update.lower() == "false":
-    force_update = False
-else:
-    force_update = True
-
-print("Auto update is set to", auto_update)
-print("Force update is set to", force_update)
-
-# Auto update logic
-if auto_update is True:
-    upt_file = 'data/last_update'
-    os.makedirs('data', exist_ok=True)
-    print("Running update check...")
-    if os.path.exists(upt_file):
-        with open(upt_file, 'r') as f:
-            last_update = f.read()
-        if len(last_update) > 1:
-            last_update = datetime.datetime.fromisoformat(last_update)
-            if datetime.datetime.now() - last_update < datetime.timedelta(days=1):
-                print("Last update check was less than 1 day ago. Skipping update.")
-            else:
-                print("Last update check was more than 1 day ago. Running update.")
-                run_update = True
-        else:
-            print("Last update was never recorded. Running update.")
-            run_update = True
-    else:
-        print("Last update was never recorded. Running update.")
-        run_update = True
-
-if force_update is True:
-    run_update = True
-
-if run_update:
-    update_service.run_update()
-    os.makedirs('data', exist_ok=True)
-    with open('data/last_update', 'w+') as f:
-        f.write(str(datetime.datetime.now()))
-    exit(1)  # Reboot the bot at this point.
 
 os.makedirs('logs', exist_ok=True)
 logging.basicConfig(
