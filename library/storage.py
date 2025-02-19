@@ -33,6 +33,7 @@ def modernize_db():
             'completed_on': 'DATE DEFAULT NULL',
             'added_by': 'INT NOT NULL',
             'deadline': 'DATETIME DEFAULT NULL',
+            'guild_id': 'INT DEFAULT NULL',
         },
         'guild_settings': {
             'uid': 'INT PRIMARY KEY',
@@ -45,10 +46,6 @@ def modernize_db():
             'contribution_date': 'DATE DEFAULT CURRENT_TIMESTAMP',
             'task_for_guild_id': 'INT NOT NULL',
         },
-        'guild_task_crossref': {
-            'task_id': 'INT PRIMARY KEY NOT NULL REFERENCES todo_items(id)',
-            'guild_id': 'INT NOT NULL',
-        }
     }
 
     for table_name, columns in table_dict.items():
@@ -130,38 +127,12 @@ class sqlite_storage:
 
         uid = user_id if user_id else guild_id
         query = """
-        INSERT INTO todo_items (uid, name, description, completed, added_by, deadline)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO todo_items (uid, name, description, completed, added_by, deadline, guild_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         """
-        cur.execute(query, (uid, name, description, False, added_by, deadline))
+        cur.execute(query, (uid, name, description, False, added_by, deadline, guild_id))
         conn.commit()
 
-        # Adds it as a crossref
-        if guild_id is not None:
-            # Get the task ID
-            query = """
-            SELECT id FROM todo_items WHERE uid = ? AND name = ? AND description = ? AND added_by = ? ORDER BY id DESC
-            """
-            cur.execute(query, (uid, name, description, added_by))
-            task_id = cur.fetchone()[0]
-
-            sqlite_storage.add_crossref_task(guild_id=guild_id, task_id=task_id)
-
-        conn.close()
-
-        return True
-
-    @staticmethod
-    def add_crossref_task(task_id, guild_id):
-        conn = sqlite3.connect(guild_filepath)
-        cur = conn.cursor()
-
-        query = """
-        INSERT INTO guild_task_crossref (task_id, guild_id)
-        VALUES (?, ?)
-        """
-        cur.execute(query, (task_id, guild_id))
-        conn.commit()
         conn.close()
 
         return True
@@ -242,7 +213,7 @@ class sqlite_storage:
         uid = user_id if user_id else guild_id
         arguments = (uid,) if uid != "*" else ()
         query = f"""
-        SELECT name, description, completed, id, completed_on, added_by, deadline
+        SELECT name, description, completed, id, completed_on, added_by, deadline, guild_id
         FROM todo_items
         {"WHERE uid = ?" if uid != "*" else ""}
         """
@@ -273,6 +244,10 @@ class sqlite_storage:
             raise e
         data = cur.fetchall()
         conn.close()
+
+        # Filter out tasks that don't belong to the guild
+        if guild_id is not None:
+            data = [task for task in data if task[7] == guild_id]
 
         return data
 
@@ -424,7 +399,7 @@ class sqlite_storage:
 
         query = """
         SELECT guild_id
-        FROM guild_task_crossref
+        FROM todo_items
         WHERE task_id = ?
         """
         cur.execute(query, (task_id,))
