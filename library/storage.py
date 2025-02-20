@@ -249,7 +249,7 @@ class sqlite_storage:
         if guild_id is not None:
             data = [task for task in data if task[7] == guild_id]
 
-        return data
+        return data  # Example data: [('Task 1', 'Description 1', False, 1, None, 123456789), ...]
 
     @staticmethod
     def set_taskchannel(guild_id, channel_id):

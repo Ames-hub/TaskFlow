@@ -58,6 +58,18 @@ async def view_cmd(ctx: lightbulb.SlashContext):
         desc_value = f"{description}\n\n{completed_text}" if description != "..." else completed_text
         desc_value += f"\nAdded by: <@{added_by}>"
 
+        is_contributing = int(ctx.author.id) in dataMan().get_contributors(task_id)
+        if is_contributing:
+            if not completed:
+                desc_value += f"\nViewer is contributing to this task."
+            else:
+                desc_value += f"\nViewer has contributed to this task."
+        else:
+            if not completed:
+                desc_value += f"\nViewer is not contributing to this task."
+            else:
+                desc_value += f"\nViewer did not contribute to this task."
+
         task_counter += 1
         embed.add_field(
             name=f'{task_counter}. {name}\n(ID: {task_id})',

@@ -28,7 +28,7 @@ async def on_reaction_add(event: hikari.ReactionAddEvent):
         message = await plugin.bot.rest.fetch_message(event.channel_id, event.message_id)
 
         try:
-            task_name, task_desc, is_completed, _, _, added_by, _ = dataMan().get_todo_items(
+            task_name, task_desc, is_completed, _, _, added_by, _, _ = dataMan().get_todo_items(
                 guild_id=guild_id,
                 identifier=task_id,
                 filter_for='*'
