@@ -50,9 +50,13 @@ async def view_cmd(ctx: lightbulb.SlashContext):
         completed = task[2]
         task_id = task[3]
         added_by = task[5]
+        category = task[8]
+
+        if category is not None:
+            name = f"**{category}**"
 
         # If the task is completed, we want to show a different emoji.
-        completed_text = f"Completed: {'❌' if not completed else '✅'}"
+        completed_text = "Completed: " + '❌' if not completed else '✅'
         # If there is no description, don't show the '...' placeholder. Just show completion.
         # Otherwise, show the description and the completion.
         desc_value = f"{description}\n\n{completed_text}" if description != "..." else completed_text

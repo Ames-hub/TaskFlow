@@ -2,8 +2,8 @@ import lightbulb
 
 plugin = lightbulb.Plugin(__name__)
 
-name = "task"
-desc = "View and manage your groups todo-list."
+name = "live"
+desc = "To do with the live channel"
 @plugin.command
 @lightbulb.command(name, desc)
 @lightbulb.implements(lightbulb.SlashCommandGroup)

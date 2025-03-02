@@ -11,6 +11,8 @@ if not os.path.exists('.env'):
 
 dotenv.load_dotenv('.env')
 
+DEBUG = os.getenv('DEBUG', 'false').lower() == 'true'
+
 os.makedirs('logs', exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
@@ -27,6 +29,7 @@ from library.botapp import botapp
 
 # Loads the commands
 botapp.load_extensions_from("cogs/guild_tasks/")
+botapp.load_extensions_from("cogs/livechannel/")
 botapp.load_extensions_from("cogs/listeners/")
 botapp.load_extensions_from("cogs/tasks/")
 botapp.load_extensions_from("cogs/other")
@@ -39,6 +42,14 @@ botapp.d['watched_messages'] = {}
 # A dict to track when we last edited a watched message. This is so if someone spams the reactions, it won't spam discord
 botapp.d['last_edited'] = {}
 
+botapp.d['reaction_cooldown'] = 2  # seconds
 botapp.d['dl_notif_cooldown'] = {}
 
-botapp.run()
+# The same colour as the dark-mode embed body. This gives a clean look to the embed.
+botapp.d['colourless'] = 0x2b2d31
+
+botapp.d['livelist_styles'] = {}
+
+botapp.d['DEBUG'] = DEBUG
+
+botapp.run(shard_count=3 if DEBUG is False else 1)

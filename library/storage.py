@@ -34,6 +34,11 @@ def modernize_db():
             'added_by': 'INT NOT NULL',
             'deadline': 'DATETIME DEFAULT NULL',
             'guild_id': 'INT DEFAULT NULL',
+            'category': 'TEXT DEFAULT NULL',
+        },
+        'livechannel_styles': {
+            'guild_id': 'INT PRIMARY KEY',
+            'style': 'TEXT DEFAULT "classic"',
         },
         'guild_settings': {
             'uid': 'INT PRIMARY KEY',
@@ -86,6 +91,53 @@ modernize_db()
 
 class sqlite_storage:
     @staticmethod
+    def get_livechannel_style(guild_id:int):
+        conn = sqlite3.connect(guild_filepath)
+        cur = conn.cursor()
+
+        query = """
+        SELECT style
+        FROM livechannel_styles
+        WHERE guild_id = ?
+        """
+        cur.execute(query, (guild_id,))
+        data = cur.fetchone()
+        conn.close()
+
+        return data[0] if data else "classic"
+
+    @staticmethod
+    def set_livechannel_style(style:str, guild_id:int):
+        conn = sqlite3.connect(guild_filepath)
+        cur = conn.cursor()
+
+        query = """
+        INSERT OR REPLACE INTO livechannel_styles (guild_id, style)
+        VALUES (?, ?)
+        """
+        cur.execute(query, (guild_id, style))
+        conn.commit()
+        conn.close()
+
+        return True
+
+    @staticmethod
+    def get_category_exists(category:str):
+        conn = sqlite3.connect(guild_filepath)
+        cur = conn.cursor()
+
+        query = """
+        SELECT name
+        FROM todo_items
+        WHERE category = ?
+        """
+        cur.execute(query, (category,))
+        data = cur.fetchone()
+        conn.close()
+
+        return data is not None
+
+    @staticmethod
     def get_allow_late_contrib(guild_id:int):
         conn = sqlite3.connect(guild_filepath)
         cur = conn.cursor()
@@ -117,20 +169,21 @@ class sqlite_storage:
         return True
 
     @staticmethod
-    def add_todo_item(name, description, user_id=None, guild_id=None, added_by:int=None, deadline:datetime=None):
+    def add_todo_item(name, description, user_id=None, guild_id=None, added_by:int=None, deadline:datetime=None, category=None):
         assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"
         assert type(name) is str and type(description) is str, "Name and description must be strings"
         assert type(added_by) is int or user_id is not None, "Added by must be an integer if user_id is None."
         assert added_by is not None if guild_id is not None else True, "Added by is needed if guild_id is provided."
+        assert category is None or type(category) is str, "Category must be a string or None"
         conn = sqlite3.connect(user_file if user_id is not None else guild_filepath)
         cur = conn.cursor()
 
         uid = user_id if user_id else guild_id
         query = """
-        INSERT INTO todo_items (uid, name, description, completed, added_by, deadline, guild_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO todo_items (uid, name, description, completed, added_by, deadline, guild_id, category)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """
-        cur.execute(query, (uid, name, description, False, added_by, deadline, guild_id))
+        cur.execute(query, (uid, name, description, False, added_by, deadline, guild_id, category))
         conn.commit()
 
         conn.close()
@@ -201,6 +254,14 @@ class sqlite_storage:
 
     @staticmethod
     def get_todo_items(filter_for='*', guild_id=None, user_id=None, identifier=None):
+        """
+        Gets the todo items from the database.
+        :param filter_for: The filter to apply to the todo items. Can be 'incompleted', 'completed', or '*'.
+        :param guild_id: The guild ID to get the todo items for.
+        :param user_id: The user ID to get the todo items for.
+        :param identifier: The identifier to filter the todo items by. Can be the task ID or the task name.
+        :return:
+        """
         assert filter_for in ['incompleted', 'completed', '*'], "Filter must be either 'incompleted', 'completed' or *"
         conn = sqlite3.connect(user_file if user_id is not None else guild_filepath)
         cur = conn.cursor()
@@ -213,7 +274,7 @@ class sqlite_storage:
         uid = user_id if user_id else guild_id
         arguments = (uid,) if uid != "*" else ()
         query = f"""
-        SELECT name, description, completed, id, completed_on, added_by, deadline, guild_id
+        SELECT name, description, completed, id, completed_on, added_by, deadline, guild_id, category
         FROM todo_items
         {"WHERE uid = ?" if uid != "*" else ""}
         """
@@ -412,6 +473,36 @@ class dataMan:
     def __init__(self):
         self.storage = sqlite_storage
 
+    def get_livechannel_style(self, guild_id:int):
+        """
+        Gets the style for the live channel.
+        :param guild_id: The guild ID to get the style for.
+        :return: The style for the live channel.
+        """
+        assert type(guild_id) is int, "Guild ID must be an integer"
+        return self.storage.get_livechannel_style(guild_id)
+
+    def set_livechannel_style(self, style:str, guild_id:int):
+        """
+        Sets the style for the live channel.
+        :param style: The style to set.
+        :param guild_id: The guild ID to set the style for.
+        :return:
+        """
+        assert type(style) is str, "Style must be a string"
+        assert style.lower() in ['classic', 'minimal', 'pinned', 'compact', 'pinned-minimal'], "Style must be valid"
+        assert type(guild_id) is int, "Guild ID must be an integer"
+        return self.storage.set_livechannel_style(style, guild_id)
+
+    def get_category_exists(self, category_name) -> bool:
+        """
+        Checks if a category exists.
+        :param category_name:
+        :return: bool
+        """
+        assert type(category_name) is str, "Category name must be a string"
+        return self.storage.get_category_exists(category_name)
+
     def crossref_task(self, task_id:int):
         """
         Gets the guild ID for a task.
@@ -472,14 +563,14 @@ class dataMan:
 
         return self.storage.get_contributors(task_id)
 
-    def add_todo_item(self, name, description, added_by:int, user_id=None, guild_id=None, deadline:datetime=None):
+    def add_todo_item(self, name, description, added_by:int, user_id=None, guild_id=None, deadline:datetime=None, category=None):
         assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"
         assert type(name) is str and type(description) is str, "Name and description must be strings"
         uid = int(user_id if user_id else guild_id)
         if user_id:
-            return self.storage.add_todo_item(name, description, user_id=uid, deadline=deadline)
+            return self.storage.add_todo_item(name, description, user_id=uid, deadline=deadline, added_by=int(added_by), category=category)
         else:
-            return self.storage.add_todo_item(name, description, guild_id=uid, added_by=int(added_by), deadline=deadline)
+            return self.storage.add_todo_item(name, description, guild_id=uid, added_by=int(added_by), deadline=deadline, category=category)
 
     def mark_todo_finished(self, name_or_id, user_id=None, guild_id=None):
         assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"

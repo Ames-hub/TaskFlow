@@ -1,11 +1,12 @@
 from library.live_task_channel import livetasks
+from cogs.livechannel.group import group
 from library.storage import dataMan
 import lightbulb
 import hikari
 
 plugin = lightbulb.Plugin(__name__)
 
-@plugin.command
+@group.child
 @lightbulb.app_command_permissions(dm_enabled=False)
 @lightbulb.option(
     name='channel',
@@ -13,8 +14,8 @@ plugin = lightbulb.Plugin(__name__)
     type=hikari.OptionType.CHANNEL,
     required=True
 )
-@lightbulb.command(name='taskchannel', description="Designate a live channel for your guild's tasks.")
-@lightbulb.implements(lightbulb.SlashCommand)
+@lightbulb.command(name='channel', description="Designate a live channel for your guild's tasks.")
+@lightbulb.implements(lightbulb.SlashSubCommand)
 async def command(ctx: lightbulb.SlashContext):
     task_channel: hikari.GuildChannel = ctx.options.channel
 

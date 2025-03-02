@@ -5,6 +5,7 @@ import logging
 import hikari
 
 plugin = lightbulb.Plugin(__name__)
+
 class livetasks:
     @staticmethod
     async def update(guild_id):
@@ -30,24 +31,7 @@ class livetasks:
                 else:
                     completed_tasks.append(task)
 
-        embed = (
-            hikari.Embed(
-                title="Live Task List",
-                description="This is a live list of incomplete and newly completed tasks.",
-                color=0x00ff00
-            )
-        )
-
-        # Adds all the completed tasks to the top of the embed (seemingly less important, as we see bottom-to-top)
-        for task in completed_tasks:
-            embed = livetasks.add_task_field(task, embed)
-        # Adds all the completed tasks to the bottom of the embed
-        for task in incomplete_tasks:
-            embed = livetasks.add_task_field(task, embed)
-
-        footer_text = ("This list is updated on events.\n"
-                       "To interact with a task, use /grouptasks view (task id)")
-        embed.set_footer(text=footer_text)
+        embed = livetasks.gen_livetasklist_embed(completed_tasks, incomplete_tasks)
 
         try:
             await plugin.bot.rest.create_message(embed=embed, channel=task_channel)
@@ -59,6 +43,54 @@ class livetasks:
         return True
 
     @staticmethod
+    def gen_livetasklist_embed(completed_tasks, incomplete_tasks):
+        embed = (
+            hikari.Embed(
+                title="Live Task List",
+                description="This is a live list of incomplete and newly completed tasks.",
+                color=0x00ff00
+            )
+            .add_field(
+                name="Details",
+                value=f"The details of {len(incomplete_tasks)} incomplete task(s) is attached below.\n\n"
+            )
+        )
+
+        # Adds all the completed tasks to the top of the embed (seemingly less important, as we see bottom-to-top)
+        for task in completed_tasks:
+            embed = livetasks.add_task_field(task, embed)
+
+        # Counts the amount of tasks in each category
+        task_cat_count = {}
+        for task in incomplete_tasks:
+            category = str(task[8])
+            if category not in task_cat_count.keys():
+                task_cat_count[category] = 1
+            else:
+                task_cat_count[category] += 1
+
+        category_sorted_tasks = {}
+        # Organizes tasks by category
+        for task in incomplete_tasks:
+            category = str(task[8])
+            # Makes sure the category has at least one task
+            if task_cat_count[category] == 0:
+                continue
+
+            if category not in category_sorted_tasks.keys():
+                category_sorted_tasks[category] = []
+
+            # noinspection PyUnresolvedReferences
+            category_sorted_tasks[category].append(task)
+
+        # Adds all the completed tasks to the bottom of the embed
+        for category in category_sorted_tasks:
+            for task in category_sorted_tasks[category]:
+                embed = livetasks.add_task_field(task, embed)
+
+        return embed
+
+    @staticmethod
     def add_task_field(task:tuple, embed):
         task_name = task[0]
         task_desc = task[1]
@@ -66,28 +98,80 @@ class livetasks:
         identifier = task[3]
         added_by = task[5]
         deadline = task[6]
+        guild_id = task[7]
+        category = task[8]
 
-        completed_text = f"Completed: {'❌' if not completed else '✅'}"
+        # Gets the guild's livelist style setting with a 10-second cache
+        if plugin.bot.d['livelist_styles'].get(str(guild_id)) is None:
+            style = dataMan().get_livechannel_style(guild_id)
+            plugin.bot.d['livelist_styles'][str(guild_id)] = [style, datetime.datetime.now().timestamp()]
+        else:
+            data = plugin.bot.d['livelist_styles'].get(str(guild_id))
+            if data[1] + 10 < datetime.datetime.now().timestamp():
+                style = dataMan().get_livechannel_style(guild_id)
+                plugin.bot.d['livelist_styles'][str(guild_id)] = [style, datetime.datetime.now().timestamp()]
+            else:
+                style = data[0]
+
+        if style in ['classic']:
+            completed_text = f"Completed: {'❌' if not completed else '✅'}"
+        elif style in ['pinned', 'compact', 'minimal', 'pinned-minimal']:
+            completed_text = f"{'❌' if not completed else '✅'}"
+        else:
+            raise ValueError("Invalid style")
 
         if task_desc == "...":
-            task_desc = "\n"
+            task_desc = ""
         else:
-            task_desc = f"{task_desc}\n\b"
+            task_desc = f"{task_desc}\n"
 
         # Get task contributors
         contributors = dataMan().get_contributors(task_id=identifier)
 
+        deadline_txt = ""
         if deadline is not None:
             deadline = datetime.datetime.strptime(deadline, "%Y-%m-%d %H:%M:%S")
-            task_desc += f"Deadline: {deadline.strftime("%d/%m/%Y %I:%M %p")}\n"
             if deadline < datetime.datetime.now():
-                task_desc += "⚠️ Deadline has passed!\n"
+                deadline_txt += f"⚠️ Deadline expired <t:{int(deadline.timestamp())}:R> ago!\n"
+            else:
+                deadline_txt += f"Deadline: {deadline.strftime("%d/%m/%Y %I:%M %p")}\n"
+                deadline_txt += f"Time left: <t:{int(deadline.timestamp())}:R>\n"
 
-        embed.add_field(
-            name=f"{task_name}\n(ID: {identifier})",
-            value=f"{task_desc}{completed_text}\nAdded by: <@{added_by}>\n{len(contributors)} Contributors",
+        efield = embed.fields[0].value
+
+        if category is not None:
+            if style in ['classic']:
+                if f"-- **__{category}__** --" not in efield:
+                    efield += f"\n-- **__{category}__** --\n\n"
+            elif style in ['pinned', 'pinned-minimal', 'minimal', 'compact']:
+                if f"# {category}" not in efield:
+                    efield += f"**__{category}__**\n"
+
+        # Quote or space
+        q_or_s = '"' if len(task_desc) > 0 else ''
+        if style == 'classic':
+            efield = efield + f"{task_name}\n(ID: {identifier})\n"
+            efield = efield + f"{task_desc}{completed_text}\nAdded by: <@{added_by}>\n{len(contributors)} helping\n\n"
+        elif style == 'minimal':
+            efield = efield + f"({identifier}) {task_name} {completed_text}\n"
+        elif style == 'pinned':
+            efield = efield + f"- ({identifier}) {task_name} {completed_text} {q_or_s}{task_desc}{q_or_s} {len(contributors)} helping. <@{added_by}>\n"
+        elif style == 'pinned-minimal':
+            efield = efield + f"- ({identifier}) {task_name} {completed_text}"
+        elif style == 'compact':
+            efield = efield + f"({identifier}) {task_name} {completed_text} {q_or_s}{task_desc}{q_or_s} {len(contributors)} helping. <@{added_by}>\n"
+        else:
+            raise ValueError("Invalid style")
+
+        efield = efield + deadline_txt
+
+        embed.edit_field(
+            0,
+            "Details",
+            efield,
             inline=False
         )
+
         return embed
 
 def load(bot: lightbulb.BotApp) -> None:

@@ -19,7 +19,7 @@ async def on_reaction_remove(event: hikari.ReactionDeleteEvent):
         task_id = plugin.bot.d['watched_messages'][event.message_id][0]
         # Won't edit if it's been edited in the last 5 seconds
         last_edited = plugin.bot.d['last_edited'][event.message_id]
-        if datetime.datetime.now().timestamp() - last_edited.timestamp() < 5:
+        if datetime.datetime.now().timestamp() - last_edited.timestamp() < plugin.bot.d['reaction_cooldown']:
             return
 
         # Edit the message to mark it as incomplete.
@@ -28,7 +28,7 @@ async def on_reaction_remove(event: hikari.ReactionDeleteEvent):
 
         guild_id = plugin.bot.d['watched_messages'][event.message_id][1]
         try:
-            task_name, task_desc, is_completed, _, _, added_by, _ = dataMan().get_todo_items(
+            task_name, task_desc, is_completed, _, _, added_by, _, _, _ = dataMan().get_todo_items(
                 filter_for='*',
                 identifier=task_id,
                 guild_id=guild_id,

@@ -18,9 +18,9 @@ async def on_reaction_add(event: hikari.ReactionAddEvent):
     if event.emoji_name == "🔔":
         guild_id = int(plugin.bot.d['watched_messages'][event.message_id][1])
         task_id = plugin.bot.d['watched_messages'][event.message_id][0]
-        # Won't edit if it's been edited in the last 5 seconds
+        # Won't edit if it's been edited in the last 2 seconds
         last_edited = plugin.bot.d['last_edited'][event.message_id]
-        if datetime.datetime.now().timestamp() - last_edited.timestamp() < 5:
+        if datetime.datetime.now().timestamp() - last_edited.timestamp() < plugin.bot.d['reaction_cooldown']:
             return
 
         # Edit the message to mark it as incomplete.
@@ -28,7 +28,7 @@ async def on_reaction_add(event: hikari.ReactionAddEvent):
         message = await plugin.bot.rest.fetch_message(event.channel_id, event.message_id)
 
         try:
-            task_name, task_desc, is_completed, _, _, added_by, _, _ = dataMan().get_todo_items(
+            task_name, task_desc, is_completed, _, _, added_by, _, _, _ = dataMan().get_todo_items(
                 guild_id=guild_id,
                 identifier=task_id,
                 filter_for='*'
