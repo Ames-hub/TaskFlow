@@ -25,7 +25,7 @@ async def command(ctx: lightbulb.SlashContext):
 
     success = dataMan().set_taskchannel(int(ctx.guild_id), int(task_channel.id))
     if success:
-        await ctx.respond(f"Task channel set to {task_channel.mention}")
+        await ctx.respond(f"Task channel set to <#{task_channel.id}>")
     else:
         await ctx.respond("Failed to set task channel. Please try again later.")
 

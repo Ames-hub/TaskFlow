@@ -32,6 +32,22 @@ class livetasks:
                     completed_tasks.append(task)
 
         embed = livetasks.gen_livetasklist_embed(completed_tasks, incomplete_tasks)
+        if embed is False:
+            try:
+                await plugin.bot.rest.create_message(
+                    embed=(
+                        hikari.Embed(
+                            title="Uh oh!",
+                            description="Failed to generate embed for live task list!"
+                        ),
+                    ),
+                    channel=task_channel
+                )
+                return False
+            except hikari.errors.NotFoundError:
+                logging.info(f"Task channel for guild {guild_id} not found. Disabling live task list.")
+                dataMan().clear_taskchannel(guild_id)
+                return False
 
         try:
             await plugin.bot.rest.create_message(embed=embed, channel=task_channel)
@@ -44,10 +60,30 @@ class livetasks:
 
     @staticmethod
     def gen_livetasklist_embed(completed_tasks, incomplete_tasks):
+        # Gets the guild's livelist style setting with a 5-second cache
+        # Grabs the first task's guild ID. Since the guild id will be the same for all these tasks
+        try:
+            guild_id = completed_tasks[0][7]
+        except IndexError:
+            try:
+                guild_id = incomplete_tasks[0][7]
+            except IndexError:
+                return False
+        if plugin.bot.d['livelist_styles'].get(str(guild_id)) is None:
+            style = dataMan().get_livechannel_style(guild_id)
+            plugin.bot.d['livelist_styles'][str(guild_id)] = [style, datetime.datetime.now().timestamp()]
+        else:
+            data = plugin.bot.d['livelist_styles'].get(str(guild_id))
+            if data[1] + 5 < datetime.datetime.now().timestamp():
+                style = dataMan().get_livechannel_style(guild_id)
+                plugin.bot.d['livelist_styles'][str(guild_id)] = [style, datetime.datetime.now().timestamp()]
+            else:
+                style = data[0]
+
         embed = (
             hikari.Embed(
                 title="Live Task List",
-                description="This is a live list of incomplete and newly completed tasks.",
+                description=f"This is a live list of incomplete and newly completed tasks.\n{style} style",
                 color=0x00ff00
             )
             .add_field(
@@ -58,7 +94,7 @@ class livetasks:
 
         # Adds all the completed tasks to the top of the embed (seemingly less important, as we see bottom-to-top)
         for task in completed_tasks:
-            embed = livetasks.add_task_field(task, embed)
+            embed = livetasks.add_task_field(task, embed, style)
 
         # Counts the amount of tasks in each category
         task_cat_count = {}
@@ -86,32 +122,19 @@ class livetasks:
         # Adds all the completed tasks to the bottom of the embed
         for category in category_sorted_tasks:
             for task in category_sorted_tasks[category]:
-                embed = livetasks.add_task_field(task, embed)
+                embed = livetasks.add_task_field(task, embed, style)
 
         return embed
 
     @staticmethod
-    def add_task_field(task:tuple, embed):
+    def add_task_field(task:tuple, embed, style):
         task_name = task[0]
         task_desc = task[1]
         completed = task[2]
         identifier = task[3]
         added_by = task[5]
         deadline = task[6]
-        guild_id = task[7]
         category = task[8]
-
-        # Gets the guild's livelist style setting with a 10-second cache
-        if plugin.bot.d['livelist_styles'].get(str(guild_id)) is None:
-            style = dataMan().get_livechannel_style(guild_id)
-            plugin.bot.d['livelist_styles'][str(guild_id)] = [style, datetime.datetime.now().timestamp()]
-        else:
-            data = plugin.bot.d['livelist_styles'].get(str(guild_id))
-            if data[1] + 10 < datetime.datetime.now().timestamp():
-                style = dataMan().get_livechannel_style(guild_id)
-                plugin.bot.d['livelist_styles'][str(guild_id)] = [style, datetime.datetime.now().timestamp()]
-            else:
-                style = data[0]
 
         if style in ['classic']:
             completed_text = f"Completed: {'❌' if not completed else '✅'}"
@@ -123,7 +146,7 @@ class livetasks:
         if task_desc == "...":
             task_desc = ""
         else:
-            task_desc = f"{task_desc}\n"
+            task_desc = f"{task_desc}"
 
         # Get task contributors
         contributors = dataMan().get_contributors(task_id=identifier)
@@ -155,9 +178,9 @@ class livetasks:
         elif style == 'minimal':
             efield = efield + f"({identifier}) {task_name} {completed_text}\n"
         elif style == 'pinned':
-            efield = efield + f"- ({identifier}) {task_name} {completed_text} {q_or_s}{task_desc}{q_or_s} {len(contributors)} helping. <@{added_by}>\n"
+            efield = efield + f"- ({identifier}) {task_name} {completed_text}\n{q_or_s}{task_desc}{q_or_s} {len(contributors)} people helping.\nAdded by <@{added_by}>\n"
         elif style == 'pinned-minimal':
-            efield = efield + f"- ({identifier}) {task_name} {completed_text}"
+            efield = efield + f"- ({identifier}) {task_name} {completed_text}\n"
         elif style == 'compact':
             efield = efield + f"({identifier}) {task_name} {completed_text} {q_or_s}{task_desc}{q_or_s} {len(contributors)} helping. <@{added_by}>\n"
         else:
