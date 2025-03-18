@@ -51,7 +51,7 @@ async def on_reaction_remove(event: hikari.ReactionDeleteEvent):
                 "React with 🔔 to indicate you intend to contribute to the completion of this task."
             )
         )
-        dataMan().undo_mark_todo_finished(task_id, guild_id=guild_id)
+        dataMan().mark_todo_not_finished(task_id, guild_id=guild_id)
         await message.edit(embed)
         await livetasks.update(guild_id)
 

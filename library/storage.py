@@ -91,6 +91,19 @@ modernize_db()
 
 class sqlite_storage:
     @staticmethod
+    def get_is_task_completed(task_id:str):
+        try:
+            conn = sqlite3.connect(guild_filepath)
+            cur = conn.cursor()
+            query = f"SELECT completed FROM todo_items WHERE id = ?"
+            cur.execute(query, (task_id,))
+            result = cur.fetchone()
+            return False if not result else bool(result[0])
+        except sqlite3.Error as err:
+            print(f"Error checking task completion: {err}")
+            return err
+
+    @staticmethod
     def get_livechannel_style(guild_id:int):
         conn = sqlite3.connect(guild_filepath)
         cur = conn.cursor()
@@ -266,12 +279,22 @@ class sqlite_storage:
         conn = sqlite3.connect(user_file if user_id is not None else guild_filepath)
         cur = conn.cursor()
 
-        if guild_id is None:
-            guild_id = "*"
-        if user_id is None:
-            user_id = "*"
+        if guild_id is not None and user_id is not None:
+            raise ValueError("Only provide either guild ID or User ID")
+        else:
+            if guild_id is None:
+                assigned_guild_id = "*"
+            else:
+                assigned_guild_id = guild_id
+            if user_id is None:
+                assigned_user_id = "*"
+            else:
+                assigned_user_id = user_id
 
-        uid = user_id if user_id else guild_id
+        uid = assigned_user_id if assigned_user_id else assigned_guild_id
+        if guild_id is None and user_id is None:
+            uid = "*"
+
         arguments = (uid,) if uid != "*" else ()
         query = f"""
         SELECT name, description, completed, id, completed_on, added_by, deadline, guild_id, category
@@ -307,8 +330,8 @@ class sqlite_storage:
         conn.close()
 
         # Filter out tasks that don't belong to the guild
-        if guild_id is not None:
-            data = [task for task in data if task[7] == guild_id]
+        if assigned_guild_id is not None:
+            data = [task for task in data if task[7] == assigned_guild_id]
 
         return data  # Example data: [('Task 1', 'Description 1', False, 1, None, 123456789), ...]
 
@@ -473,6 +496,15 @@ class dataMan:
     def __init__(self):
         self.storage = sqlite_storage
 
+    def get_is_task_completed(self, task_id_or_name):
+        """
+        Gets if a task is completed or not
+        :param task_id_or_name:
+        :return:
+        """
+        task_id_or_name = str(task_id_or_name)
+        return self.storage.get_is_task_completed(task_id_or_name)
+
     def get_livechannel_style(self, guild_id:int):
         """
         Gets the style for the live channel.
@@ -581,7 +613,7 @@ class dataMan:
         else:
             return self.storage.mark_todo_finished(name_or_id, guild_id=uid)
 
-    def undo_mark_todo_finished(self, name_or_id, user_id=None, guild_id=None):
+    def mark_todo_not_finished(self, name_or_id, user_id=None, guild_id=None):
         assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"
         assert type(name_or_id) is str or type(name_or_id) is int, "Name must be a string or int"
         uid = int(user_id if user_id else guild_id)
@@ -590,13 +622,44 @@ class dataMan:
         else:
             return self.storage.undo_mark_todo_finished(name_or_id, guild_id=uid)
 
-    def get_todo_items(self, filter_for='incompleted', user_id=None, guild_id=None, identifier=None):
+    def get_todo_items(self, filter_for='incompleted', user_id=None, guild_id=None, identifier=None, only_keys=[]):
         assert filter_for in ['incompleted', 'completed', '*'], "Filter must be either 'incompleted' or 'completed'"
         uid = int(user_id if user_id else guild_id) if user_id or guild_id else None
         if user_id:
-            return self.storage.get_todo_items(filter_for, user_id=uid, identifier=identifier)
+            data = self.storage.get_todo_items(filter_for, user_id=uid, identifier=identifier)
         else:
-            return self.storage.get_todo_items(filter_for, guild_id=uid, identifier=identifier)
+            data = self.storage.get_todo_items(filter_for, guild_id=uid, identifier=identifier)
+
+        if len(only_keys) > 0:
+            acceptable_keys = ["name", "description", "completed", "id", "completed_on", "added_by", "deadline", "guild_id", "category"]
+            for d_key in only_keys:
+                if d_key not in acceptable_keys:
+                    raise TypeError(f"This key type is not acceptable \"{d_key}\"")
+
+            keys_crossref = {
+                "name": 0,
+                "description": 1,
+                "completed": 2,
+                "id": 3,
+                "completed_on": 4,
+                "added_by": 5,
+                "deadline": 6,
+                "guild_id": 7,
+                "category": 8
+            }
+            dictionary = {}
+
+            for task in data:
+                task_id = str(task[3])
+                if task_id not in dictionary:
+                    dictionary[task_id] = {}
+
+                for dict_Key in only_keys:
+                    dictionary[task_id][dict_Key] = task[keys_crossref[dict_Key]]
+
+            return dictionary
+        else:
+            return data
 
     def set_taskchannel(self, guild_id:int, channel_id:int):
         """

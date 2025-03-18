@@ -10,6 +10,7 @@ plugin = lightbulb.Plugin(__name__)
 
 @tasks.task(s=4, wait_before_execution=True, auto_start=True)
 async def task() -> None:
+    # TODO: Fix the fact that the below call recieves 0 tasks
     task_list = dataMan().get_todo_items(filter_for='incompleted')
     for task in task_list:
         name = task[0]

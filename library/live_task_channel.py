@@ -152,13 +152,14 @@ class livetasks:
         contributors = dataMan().get_contributors(task_id=identifier)
 
         deadline_txt = ""
-        if deadline is not None:
-            deadline = datetime.datetime.strptime(deadline, "%Y-%m-%d %H:%M:%S")
-            if deadline < datetime.datetime.now():
-                deadline_txt += f"⚠️ Deadline expired <t:{int(deadline.timestamp())}:R> ago!\n"
-            else:
-                deadline_txt += f"Deadline: {deadline.strftime("%d/%m/%Y %I:%M %p")}\n"
-                deadline_txt += f"Time left: <t:{int(deadline.timestamp())}:R>\n"
+        if not completed:
+            if deadline is not None:
+                deadline = datetime.datetime.strptime(deadline, "%Y-%m-%d %H:%M:%S")
+                if deadline < datetime.datetime.now():
+                    deadline_txt += f"⚠️ Deadline expired <t:{int(deadline.timestamp())}:R>!\n"
+                else:
+                    deadline_txt += f"Deadline: {deadline.strftime("%d/%m/%Y %I:%M %p")}\n"
+                    deadline_txt += f"Time left: <t:{int(deadline.timestamp())}:R>\n"
 
         efield = embed.fields[0].value
 
