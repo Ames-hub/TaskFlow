@@ -42,7 +42,7 @@ botapp.d['watched_messages'] = {}
 # A dict to track when we last edited a watched message. This is so if someone spams the reactions, it won't spam discord
 botapp.d['last_edited'] = {}
 
-botapp.d['reaction_cooldown'] = 2  # seconds
+botapp.d['reaction_cooldown'] = 0  # seconds
 botapp.d['dl_notif_cooldown'] = {}
 
 # The same colour as the dark-mode embed body. This gives a clean look to the embed.

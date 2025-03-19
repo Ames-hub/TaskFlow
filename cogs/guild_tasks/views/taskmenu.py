@@ -39,6 +39,8 @@ class views:
         Make sure to use keys_only=['id', 'name']).values() for tasks_data
         """
         tasks_data_options = []
+        if len(viewself.task_data) == 0:
+            return -1
         for task_id, task in viewself.task_data.items():
             tasks_data_options.append(
                 miru.SelectOption(

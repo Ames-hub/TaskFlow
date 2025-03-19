@@ -1,4 +1,4 @@
-from cogs.livechannel.views.taskmenu import views
+from cogs.guild_tasks.views.taskmenu import views
 from cogs.guild_tasks.group import group
 from library.botapp import miru_client
 import lightbulb
@@ -13,6 +13,15 @@ plugin = lightbulb.Plugin(__name__)
 async def command(ctx: lightbulb.SlashContext):
     view = views(ctx.guild_id)
     view_menu = view.init_view()
+    if view_menu == -1:
+        await ctx.respond(
+            hikari.Embed(
+                description="There are too few tasks to use the list feature.\n"
+                            "Please use the create command to make one first!"
+            ),
+            flags=hikari.MessageFlag.EPHEMERAL
+        )
+
     await ctx.respond(
         embed=view.gen_init_embed(),
         components=view_menu.build(),

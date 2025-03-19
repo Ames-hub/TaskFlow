@@ -205,6 +205,14 @@ class sqlite_storage:
 
     @staticmethod
     def mark_todo_finished(identifier, user_id=None, guild_id=None):
+        """
+        Mark a task as done.
+        Provide user ID or Guild ID depending on if it's a user's task or a guild's task.
+        :param identifier:
+        :param user_id:
+        :param guild_id:
+        :return:
+        """
         assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"
         conn = sqlite3.connect(user_file if user_id is not None else guild_filepath)
         cur = conn.cursor()
@@ -576,7 +584,7 @@ class dataMan:
 
         # Ensure the user is not already contributing
         if user_id in self.get_contributors(task_id):
-            return False
+            return -1
 
         return self.storage.mark_user_as_contributing(user_id, task_id, guild_id=int(guild_id))
 
@@ -586,7 +594,7 @@ class dataMan:
 
         # Ensure the user is contributing
         if user_id not in self.get_contributors(task_id):
-            return False
+            return -1
 
         return self.storage.remove_contributor(user_id, task_id)
 
