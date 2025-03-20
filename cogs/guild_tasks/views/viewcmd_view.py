@@ -131,8 +131,12 @@ class view_cmd_view:
 
             # Define a new Button that when pressed will stop the view
             # & invalidate all the buttons in this view
-            @miru.button(label="Stop me!", style=hikari.ButtonStyle.DANGER)
+            @miru.button(label="Exit", style=hikari.ButtonStyle.DANGER)
             async def stop_button(self, ctx: miru.ViewContext, button: miru.Button) -> None:
+                await ctx.edit_response(
+                    embed=viewself.generate_task_embed(int(ctx.author.id))[0],
+                    components=[]
+                )
                 self.stop()  # Called to stop the view
 
         return mainview()

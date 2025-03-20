@@ -8,7 +8,7 @@ plugin = lightbulb.Plugin(__name__)
 
 @group.child
 @lightbulb.app_command_permissions(dm_enabled=False)
-@lightbulb.command(name='list', description="The task select GUI.")
+@lightbulb.command(name='menu', description="The task select GUI.")
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def command(ctx: lightbulb.SlashContext):
     view = views(ctx.guild_id)

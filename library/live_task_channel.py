@@ -62,6 +62,15 @@ class livetasks:
     def gen_livetasklist_embed(completed_tasks, incomplete_tasks):
         # Gets the guild's livelist style setting with a 5-second cache
         # Grabs the first task's guild ID. Since the guild id will be the same for all these tasks
+        if len(completed_tasks) + len(incomplete_tasks) == 0:
+            return (
+                hikari.Embed(
+                    title="Live Task List",
+                    description="Unfortunately, there are no tasks incomplete or complete to display.",
+                    color=0x00ff00
+                )
+            )
+
         try:
             guild_id = completed_tasks[0][7]
         except IndexError:

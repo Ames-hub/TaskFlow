@@ -91,11 +91,77 @@ modernize_db()
 
 class sqlite_storage:
     @staticmethod
+    def set_new_task_data(task_id, task_name=None, task_desc=None, task_category=None):
+        # Gets the task
+        try:
+            conn = sqlite3.connect(guild_filepath)
+            cur = conn.cursor()
+            query = "SELECT name, description, category FROM todo_items WHERE id = ? LIMIT 1"
+            cur.execute(query, (int(task_id),))
+            old_name, old_description, old_category = cur.fetchone()
+            conn.close()  # Close the connection after fetching data
+        except sqlite3.Error as err:
+            print("An error occurred Getting a task from the list to update a task!", err)
+            return False
+
+        # Use old values if new ones are not provided
+        if task_name is None:
+            task_name = old_name
+        if task_desc is None:
+            task_desc = old_description
+        if task_category is None:
+            task_category = old_category
+
+        # Update the task
+        try:
+            conn = sqlite3.connect(guild_filepath)
+            cur = conn.cursor()
+            query = """
+            UPDATE todo_items 
+            SET name = ?, description = ?, category = ?
+            WHERE id = ?
+            """
+            cur.execute(query, (task_name, task_desc, task_category, int(task_id)))
+            conn.commit()  # Commit the changes to the database
+            conn.close()
+            return True
+        except sqlite3.Error as err:
+            print("An error occurred editing a task in the list!", err)
+            return False
+
+    @staticmethod
+    def get_task_exists(task_id:int):
+        try:
+            conn = sqlite3.connect(guild_filepath)
+            cur = conn.cursor()
+            query = "SELECT 1 FROM todo_items WHERE id = ? LIMIT 1;"
+            cur.execute(query, (int(task_id),))
+            exists = cur.fetchone() is not None
+            conn.close()
+            return exists
+        except sqlite3.Error as err:
+            print(f"Error checking task existence: {err}")
+            return False
+
+    @staticmethod
+    def delete_task_from_list(task_id:int):
+        try:
+            conn = sqlite3.connect(guild_filepath)
+            cur = conn.cursor()
+            query = "DELETE FROM todo_items WHERE id = ?;"
+            cur.execute(query, (int(task_id),))
+            conn.commit()
+            return True
+        except sqlite3.Error as err:
+            print("An error occured deleting a task from the list!", err)
+            return False
+
+    @staticmethod
     def get_is_task_completed(task_id:str):
         try:
             conn = sqlite3.connect(guild_filepath)
             cur = conn.cursor()
-            query = f"SELECT completed FROM todo_items WHERE id = ?"
+            query = "SELECT completed FROM todo_items WHERE id = ?"
             cur.execute(query, (task_id,))
             result = cur.fetchone()
             return False if not result else bool(result[0])
@@ -492,17 +558,54 @@ class sqlite_storage:
         query = """
         SELECT guild_id
         FROM todo_items
-        WHERE task_id = ?
+        WHERE id = ?
         """
         cur.execute(query, (task_id,))
         data = cur.fetchone()
         conn.close()
 
-        return data[0] if data else None
+        return int(data[0]) if data else None
 
 class dataMan:
     def __init__(self):
         self.storage = sqlite_storage
+
+    def set_new_task_data(self, task_id, task_name=None, task_desc=None, task_category=None):
+        """
+        The task's old data will be rewritten with what is not None.
+        :param task_id:
+        :param task_name:
+        :param task_desc:
+        :param task_category:
+        :return:
+        """
+        assert type(task_name) is str
+        assert type(task_desc) is str
+        return self.storage.set_new_task_data(
+            task_id,
+            task_name,
+            task_desc,
+            task_category
+        )
+
+    def get_task_exists(self, task_id):
+        """
+        Get if the task exists or not
+        :return:
+        """
+        assert type(task_id) is int
+        return self.storage.get_task_exists(task_id)
+
+    def delete_task_from_list(self, task_id):
+        """
+        Delete a task so it no longer exists.
+        :param task_id:
+        :return:
+        """
+        assert type(task_id) is int
+        if self.storage.get_task_exists(task_id) is False:
+            return -1
+        return self.storage.delete_task_from_list(task_id)
 
     def get_is_task_completed(self, task_id_or_name):
         """
