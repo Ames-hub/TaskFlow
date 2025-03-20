@@ -21,6 +21,7 @@ async def command(ctx: lightbulb.SlashContext):
             ),
             flags=hikari.MessageFlag.EPHEMERAL
         )
+        return
 
     await ctx.respond(
         embed=view.gen_init_embed(),
