@@ -168,12 +168,11 @@ class livetasks:
                 if deadline < datetime.datetime.now():
                     deadline_txt += f"⚠️ Deadline expired <t:{int(deadline.timestamp())}:R>!\n"
                 else:
-                    deadline_txt += f"Deadline: {deadline.strftime("%d/%m/%Y %I:%M %p")}\n"
+                    deadline_txt += f"Deadline: {deadline.strftime("%d/%m/%Y %I:%M %p")}\n\n"
                     deadline_txt += f"Time left: <t:{int(deadline.timestamp())}:R>\n"
 
         efield = embed.fields[0].value
 
-        print(category)
         if category is not None and category != "":
             if style in ['classic']:
                 if f"-- **__{category}__** --" not in efield:
@@ -184,21 +183,23 @@ class livetasks:
 
         # Quote or space
         q_or_s = '"' if len(task_desc) > 0 else ''
+        no_deadline_nl = "\n" if len(deadline_txt) <= 0 else ""
         if style == 'classic':
             efield = efield + f"{task_name}\n(ID: {identifier})\n"
-            efield = efield + f"{task_desc}{completed_text}\nAdded by: <@{added_by}>\n{len(contributors)} helping\n\n"
+            efield = efield + f"{task_desc}{"\n" if len(task_desc) != 0 else ""}{completed_text}\nAdded by: <@{added_by}>\n{len(contributors)} helping\n{no_deadline_nl}"
         elif style == 'minimal':
-            efield = efield + f"({identifier}) {task_name} {completed_text}\n"
+            efield = efield + f"({identifier}) {task_name} {completed_text}\n{no_deadline_nl}"
         elif style == 'pinned':
-            efield = efield + f"- ({identifier}) {task_name} {completed_text}\n{q_or_s}{task_desc}{q_or_s} {len(contributors)} people helping.\nAdded by <@{added_by}>\n"
+            efield = efield + f"- ({identifier}) {task_name} {completed_text}\n{q_or_s}{task_desc}{q_or_s} {len(contributors)} people helping.\nAdded by <@{added_by}>\n{no_deadline_nl}"
         elif style == 'pinned-minimal':
-            efield = efield + f"- ({identifier}) {task_name} {completed_text}\n"
+            efield = efield + f"- ({identifier}) {task_name} {completed_text}\n{no_deadline_nl}"
         elif style == 'compact':
-            efield = efield + f"({identifier}) {task_name} {completed_text} {q_or_s}{task_desc}{q_or_s} {len(contributors)} helping. <@{added_by}>\n"
+            efield = efield + f"({identifier}) {task_name} {completed_text} {q_or_s}{task_desc}{q_or_s} {len(contributors)} helping. <@{added_by}>\n{no_deadline_nl}"
         else:
             raise ValueError("Invalid style")
 
-        efield = efield + deadline_txt
+        if len(deadline_txt) > 0:
+            efield = efield + f"{deadline_txt}\n"
 
         embed.edit_field(
             0,

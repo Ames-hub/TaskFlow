@@ -1,3 +1,5 @@
+import logging
+
 import lightbulb
 import hikari
 
@@ -35,6 +37,16 @@ async def on_error(event: lightbulb.CommandErrorEvent) -> None:
         await event.context.respond("Something went wrong with the interaction.\nPlease run the command again.", flags=hikari.MessageFlag.EPHEMERAL)
     elif isinstance(event.exception, TimeoutError):
         await event.context.respond("Command timed out.", flags=hikari.MessageFlag.EPHEMERAL)
+    elif isinstance(event.exception, Exception):
+        if event.context:
+            await event.context.respond(
+                hikari.Embed(
+                    title="Uh oh!",
+                    description="Sorry, it seems an unknown problem occured!"
+                ),
+                flags=hikari.MessageFlag.EPHEMERAL
+            )
+        logging.info("Error!", exc_info=event.exception)
     else:
         await event.context.respond("An error occurred while running this command :(\nPlease try again later once we solve the problem.", flags=hikari.MessageFlag.EPHEMERAL)
         raise event.exception
