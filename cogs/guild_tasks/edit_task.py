@@ -1,5 +1,4 @@
 from cogs.guild_tasks.views.edit_task_menu import main_view
-from library.live_task_channel import livetasks
 from cogs.guild_tasks.group import group
 from library.botapp import miru_client
 import lightbulb
@@ -23,8 +22,6 @@ async def edit_task_cmd(ctx: lightbulb.SlashContext):
 
     miru_client.start_view(viewmenu)
     await viewmenu.wait()
-
-    await livetasks.update(int(ctx.guild_id))
 
 def load(bot: lightbulb.BotApp) -> None:
     bot.add_plugin(plugin)

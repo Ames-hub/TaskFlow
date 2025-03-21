@@ -119,6 +119,7 @@ class livetasks:
         for task in incomplete_tasks:
             category = str(task[8])
             # Makes sure the category has at least one task
+            # noinspection PyUnresolvedReferences
             if task_cat_count[category] == 0:
                 continue
 
@@ -172,7 +173,8 @@ class livetasks:
 
         efield = embed.fields[0].value
 
-        if category is not None:
+        print(category)
+        if category is not None and category != "":
             if style in ['classic']:
                 if f"-- **__{category}__** --" not in efield:
                     efield += f"\n-- **__{category}__** --\n\n"

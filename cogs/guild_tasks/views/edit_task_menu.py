@@ -1,3 +1,4 @@
+from library.live_task_channel import livetasks
 from library.botapp import miru_client
 from library.storage import dataMan
 import hikari
@@ -95,6 +96,7 @@ class main_view:
                         await ctx.edit_response(
                             embed=viewself.gen_init_embed(),
                         )
+                        await livetasks.update(int(ctx.guild_id))
 
                 modal = MyModal()
                 builder = modal.build_response(miru_client)
