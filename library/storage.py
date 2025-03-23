@@ -100,7 +100,7 @@ class sqlite_storage:
             cur.execute(query, (int(guild_id),))
             data = cur.fetchone()
             conn.close()  # Close the connection after fetching data
-            return data
+            return bool(data[0]) if data else False
         except sqlite3.Error as err:
             print("An error occurred Getting the show task completion", err)
             return False
@@ -114,6 +114,7 @@ class sqlite_storage:
             cur.execute(query, (status, int(guild_id),))
             conn.commit()
             conn.close()
+            return True
         except sqlite3.Error as err:
             print("An error occurred trying to set a show task completion setting", err)
             return False
@@ -603,7 +604,7 @@ class dataMan:
         return self.storage.get_show_task_completion(guild_id)
 
     def toggle_show_task_completion(self, status:bool, guild_id:int):
-        assert status is bool
+        assert type(status) is bool
         guild_id = int(guild_id)
 
         return self.storage.toggle_show_task_completion(status, guild_id)

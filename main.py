@@ -52,4 +52,6 @@ botapp.d['livelist_styles'] = {}
 
 botapp.d['DEBUG'] = DEBUG
 
+botapp.d['show_x_cache'] = {}
+
 botapp.run(shard_count=3 if DEBUG is False else 1)

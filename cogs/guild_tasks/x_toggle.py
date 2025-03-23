@@ -46,7 +46,7 @@ async def cmd(ctx: lightbulb.SlashContext, status):
         await ctx.respond(
             hikari.Embed(
                 title="Uh oh!",
-                description="Something went wrong? :("
+                description=f"Something went wrong? :(\nWe expected a Boolean but got {type(success)} ({success}) Instead!"
             )
         )
         return

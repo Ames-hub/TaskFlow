@@ -1,9 +1,10 @@
+from datetime import datetime, timedelta
 from library.storage import dataMan
 import lightbulb
-import datetime
 import logging
 import hikari
 
+CACHE_EXPIRATION_TIME = timedelta(seconds=15)
 plugin = lightbulb.Plugin(__name__)
 
 class livetasks:
@@ -24,9 +25,9 @@ class livetasks:
             if completed:
                 completed_at = task[4]  # eg, 2024-07-15 18:52:16. Type str
                 # Converts to datetime obj
-                completed_at = datetime.datetime.strptime(completed_at, "%Y-%m-%d %H:%M:%S")
+                completed_at = datetime.strptime(completed_at, "%Y-%m-%d %H:%M:%S")
                 # If the task was completed more than 7 days ago, it will be filtered out
-                if datetime.datetime.now() - completed_at > datetime.timedelta(days=7):
+                if datetime.now() - completed_at > timedelta(days=7):
                     continue
                 else:
                     completed_tasks.append(task)
@@ -80,12 +81,12 @@ class livetasks:
                 return False
         if plugin.bot.d['livelist_styles'].get(str(guild_id)) is None:
             style = dataMan().get_livechannel_style(guild_id)
-            plugin.bot.d['livelist_styles'][str(guild_id)] = [style, datetime.datetime.now().timestamp()]
+            plugin.bot.d['livelist_styles'][str(guild_id)] = [style, datetime.now().timestamp()]
         else:
             data = plugin.bot.d['livelist_styles'].get(str(guild_id))
-            if data[1] + 5 < datetime.datetime.now().timestamp():
+            if data[1] + 5 < datetime.now().timestamp():
                 style = dataMan().get_livechannel_style(guild_id)
-                plugin.bot.d['livelist_styles'][str(guild_id)] = [style, datetime.datetime.now().timestamp()]
+                plugin.bot.d['livelist_styles'][str(guild_id)] = [style, datetime.now().timestamp()]
             else:
                 style = data[0]
 
@@ -154,7 +155,32 @@ class livetasks:
         else:
             raise ValueError("Invalid style")
 
-        if dataMan().get_show_task_completion(guild_id) is False:
+        # Check cache status
+        cache_result = plugin.bot.d['show_x_cache'].get(int(guild_id))
+
+        if cache_result:
+            cached_status = cache_result['status']
+            cached_time = cache_result['timenow']
+
+            # Check if the cache is still valid
+            if isinstance(cached_status, bool) and (datetime.now() - cached_time) < CACHE_EXPIRATION_TIME:
+                show_x = cached_status
+            else:
+                # Cache is outdated or invalid
+                show_x = bool(dataMan().get_show_task_completion(guild_id))
+                plugin.bot.d['show_x_cache'][int(guild_id)] = {
+                    'status': show_x,
+                    'timenow': datetime.now()
+                }
+        else:
+            # No cache found for the guild, fetch fresh data
+            show_x = bool(dataMan().get_show_task_completion(guild_id))
+            plugin.bot.d['show_x_cache'][int(guild_id)] = {
+                'status': show_x,
+                'timenow': datetime.now()
+            }
+
+        if show_x is False:
             completed_text = ""
 
         if task_desc == "...":
@@ -168,8 +194,8 @@ class livetasks:
         deadline_txt = ""
         if not completed:
             if deadline is not None:
-                deadline = datetime.datetime.strptime(deadline, "%Y-%m-%d %H:%M:%S")
-                if deadline < datetime.datetime.now():
+                deadline = datetime.strptime(deadline, "%Y-%m-%d %H:%M:%S")
+                if deadline < datetime.now():
                     deadline_txt += f"⚠️ Deadline expired <t:{int(deadline.timestamp())}:R>!\n"
                 else:
                     deadline_txt += f"Deadline: {deadline.strftime("%d/%m/%Y %I:%M %p")}\n\n"
@@ -190,15 +216,15 @@ class livetasks:
         no_deadline_nl = "\n" if len(deadline_txt) <= 0 else ""
         if style == 'classic':
             efield = efield + f"{task_name}\n(ID: {identifier})\n"
-            efield = efield + f"{task_desc}{"\n" if len(task_desc) != 0 else ""}{completed_text}\nAdded by: <@{added_by}>\n{len(contributors)} helping\n{no_deadline_nl}"
+            efield = efield + f"{task_desc}{"\n" if len(task_desc) != 0 else ""}{completed_text}{"\n" if show_x else ""}Added by: <@{added_by}>\n{len(contributors)} helping\n{no_deadline_nl}"
         elif style == 'minimal':
-            efield = efield + f"({identifier}) {task_name} {completed_text}\n{no_deadline_nl}"
+            efield = efield + f"({identifier}) {task_name}{" " if show_x else ""}{completed_text}\n{no_deadline_nl}"
         elif style == 'pinned':
-            efield = efield + f"- ({identifier}) {task_name} {completed_text}\n{q_or_s}{task_desc}{q_or_s} {len(contributors)} people helping.\nAdded by <@{added_by}>\n{no_deadline_nl}"
+            efield = efield + f"- ({identifier}) {task_name}{" " if show_x else ""}{completed_text}\n{q_or_s}{task_desc}{q_or_s} {len(contributors)} people helping.\nAdded by <@{added_by}>\n{no_deadline_nl}"
         elif style == 'pinned-minimal':
-            efield = efield + f"- ({identifier}) {task_name} {completed_text}\n{no_deadline_nl}"
+            efield = efield + f"- ({identifier}) {task_name}{" " if show_x else ""}{completed_text}\n{no_deadline_nl}"
         elif style == 'compact':
-            efield = efield + f"({identifier}) {task_name} {completed_text} {q_or_s}{task_desc}{q_or_s} {len(contributors)} helping. <@{added_by}>\n{no_deadline_nl}"
+            efield = efield + f"({identifier}) {task_name} {completed_text}{" " if show_x else ""}{q_or_s}{task_desc}{q_or_s} {len(contributors)} helping. <@{added_by}>\n{no_deadline_nl}"
         else:
             raise ValueError("Invalid style")
 
