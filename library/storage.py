@@ -44,6 +44,7 @@ def modernize_db():
             'uid': 'INT PRIMARY KEY',
             'task_channel': 'INT DEFAULT NULL',
             'allow_late_contrib': 'BOOLEAN DEFAULT FALSE',
+            'show_task_completion': 'BOOLEAN DEFAULT TRUE',
         },
         'user_contribution_log': {
             'contributed_task_uid': 'INT NOT NULL REFERENCES todo_items(uid)',
@@ -90,6 +91,33 @@ def modernize_db():
 modernize_db()
 
 class sqlite_storage:
+    @staticmethod
+    def get_show_task_completion(guild_id:int):
+        try:
+            conn = sqlite3.connect(guild_filepath)
+            cur = conn.cursor()
+            query = "SELECT show_task_completion FROM guild_settings WHERE uid = ? LIMIT 1"
+            cur.execute(query, (int(guild_id),))
+            data = cur.fetchone()
+            conn.close()  # Close the connection after fetching data
+            return data
+        except sqlite3.Error as err:
+            print("An error occurred Getting the show task completion", err)
+            return False
+
+    @staticmethod
+    def toggle_show_task_completion(status:bool, guild_id:int):
+        try:
+            conn = sqlite3.connect(guild_filepath)
+            cur = conn.cursor()
+            query = "UPDATE guild_settings SET show_task_completion = ? WHERE uid = ?"
+            cur.execute(query, (status, int(guild_id),))
+            conn.commit()
+            conn.close()
+        except sqlite3.Error as err:
+            print("An error occurred trying to set a show task completion setting", err)
+            return False
+
     @staticmethod
     def set_new_task_data(task_id, task_name=None, task_desc=None, task_category=None):
         # Gets the task
@@ -569,6 +597,16 @@ class sqlite_storage:
 class dataMan:
     def __init__(self):
         self.storage = sqlite_storage
+
+    def get_show_task_completion(self, guild_id:int):
+        guild_id = int(guild_id)
+        return self.storage.get_show_task_completion(guild_id)
+
+    def toggle_show_task_completion(self, status:bool, guild_id:int):
+        assert status is bool
+        guild_id = int(guild_id)
+
+        return self.storage.toggle_show_task_completion(status, guild_id)
 
     def set_new_task_data(self, task_id, task_name=None, task_desc=None, task_category=None):
         """

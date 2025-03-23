@@ -144,6 +144,7 @@ class livetasks:
         identifier = task[3]
         added_by = task[5]
         deadline = task[6]
+        guild_id = task[7]
         category = task[8]
 
         if style in ['classic']:
@@ -152,6 +153,9 @@ class livetasks:
             completed_text = f"{'❌' if not completed else '✅'}"
         else:
             raise ValueError("Invalid style")
+
+        if dataMan().get_show_task_completion(guild_id) is False:
+            completed_text = ""
 
         if task_desc == "...":
             task_desc = ""
