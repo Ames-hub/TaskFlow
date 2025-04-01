@@ -26,7 +26,7 @@ def modernize_db():
     table_dict = {
         'todo_items': {
             'id': 'INTEGER PRIMARY KEY AUTOINCREMENT',
-            'uid': 'INT',
+            'uid': 'INT',  # TODO: Just discovered this is a double-up of guild_id. Need to fix this
             'name': 'TEXT',
             'description': 'TEXT',
             'completed': 'BOOLEAN',

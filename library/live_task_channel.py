@@ -180,7 +180,7 @@ class livetasks:
                 'timenow': datetime.now()
             }
 
-        if show_x is False:
+        if show_x is False and completed is False:
             completed_text = ""
 
         if task_desc == "...":
