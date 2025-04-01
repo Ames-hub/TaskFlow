@@ -1,6 +1,5 @@
-import logging
-
 import lightbulb
+import logging
 import hikari
 
 plugin = lightbulb.Plugin(__name__)
