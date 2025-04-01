@@ -61,15 +61,11 @@ class livetasks:
 
     @staticmethod
     def gen_livetasklist_embed(completed_tasks, incomplete_tasks):
-        # Gets the guild's livelist style setting with a 5-second cache
-        # Grabs the first task's guild ID. Since the guild id will be the same for all these tasks
         if len(completed_tasks) + len(incomplete_tasks) == 0:
-            return (
-                hikari.Embed(
-                    title="Live Task List",
-                    description="Unfortunately, there are no tasks incomplete or complete to display.",
-                    color=0x00ff00
-                )
+            return hikari.Embed(
+                title="Live Task List",
+                description="Unfortunately, there are no tasks incomplete or complete to display.",
+                color=0x00ff00
             )
 
         try:
@@ -79,6 +75,7 @@ class livetasks:
                 guild_id = incomplete_tasks[0][7]
             except IndexError:
                 return False
+
         if plugin.bot.d['livelist_styles'].get(str(guild_id)) is None:
             style = dataMan().get_livechannel_style(guild_id)
             plugin.bot.d['livelist_styles'][str(guild_id)] = [style, datetime.now().timestamp()]
@@ -90,48 +87,33 @@ class livetasks:
             else:
                 style = data[0]
 
-        embed = (
-            hikari.Embed(
-                title="Live Task List",
-                description=f"This is a live list of incomplete and newly completed tasks.\n{style} style",
-                color=0x00ff00
-            )
-            .add_field(
-                name="Details",
-                value=f"The details of {len(incomplete_tasks)} incomplete task(s) is attached below.\n\n"
-            )
+        embed = hikari.Embed(
+            title="Live Task List",
+            description=f"This is a live list of incomplete and newly completed tasks.\n{style} style",
+            color=0x00ff00
+        ).add_field(
+            name="Details",
+            value=f"The details of {len(incomplete_tasks)} incomplete task(s) is attached below.\n\n"
         )
 
-        # Adds all the completed tasks to the top of the embed (seemingly less important, as we see bottom-to-top)
+        # Sort tasks: prioritize tasks without a category
+        incomplete_tasks.sort(key=lambda task: task[8] is not None and task[8] != "")
+        completed_tasks.sort(key=lambda task: task[8] is not None and task[8] != "")
+
+        # Add completed tasks to the embed
         for task in completed_tasks:
             embed = livetasks.add_task_field(task, embed, style)
 
-        # Counts the amount of tasks in each category
-        task_cat_count = {}
-        for task in incomplete_tasks:
-            category = str(task[8])
-            if category not in task_cat_count.keys():
-                task_cat_count[category] = 1
-            else:
-                task_cat_count[category] += 1
-
+        # Categorize remaining incomplete tasks
         category_sorted_tasks = {}
-        # Organizes tasks by category
         for task in incomplete_tasks:
-            category = str(task[8])
-            # Makes sure the category has at least one task
-            # noinspection PyUnresolvedReferences
-            if task_cat_count[category] == 0:
-                continue
-
-            if category not in category_sorted_tasks.keys():
+            category = task[8] or ""  # Empty category comes first
+            if category not in category_sorted_tasks:
                 category_sorted_tasks[category] = []
-
-            # noinspection PyUnresolvedReferences
             category_sorted_tasks[category].append(task)
 
-        # Adds all the completed tasks to the bottom of the embed
-        for category in category_sorted_tasks:
+        # Add sorted tasks to the embed
+        for category in sorted(category_sorted_tasks.keys(), key=lambda x: x != ""):
             for task in category_sorted_tasks[category]:
                 embed = livetasks.add_task_field(task, embed, style)
 
@@ -141,7 +123,7 @@ class livetasks:
     def add_task_field(task:tuple, embed, style):
         task_name = task[0]
         task_desc = task[1]
-        completed = task[2]
+        completed = bool(task[2])
         identifier = task[3]
         added_by = task[5]
         deadline = task[6]
@@ -180,7 +162,7 @@ class livetasks:
                 'timenow': datetime.now()
             }
 
-        if show_x is False and completed is False:
+        if show_x is False and bool(completed) is False:
             completed_text = ""
 
         if task_desc == "...":

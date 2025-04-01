@@ -3,7 +3,7 @@ import lightbulb
 plugin = lightbulb.Plugin(__name__)
 
 @plugin.command
-@lightbulb.app_command_permissions(dm_enabled=False)
+@lightbulb.app_command_permissions(dm_enabled=True)
 # @lightbulb.option (options here)
 # @lightbulb.add_cooldown (cooldown here)
 @lightbulb.command(name='github', description='Find the bots github repository and who made the bot!')
