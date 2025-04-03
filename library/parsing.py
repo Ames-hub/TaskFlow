@@ -1,7 +1,63 @@
+from library.storage import dataMan
 from datetime import datetime
 import lightbulb
 
 plugin = lightbulb.Plugin(__name__)
+
+acceptable_placeholders = [
+"<task_id>",
+"<task_name>",
+"<task_desc>",
+"<task_completed_bool>",
+"<task_completed_emoji>",
+"<task_completed_text>",
+"<creator_id>",
+"<creator_ping>",
+]
+
+def compile_livelist_placeholders(task):
+    try:
+        livelist_placeholders = {
+            "<task_id>": task['id'],
+            "<task_name>": task['name'],
+            "<task_desc>": task['description'],
+            "<task_completed_bool>": task['completed'],
+            "<task_completed_emoji>": "✅" if task['completed'] is True else "❌",
+            "<task_completed_text>": "Done" if task['completed'] is True else "Incomplete",
+            "<creator_id>": task["added_by"],
+            "<creator_ping>": f"<@{task["added_by"]}>",
+            "<br>": "\n"
+        }
+    except KeyError as err:
+        print(f"Error in func compile_livelist_placeholders. Expected key {err} to exist that did not.\nTask obj: {task}")
+        return
+    return livelist_placeholders
+
+def parse_livelist_format(format_text:str, task_id:int=None, task_item:dict=None):
+    """
+    Parses and formats a livelist message.
+    :param format_text:
+    :param task_id: The task ID to format the item to.
+    :param task_item: The task to use in place of task ID
+    :return:
+    """
+    if task_item is None:
+        task = dataMan().get_todo_items(
+            identifier=task_id,
+            filter_for="*",
+            only_keys=['id', 'name', 'description', 'completed', 'added_by', 'completed_on']
+        )
+        # There'll only be one item. Get the item by its ID
+        task = task[str(task_id)]
+    else:
+        task = task_item
+
+    livelist_placeholders = compile_livelist_placeholders(task)
+
+    for placeholder in livelist_placeholders.keys():
+        format_text = format_text.replace(placeholder, str(livelist_placeholders[placeholder]))
+
+    return format_text
 
 def validate_deadline(deadline_date: str = None, deadline_hmp: str = None):
     """

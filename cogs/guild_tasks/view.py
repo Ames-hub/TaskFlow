@@ -49,6 +49,5 @@ async def view_cmd(ctx: lightbulb.SlashContext):
 
 def load(bot: lightbulb.BotApp) -> None:
     bot.add_plugin(plugin)
-
 def unload(bot):
     bot.remove_plugin(plugin)

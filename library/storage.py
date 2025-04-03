@@ -52,6 +52,10 @@ def modernize_db():
             'contribution_date': 'DATE DEFAULT CURRENT_TIMESTAMP',
             'task_for_guild_id': 'INT NOT NULL',
         },
+        'guild_livelist_formats': {
+            'guild_id': 'TEXT NOT NULL PRIMARY KEY',
+            'text_format': 'TEXT'
+        }
     }
 
     for table_name, columns in table_dict.items():
@@ -91,6 +95,38 @@ def modernize_db():
 modernize_db()
 
 class sqlite_storage:
+    @staticmethod
+    def save_livelist_format(guild_id, live_format):
+        try:
+            conn = sqlite3.connect(guild_filepath)
+            cur = conn.cursor()
+            query = """
+            INSERT INTO guild_livelist_formats (guild_id, text_format)
+            VALUES (?, ?)
+            ON CONFLICT(guild_id) DO UPDATE SET text_format = excluded.text_format
+            """
+            cur.execute(query, (int(guild_id), live_format))
+            conn.commit()
+            conn.close()
+            return True
+        except sqlite3.Error as err:
+            print("An error occurred while setting the show task completion setting:", err)
+            return False
+
+    @staticmethod
+    def get_livelist_format(guild_id:int):
+        try:
+            conn = sqlite3.connect(guild_filepath)
+            cur = conn.cursor()
+            query = "SELECT text_format FROM guild_livelist_formats WHERE guild_id = ? LIMIT 1"
+            cur.execute(query, (int(guild_id),))
+            data = cur.fetchone()
+            conn.close()  # Close the connection after fetching data
+            return data[0] if data is not None else None
+        except sqlite3.Error as err:
+            print("An error occurred Getting the show task completion", err)
+            return False
+
     @staticmethod
     def get_show_task_completion(guild_id:int):
         try:
@@ -433,8 +469,10 @@ class sqlite_storage:
         conn.close()
 
         # Filter out tasks that don't belong to the guild
-        if assigned_guild_id is not None:
-            data = [task for task in data if task[7] == assigned_guild_id]
+        # Only filter by guild if a guild_id was actually provided
+        if guild_id is not None:
+            data = [task for task in data if task[7] == guild_id]
+
 
         return data  # Example data: [('Task 1', 'Description 1', False, 1, None, 123456789), ...]
 
@@ -599,11 +637,37 @@ class dataMan:
     def __init__(self):
         self.storage = sqlite_storage
 
+    def get_livelist_format(self, guild_id:int):
+        """
+        :param guild_id:
+        :return:
+        """
+        guild_id = int(guild_id)
+        return self.storage.get_livelist_format(guild_id)
+
+    def save_livelist_format(self, guild_id:int, live_format:str|None):
+        """
+        :param guild_id:
+        :param live_format:
+        :return:
+        """
+        guild_id = int(guild_id)
+        return self.storage.save_livelist_format(guild_id=guild_id, live_format=live_format)
+
     def get_show_task_completion(self, guild_id:int):
+        """
+        :param guild_id:
+        :return:
+        """
         guild_id = int(guild_id)
         return self.storage.get_show_task_completion(guild_id)
 
     def toggle_show_task_completion(self, status:bool, guild_id:int):
+        """
+        :param status:
+        :param guild_id:
+        :return:
+        """
         assert type(status) is bool
         guild_id = int(guild_id)
 
@@ -674,6 +738,9 @@ class dataMan:
         assert type(style) is str, "Style must be a string"
         assert style.lower() in ['classic', 'minimal', 'pinned', 'compact', 'pinned-minimal'], "Style must be valid"
         assert type(guild_id) is int, "Guild ID must be an integer"
+
+        self.save_livelist_format(guild_id, None)
+
         return self.storage.set_livechannel_style(style, guild_id)
 
     def get_category_exists(self, category_name) -> bool:

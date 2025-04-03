@@ -1,3 +1,4 @@
+from library.parsing import parse_livelist_format
 from datetime import datetime, timedelta
 from library.storage import dataMan
 import lightbulb
@@ -193,25 +194,32 @@ class livetasks:
                 if f"# {category}" not in efield:
                     efield += f"**__{category}__**\n"
 
-        # Quote or space
-        q_or_s = '"' if len(task_desc) > 0 else ''
-        no_deadline_nl = "\n" if len(deadline_txt) <= 0 else ""
-        if style == 'classic':
-            efield = efield + f"{task_name}\n(ID: {identifier})\n"
-            efield = efield + f"{task_desc}{"\n" if len(task_desc) != 0 else ""}{completed_text}{"\n" if show_x else ""}Added by: <@{added_by}>\n{len(contributors)} helping\n{no_deadline_nl}"
-        elif style == 'minimal':
-            efield = efield + f"({identifier}) {task_name}{" " if show_x else ""}{completed_text}\n{no_deadline_nl}"
-        elif style == 'pinned':
-            efield = efield + f"- ({identifier}) {task_name}{" " if show_x else ""}{completed_text}\n{q_or_s}{task_desc}{q_or_s} {len(contributors)} people helping.\nAdded by <@{added_by}>\n{no_deadline_nl}"
-        elif style == 'pinned-minimal':
-            efield = efield + f"- ({identifier}) {task_name}{" " if show_x else ""}{completed_text}\n{no_deadline_nl}"
-        elif style == 'compact':
-            efield = efield + f"({identifier}) {task_name} {completed_text}{" " if show_x else ""}{q_or_s}{task_desc}{q_or_s} {len(contributors)} helping. <@{added_by}>\n{no_deadline_nl}"
-        else:
-            raise ValueError("Invalid style")
+        custom_live_text = dataMan().get_livelist_format(guild_id)
 
-        if len(deadline_txt) > 0:
-            efield = efield + f"{deadline_txt}\n"
+        if custom_live_text is None:
+            # Quote or space
+            q_or_s = '"' if len(task_desc) > 0 else ''
+            no_deadline_nl = "\n" if len(deadline_txt) <= 0 else ""
+            if style == 'classic':
+                efield = efield + f"{task_name}\n(ID: {identifier})\n"
+                efield = efield + f"{task_desc}{"\n" if len(task_desc) != 0 else ""}{completed_text}{"\n" if show_x else ""}Added by: <@{added_by}>\n{len(contributors)} helping\n{no_deadline_nl}"
+            elif style == 'minimal':
+                efield = efield + f"({identifier}) {task_name}{" " if show_x else ""}{completed_text}\n{no_deadline_nl}"
+            elif style == 'pinned':
+                efield = efield + f"- ({identifier}) {task_name}{" " if show_x else ""}{completed_text}\n{q_or_s}{task_desc}{q_or_s} {len(contributors)} people helping.\nAdded by <@{added_by}>\n{no_deadline_nl}"
+            elif style == 'pinned-minimal':
+                efield = efield + f"- ({identifier}) {task_name}{" " if show_x else ""}{completed_text}\n{no_deadline_nl}"
+            elif style == 'compact':
+                efield = efield + f"({identifier}) {task_name} {completed_text}{" " if show_x else ""}{q_or_s}{task_desc}{q_or_s} {len(contributors)} helping. <@{added_by}>\n{no_deadline_nl}"
+            else:
+                raise ValueError("Invalid style")
+
+            if len(deadline_txt) > 0:
+                efield = efield + f"{deadline_txt}\n"
+        else:
+            efield = efield + f"{parse_livelist_format(custom_live_text, task_id=identifier)}\n"
+            if len(deadline_txt) > 0:
+                efield = efield + f"{deadline_txt}\n"
 
         embed.edit_field(
             0,
