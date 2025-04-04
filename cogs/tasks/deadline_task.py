@@ -17,6 +17,7 @@ async def task() -> None:
         description = task[1]
         completed = bool(task[2])
         uuid = task[3]
+        adder_id = task[5]
         if completed:
             continue
 
@@ -45,17 +46,18 @@ async def task() -> None:
         if now > deadline_dt:
             embed = (
                 hikari.Embed(
-                    title=name,
+                    title=f"{name} ({uuid})",
                     description=description if description != "..." else "No description provided.",
                     color=hikari.Color(0xFF0000)
                 )
                 .add_field(name="Deadline", value=f"Deadline overdue <t:{int(deadline_dt.timestamp())}:R>!"
-                                                  f"\n<t:{int(deadline_dt.timestamp())}:F>")
+                                                  f"\n<t:{int(deadline_dt.timestamp())}:F>"
+                                                  f"\n<@{adder_id}>")
             )
         elif datetime.fromtimestamp(now.timestamp() - 43200) > deadline_dt:
             embed = (
                 hikari.Embed(
-                    title=name,
+                    title=f"{name} ({uuid})",
                     description=description,
                     color=hikari.Color(0xFFFF00)
                 )
