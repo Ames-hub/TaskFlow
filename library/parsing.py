@@ -4,18 +4,8 @@ import lightbulb
 
 plugin = lightbulb.Plugin(__name__)
 
-acceptable_placeholders = [
-"<task_id>",
-"<task_name>",
-"<task_desc>",
-"<task_completed_bool>",
-"<task_completed_emoji>",
-"<task_completed_text>",
-"<creator_id>",
-"<creator_ping>",
-]
-
 def compile_livelist_placeholders(task):
+    dm = dataMan()
     try:
         livelist_placeholders = {
             "<task_id>": task['id'],
@@ -26,6 +16,8 @@ def compile_livelist_placeholders(task):
             "<task_completed_text>": "Done" if task['completed'] is True else "Incomplete",
             "<creator_id>": task["added_by"],
             "<creator_ping>": f"<@{task["added_by"]}>",
+            "<assigned_user>": str(dm.get_task_incharge(task_id=task['id'])),
+            "<contributor_count>": str(len(dm.get_contributors(task['id']))),
             "<br>": "\n"
         }
     except KeyError as err:

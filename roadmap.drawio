@@ -1,98 +1,194 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.7.5 Chrome/126.0.6478.183 Electron/31.3.0 Safari/537.36" version="24.7.5">
   <diagram name="Page-1" id="8FrDcvNgyaQXy28fj4Ws">
-    <mxGraphModel dx="794" dy="780" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1000" pageHeight="950" math="0" shadow="0">
+    <mxGraphModel dx="1195" dy="697" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1500" pageHeight="1350" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="YeKTc1dGwM5D7p58s4Ac-1" value="Tasks editable by&lt;div&gt;GUI&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" vertex="1" parent="1">
-          <mxGeometry x="210" y="390" width="120" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="YeKTc1dGwM5D7p58s4Ac-4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="YeKTc1dGwM5D7p58s4Ac-2" target="YeKTc1dGwM5D7p58s4Ac-3">
+        <mxCell id="YeKTc1dGwM5D7p58s4Ac-23" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="YeKTc1dGwM5D7p58s4Ac-1" target="YeKTc1dGwM5D7p58s4Ac-22" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="YeKTc1dGwM5D7p58s4Ac-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="YeKTc1dGwM5D7p58s4Ac-2" target="YeKTc1dGwM5D7p58s4Ac-5">
+        <mxCell id="YeKTc1dGwM5D7p58s4Ac-1" value="Editable tasks" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" parent="1" vertex="1">
+          <mxGeometry x="580" y="470" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="YeKTc1dGwM5D7p58s4Ac-4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="YeKTc1dGwM5D7p58s4Ac-2" target="YeKTc1dGwM5D7p58s4Ac-3" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="YeKTc1dGwM5D7p58s4Ac-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="YeKTc1dGwM5D7p58s4Ac-2" target="YeKTc1dGwM5D7p58s4Ac-7">
+        <mxCell id="YeKTc1dGwM5D7p58s4Ac-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="YeKTc1dGwM5D7p58s4Ac-2" target="YeKTc1dGwM5D7p58s4Ac-5" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="YeKTc1dGwM5D7p58s4Ac-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="YeKTc1dGwM5D7p58s4Ac-2" target="YeKTc1dGwM5D7p58s4Ac-15">
+        <mxCell id="YeKTc1dGwM5D7p58s4Ac-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="YeKTc1dGwM5D7p58s4Ac-2" target="YeKTc1dGwM5D7p58s4Ac-7" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="YeKTc1dGwM5D7p58s4Ac-21" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="YeKTc1dGwM5D7p58s4Ac-2" target="YeKTc1dGwM5D7p58s4Ac-1">
+        <mxCell id="YeKTc1dGwM5D7p58s4Ac-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="YeKTc1dGwM5D7p58s4Ac-2" target="YeKTc1dGwM5D7p58s4Ac-15" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="YeKTc1dGwM5D7p58s4Ac-25" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="YeKTc1dGwM5D7p58s4Ac-2" target="YeKTc1dGwM5D7p58s4Ac-24">
+        <mxCell id="YeKTc1dGwM5D7p58s4Ac-21" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="YeKTc1dGwM5D7p58s4Ac-2" target="YeKTc1dGwM5D7p58s4Ac-1" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="YeKTc1dGwM5D7p58s4Ac-2" value="Can Create tasks" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" vertex="1" parent="1">
-          <mxGeometry x="40" y="40" width="120" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="YeKTc1dGwM5D7p58s4Ac-34" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="YeKTc1dGwM5D7p58s4Ac-3" target="YeKTc1dGwM5D7p58s4Ac-33">
+        <mxCell id="YeKTc1dGwM5D7p58s4Ac-25" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="YeKTc1dGwM5D7p58s4Ac-2" target="YeKTc1dGwM5D7p58s4Ac-24" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="YeKTc1dGwM5D7p58s4Ac-38" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" edge="1" parent="1" source="YeKTc1dGwM5D7p58s4Ac-3" target="YeKTc1dGwM5D7p58s4Ac-9">
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="YeKTc1dGwM5D7p58s4Ac-2" target="YeKTc1dGwM5D7p58s4Ac-35">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="YeKTc1dGwM5D7p58s4Ac-3" value="Can&amp;nbsp;&lt;span style=&quot;background-color: initial;&quot;&gt;Mark tasks as done&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" vertex="1" parent="1">
-          <mxGeometry x="210" y="40" width="120" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="YeKTc1dGwM5D7p58s4Ac-11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="YeKTc1dGwM5D7p58s4Ac-5" target="YeKTc1dGwM5D7p58s4Ac-9">
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="YeKTc1dGwM5D7p58s4Ac-2" target="HZ9nBPcBSSSsEg8i0Y5z-9">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="YeKTc1dGwM5D7p58s4Ac-5" value="Can mark user as helping with task" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" vertex="1" parent="1">
-          <mxGeometry x="210" y="150" width="120" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="YeKTc1dGwM5D7p58s4Ac-29" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="YeKTc1dGwM5D7p58s4Ac-7" target="YeKTc1dGwM5D7p58s4Ac-28">
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-28" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="YeKTc1dGwM5D7p58s4Ac-2" target="HZ9nBPcBSSSsEg8i0Y5z-24">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="YeKTc1dGwM5D7p58s4Ac-7" value="Can delete tasks" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" vertex="1" parent="1">
-          <mxGeometry x="210" y="260" width="120" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="YeKTc1dGwM5D7p58s4Ac-13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="YeKTc1dGwM5D7p58s4Ac-9" target="YeKTc1dGwM5D7p58s4Ac-12">
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-39" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="YeKTc1dGwM5D7p58s4Ac-2" target="HZ9nBPcBSSSsEg8i0Y5z-38">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="YeKTc1dGwM5D7p58s4Ac-9" value="Users cannot contribute to completed tasks" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" vertex="1" parent="1">
-          <mxGeometry x="370" y="150" width="120" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="YeKTc1dGwM5D7p58s4Ac-12" value="Make late contributions possible by config" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" vertex="1" parent="1">
-          <mxGeometry x="530" y="150" width="120" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="YeKTc1dGwM5D7p58s4Ac-18" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="YeKTc1dGwM5D7p58s4Ac-15" target="YeKTc1dGwM5D7p58s4Ac-17">
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-41" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="YeKTc1dGwM5D7p58s4Ac-2" target="HZ9nBPcBSSSsEg8i0Y5z-40">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="YeKTc1dGwM5D7p58s4Ac-15" value="Functional Live Task List" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" vertex="1" parent="1">
-          <mxGeometry x="210" y="520" width="120" height="60" as="geometry" />
+        <mxCell id="YeKTc1dGwM5D7p58s4Ac-2" value="Can Create tasks" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" parent="1" vertex="1">
+          <mxGeometry x="410" y="120" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="YeKTc1dGwM5D7p58s4Ac-20" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="YeKTc1dGwM5D7p58s4Ac-17" target="YeKTc1dGwM5D7p58s4Ac-19">
+        <mxCell id="YeKTc1dGwM5D7p58s4Ac-34" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="YeKTc1dGwM5D7p58s4Ac-3" target="YeKTc1dGwM5D7p58s4Ac-33" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="YeKTc1dGwM5D7p58s4Ac-17" value="&lt;span style=&quot;color: rgb(240, 240, 240);&quot;&gt;Can send list at any time by cmd&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" vertex="1" parent="1">
-          <mxGeometry x="370" y="520" width="120" height="60" as="geometry" />
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-37" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" edge="1" parent="1" source="YeKTc1dGwM5D7p58s4Ac-3" target="YeKTc1dGwM5D7p58s4Ac-9">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="720" y="160" />
+              <mxPoint x="720" y="245" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="YeKTc1dGwM5D7p58s4Ac-27" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="YeKTc1dGwM5D7p58s4Ac-19" target="YeKTc1dGwM5D7p58s4Ac-26">
+        <mxCell id="YeKTc1dGwM5D7p58s4Ac-3" value="Can&amp;nbsp;&lt;span style=&quot;background-color: initial;&quot;&gt;Mark tasks as done&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" parent="1" vertex="1">
+          <mxGeometry x="580" y="120" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="YeKTc1dGwM5D7p58s4Ac-11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="YeKTc1dGwM5D7p58s4Ac-5" target="YeKTc1dGwM5D7p58s4Ac-9" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="YeKTc1dGwM5D7p58s4Ac-19" value="Different live msg styles&amp;nbsp;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" vertex="1" parent="1">
-          <mxGeometry x="530" y="520" width="120" height="60" as="geometry" />
+        <mxCell id="YeKTc1dGwM5D7p58s4Ac-5" value="Can mark user as helping with task" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" parent="1" vertex="1">
+          <mxGeometry x="580" y="230" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="YeKTc1dGwM5D7p58s4Ac-37" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="YeKTc1dGwM5D7p58s4Ac-24" target="YeKTc1dGwM5D7p58s4Ac-35">
+        <mxCell id="YeKTc1dGwM5D7p58s4Ac-7" value="Can delete tasks" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" parent="1" vertex="1">
+          <mxGeometry x="580" y="340" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="YeKTc1dGwM5D7p58s4Ac-13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="YeKTc1dGwM5D7p58s4Ac-9" target="YeKTc1dGwM5D7p58s4Ac-12" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="YeKTc1dGwM5D7p58s4Ac-24" value="Task can be assigned to someone" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-          <mxGeometry x="210" y="650" width="120" height="60" as="geometry" />
+        <mxCell id="YeKTc1dGwM5D7p58s4Ac-9" value="Users cannot contribute to completed tasks" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" parent="1" vertex="1">
+          <mxGeometry x="740" y="230" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="YeKTc1dGwM5D7p58s4Ac-26" value="Permissions management for who can set the channel" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-          <mxGeometry x="700" y="520" width="120" height="60" as="geometry" />
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-44" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="YeKTc1dGwM5D7p58s4Ac-12" target="HZ9nBPcBSSSsEg8i0Y5z-42">
+          <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="YeKTc1dGwM5D7p58s4Ac-28" value="Can delete by GUI" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-          <mxGeometry x="370" y="260" width="120" height="60" as="geometry" />
+        <mxCell id="YeKTc1dGwM5D7p58s4Ac-12" value="Make late contributions possible by config" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" parent="1" vertex="1">
+          <mxGeometry x="900" y="230" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="YeKTc1dGwM5D7p58s4Ac-33" value="Can make tasks by GUI" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" vertex="1" parent="1">
-          <mxGeometry x="370" y="40" width="120" height="60" as="geometry" />
+        <mxCell id="YeKTc1dGwM5D7p58s4Ac-18" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="YeKTc1dGwM5D7p58s4Ac-15" target="YeKTc1dGwM5D7p58s4Ac-17" edge="1">
+          <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="YeKTc1dGwM5D7p58s4Ac-35" value="A running list of notes can be made for a task" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-          <mxGeometry x="370" y="650" width="120" height="60" as="geometry" />
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-52" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="YeKTc1dGwM5D7p58s4Ac-15" target="HZ9nBPcBSSSsEg8i0Y5z-51">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="YeKTc1dGwM5D7p58s4Ac-15" value="Functional Live Task List" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" parent="1" vertex="1">
+          <mxGeometry x="580" y="650" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="YeKTc1dGwM5D7p58s4Ac-20" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="YeKTc1dGwM5D7p58s4Ac-17" target="YeKTc1dGwM5D7p58s4Ac-19" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="YeKTc1dGwM5D7p58s4Ac-17" value="&lt;span style=&quot;color: rgb(240, 240, 240);&quot;&gt;Can send list at any time by cmd&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" parent="1" vertex="1">
+          <mxGeometry x="740" y="650" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="YeKTc1dGwM5D7p58s4Ac-27" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="YeKTc1dGwM5D7p58s4Ac-19" target="YeKTc1dGwM5D7p58s4Ac-26" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-23" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="YeKTc1dGwM5D7p58s4Ac-19" target="HZ9nBPcBSSSsEg8i0Y5z-22">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="YeKTc1dGwM5D7p58s4Ac-19" value="Different live msg styles&amp;nbsp;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" parent="1" vertex="1">
+          <mxGeometry x="900" y="650" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="YeKTc1dGwM5D7p58s4Ac-22" value="Tasks editable by&lt;div&gt;GUI&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" parent="1" vertex="1">
+          <mxGeometry x="740" y="470" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="YeKTc1dGwM5D7p58s4Ac-24" value="Task can be assigned to someone" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" parent="1" vertex="1">
+          <mxGeometry x="580" y="830" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="YeKTc1dGwM5D7p58s4Ac-26" value="Permissions management for who can set the channel" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="1070" y="650" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="YeKTc1dGwM5D7p58s4Ac-33" value="Can make tasks by GUI" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" parent="1" vertex="1">
+          <mxGeometry x="740" y="120" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="YeKTc1dGwM5D7p58s4Ac-35" value="A running list of notes can be made for a task" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="580" y="960" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-16" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="HZ9nBPcBSSSsEg8i0Y5z-9" target="HZ9nBPcBSSSsEg8i0Y5z-14">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-17" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="HZ9nBPcBSSSsEg8i0Y5z-9" target="HZ9nBPcBSSSsEg8i0Y5z-14">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-19" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="HZ9nBPcBSSSsEg8i0Y5z-9" target="HZ9nBPcBSSSsEg8i0Y5z-18">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-21" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="HZ9nBPcBSSSsEg8i0Y5z-9" target="HZ9nBPcBSSSsEg8i0Y5z-20">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-9" value="Deadlines Possible" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" vertex="1" parent="1">
+          <mxGeometry x="580" y="1090" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-14" value="Deadlines Editable" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="780" y="1090" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-18" value="Deadline Shows on Live List" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" vertex="1" parent="1">
+          <mxGeometry x="780" y="1180" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-20" value="Deadline Alerter" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" vertex="1" parent="1">
+          <mxGeometry x="780" y="1270" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-22" value="Custom Styles&lt;div&gt;Creation&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" vertex="1" parent="1">
+          <mxGeometry x="900" y="560" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-33" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="HZ9nBPcBSSSsEg8i0Y5z-24" target="HZ9nBPcBSSSsEg8i0Y5z-32">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-24" value="News System" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" vertex="1" parent="1">
+          <mxGeometry x="220" y="120" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-30" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="HZ9nBPcBSSSsEg8i0Y5z-29" target="YeKTc1dGwM5D7p58s4Ac-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-29" value="Bot Profile Created" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3c800;fontColor=#000000;strokeColor=#B09500;" vertex="1" parent="1">
+          <mxGeometry x="410" y="10" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-31" value="Core Functionality" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="410" y="180" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-36" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="HZ9nBPcBSSSsEg8i0Y5z-32" target="HZ9nBPcBSSSsEg8i0Y5z-35">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="110" y="60" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-32" value="Integrated News Server" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" vertex="1" parent="1">
+          <mxGeometry x="50" y="120" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-34" value="BulletMan news server" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="40" y="180" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-35" value="Local Fallback" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" vertex="1" parent="1">
+          <mxGeometry x="220" y="30" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-38" value="View Github Cmd" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" vertex="1" parent="1">
+          <mxGeometry x="220" y="220" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-40" value="View Roadmap (summarised)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" vertex="1" parent="1">
+          <mxGeometry x="220" y="320" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-42" value="Cmd to view how many tasks a user has helped with" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="230" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-51" value="Toggle Completion Marker" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" vertex="1" parent="1">
+          <mxGeometry x="740" y="730" width="120" height="60" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

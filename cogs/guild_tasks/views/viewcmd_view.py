@@ -100,7 +100,15 @@ class view_cmd_view:
                     contributing = True
 
                 if not contributing:
-                    dm.mark_user_as_contributing(int(ctx.author.id), guild_id=int(ctx.guild_id), task_id=int(task_id))
+                    result = dm.mark_user_as_contributing(int(ctx.author.id), guild_id=int(ctx.guild_id), task_id=int(task_id))
+                    if result == -2:
+                        await ctx.edit_response(
+                            embed=viewself.generate_task_embed(int(ctx.author.id))[0].add_field(
+                                name="Late contribution",
+                                value="You cannot contribute to a task that's already done."
+                            )
+                        )
+                        return
                     embed = viewself.generate_task_embed(int(ctx.author.id))[0]
                     await ctx.edit_response(
                         embed=embed

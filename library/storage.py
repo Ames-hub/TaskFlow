@@ -55,7 +55,11 @@ def modernize_db():
         'guild_livelist_formats': {
             'guild_id': 'TEXT NOT NULL PRIMARY KEY',
             'text_format': 'TEXT'
-        }
+        },
+        'tasks_assigned_to_users': {
+            'task_id': 'INT NOT NULL PRIMARY KEY',
+            'user_id': 'INT NOT NULL',
+        },
     }
 
     for table_name, columns in table_dict.items():
@@ -96,6 +100,52 @@ modernize_db()
 
 class sqlite_storage:
     @staticmethod
+    def get_task_incharge(task_id):
+        try:
+            conn = sqlite3.connect(guild_filepath)
+            cur = conn.cursor()
+            query = "SELECT user_id FROM tasks_assigned_to_users WHERE task_id = ? LIMIT 1"
+            cur.execute(query, (int(task_id),))
+            data = cur.fetchone()
+            conn.close()  # Close the connection after fetching data
+            return data[0] if data is not None else None
+        except sqlite3.Error as err:
+            print("An error occurred Getting the show task completion", err)
+            return False
+
+    @staticmethod
+    def assign_user_to_task(user_id:int, task_id:int):
+        try:
+            conn = sqlite3.connect(guild_filepath)
+            cur = conn.cursor()
+            query = """
+            INSERT INTO tasks_assigned_to_users (user_id, task_id) VALUES (?, ?)
+            """
+            cur.execute(query, (user_id, task_id))
+            conn.commit()
+            conn.close()
+            return True
+        except sqlite3.Error as err:
+            print("An error occurred while setting the assigned user for a task:", err)
+            return False
+
+    @staticmethod
+    def clear_task_incharge(task_id: int):
+        try:
+            conn = sqlite3.connect(guild_filepath)
+            cur = conn.cursor()
+            query = """
+            DELETE FROM tasks_assigned_to_users WHERE task_id = ?
+            """
+            cur.execute(query, (task_id,))
+            conn.commit()
+            conn.close()
+            return True
+        except sqlite3.Error as err:
+            print("An error occurred while clearing the task in-charge:", err)
+            return False
+
+    @staticmethod
     def save_livelist_format(guild_id, live_format):
         try:
             conn = sqlite3.connect(guild_filepath)
@@ -110,7 +160,7 @@ class sqlite_storage:
             conn.close()
             return True
         except sqlite3.Error as err:
-            print("An error occurred while setting the show task completion setting:", err)
+            print("An error occurred while setting the live format:", err)
             return False
 
     @staticmethod
@@ -295,7 +345,7 @@ class sqlite_storage:
         data = cur.fetchone()
         conn.close()
 
-        return data[0] if data else False
+        return bool(data[0]) if data else False
 
     @staticmethod
     def set_allow_late_contrib(guild_id:int, allow_late_contrib:bool):
@@ -407,11 +457,11 @@ class sqlite_storage:
     @staticmethod
     def get_todo_items(filter_for='*', guild_id=None, user_id=None, identifier=None):
         """
-        Gets the todo items from the database.
-        :param filter_for: The filter to apply to the todo items. Can be 'incompleted', 'completed', or '*'.
-        :param guild_id: The guild ID to get the todo items for.
-        :param user_id: The user ID to get the todo items for.
-        :param identifier: The identifier to filter the todo items by. Can be the task ID or the task name.
+        Gets the to do items from the database.
+        :param filter_for: The filter to apply to the to do items. Can be 'incompleted', 'completed', or '*'.
+        :param guild_id: The guild ID to get the to do items for.
+        :param user_id: The user ID to get the to do items for.
+        :param identifier: The identifier to filter the to do items by. Can be the task ID or the task name.
         :return:
         """
         assert filter_for in ['incompleted', 'completed', '*'], "Filter must be either 'incompleted', 'completed' or *"
@@ -637,6 +687,22 @@ class dataMan:
     def __init__(self):
         self.storage = sqlite_storage
 
+    def get_task_incharge(self, task_id:int):
+        task_id = int(task_id)
+        return self.storage.get_task_incharge(task_id)
+
+    def assign_user_to_task(self, user_id:int, task_id:int):
+        user_id = int(user_id)
+        if type(task_id) is not int and str(task_id).isnumeric() is False:
+            raise TypeError("The task ID needs to be a number!")
+        task_id = int(task_id)
+
+        return self.storage.assign_user_to_task(user_id, task_id)
+
+    def clear_task_incharge(self, task_id):
+        task_id = int(task_id)
+        return self.storage.clear_task_incharge(task_id)
+
     def get_livelist_format(self, guild_id:int):
         """
         :param guild_id:
@@ -788,12 +854,27 @@ class dataMan:
         return self.storage.get_user_contributions(user_id, guild_id)
 
     def mark_user_as_contributing(self, user_id:int, task_id:int, guild_id:int):
+        """
+        :param user_id:
+        :param task_id:
+        :param guild_id:
+        :return: False if failed
+        :return: True if Succeeded
+        :return: -1 if already contributing
+        :return: -2 if late contrib not allowed and tried to contrib
+        """
         assert type(user_id) is int, "User ID must be an integer"
         assert type(task_id) is int, "Task ID must be an integer"
 
         # Ensure the user is not already contributing
         if user_id in self.get_contributors(task_id):
             return -1
+        if self.get_is_task_completed(task_id) is True:
+            if self.get_allow_late_contrib(guild_id) is False:
+                return -2
+
+        print(self.get_is_task_completed(task_id))
+        print(self.get_allow_late_contrib(guild_id))
 
         return self.storage.mark_user_as_contributing(user_id, task_id, guild_id=int(guild_id))
 

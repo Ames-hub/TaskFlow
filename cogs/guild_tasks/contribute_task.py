@@ -39,6 +39,13 @@ async def command(ctx: lightbulb.SlashContext, task_id:int):
                 description="You're already contributing to that task."
             )
         )
+    elif success == -2:
+        await ctx.respond(
+            hikari.Embed(
+                title="Late contribution",
+                description="The task is completed, late contribution is not allowed on this server."
+            )
+        )
     else:
         await ctx.respond(
             hikari.Embed(

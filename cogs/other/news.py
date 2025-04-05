@@ -22,7 +22,7 @@ class msgserver:
         url = f"http://{conndata['ip']}:{conndata['port']}/get_latest"
 
         try:
-            response = requests.get(url, timeout=1.5)
+            response = requests.get(url)
             response.raise_for_status()
 
             data = response.json()
@@ -44,7 +44,7 @@ class msgserver:
 
 @plugin.command
 @lightbulb.app_command_permissions(dm_enabled=True)
-@lightbulb.command(name='news', description="Find out what's new in the bot!", auto_defer=False)
+@lightbulb.command(name='news', description="Find out what's new in the bot!", auto_defer=True)
 @lightbulb.implements(lightbulb.SlashCommand)
 async def news_cmd(ctx: lightbulb.SlashContext):
     try:

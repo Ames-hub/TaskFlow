@@ -102,8 +102,16 @@ class livetasks:
         completed_tasks.sort(key=lambda task: task[8] is not None and task[8] != "")
 
         # Add completed tasks to the embed
+        failed_compile_count = 0
+        failed_compile_ids = []
         for task in completed_tasks:
-            embed = livetasks.add_task_field(task, embed, style)
+            addition = livetasks.add_task_field(task, embed, style)
+            if addition is False:
+                failed_compile_count =+ 1
+                failed_compile_ids.append(task[3])
+                continue
+            else:
+                embed = addition
 
         # Categorize remaining incomplete tasks
         category_sorted_tasks = {}
@@ -116,7 +124,26 @@ class livetasks:
         # Add sorted tasks to the embed
         for category in sorted(category_sorted_tasks.keys(), key=lambda x: x != ""):
             for task in category_sorted_tasks[category]:
-                embed = livetasks.add_task_field(task, embed, style)
+                addition = livetasks.add_task_field(task, embed, style)
+                if addition is False:
+                    failed_compile_count =+ 1
+                    failed_compile_ids.append(task[3])
+                    continue
+                else:
+                    embed = addition
+
+        if failed_compile_count != 0:
+            failed_compile_ids_str = []
+            for uuid in failed_compile_ids:
+                failed_compile_ids_str.append(str(uuid))
+            embed.add_field(
+                name="Tasks could not compile",
+                value=f"While trying to compile this list, {failed_compile_count} task(s) could not compile.\n"
+                      "Check their data, is anything especially unusual?\nRegardless, Maintainers have been alerted.\n"
+                      f"Couldn't compile Tasks with IDs: {", ".join(failed_compile_ids_str)}"
+            )
+            logging.warning(f"Tried to compile some tasks for guild {guild_id} but {failed_compile_count} tasks couldn't compile. Please debug.\n"
+                            f"Problematic ID(s)/v: {failed_compile_ids}")
 
         return embed
 
@@ -181,8 +208,24 @@ class livetasks:
                 if deadline < datetime.now():
                     deadline_txt += f"⚠️ Deadline expired <t:{int(deadline.timestamp())}:R>!\n"
                 else:
-                    deadline_txt += f"Deadline: {deadline.strftime("%d/%m/%Y %I:%M %p")}\n\n"
-                    deadline_txt += f"Time left: <t:{int(deadline.timestamp())}:R>\n"
+                    try:
+                        deadline_txt += f"Deadline: {deadline.strftime("%d/%m/%Y %I:%M %p")}\n"
+                    except OSError:
+                        deadline_txt += "Deadline is too far in the future to display!\n"
+                    except Exception as err:
+                        logging.error(f"Something's wrong with converting deadline date to strftime for task id {identifier}\n"
+                                      f"Deadline: {deadline}, type: {type(deadline)} ", err)
+                        return False
+
+                    try:
+                        deadline_txt += f"Time left: <t:{int(deadline.timestamp())}:R>\n\n"
+                    except OSError:
+                        # Handles if someone tries to put in like, year 9999
+                        deadline_txt += "A POSIX timestamp can't go that far in the future!\n\n"
+                    except Exception as err:
+                        logging.error(f"Something's wrong with converting deadline date to timestamp for task id {identifier}\n"
+                                      f"Deadline: {deadline}, type: {type(deadline)} ", err)
+                        return False
 
         efield = embed.fields[0].value
 
@@ -195,11 +238,12 @@ class livetasks:
                     efield += f"**__{category}__**\n"
 
         custom_live_text = dataMan().get_livelist_format(guild_id)
+        assigned_user = dataMan().get_task_incharge(task_id=identifier)
 
         if custom_live_text is None:
             # Quote or space
             q_or_s = '"' if len(task_desc) > 0 else ''
-            no_deadline_nl = "\n" if len(deadline_txt) <= 0 else ""
+            no_deadline_nl = "\n" if len(deadline_txt) == 0 else ""
             if style == 'classic':
                 efield = efield + f"{task_name}\n(ID: {identifier})\n"
                 efield = efield + f"{task_desc}{"\n" if len(task_desc) != 0 else ""}{completed_text}{"\n" if show_x else ""}Added by: <@{added_by}>\n{len(contributors)} helping\n{no_deadline_nl}"
@@ -214,6 +258,8 @@ class livetasks:
             else:
                 raise ValueError("Invalid style")
 
+            if assigned_user is not None:
+                efield = efield + f"Assigned to <@{assigned_user}>\n"
             if len(deadline_txt) > 0:
                 efield = efield + f"{deadline_txt}\n"
         else:
