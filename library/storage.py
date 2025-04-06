@@ -852,10 +852,14 @@ class dataMan:
         task_id = int(task_id)
         return self.storage.get_task_incharge(task_id)
 
-    def assign_user_to_task(self, user_id:int, task_id:int):
+    def assign_user_to_task(self, user_id:int, task_id:int, guild_id):
         user_id = int(user_id)
         if type(task_id) is not int and str(task_id).isnumeric() is False:
             raise TypeError("The task ID needs to be a number!")
+
+        if guild_id != self.crossref_task(task_id):
+            return -1
+
         task_id = int(task_id)
 
         return self.storage.assign_user_to_task(user_id, task_id)
@@ -1023,6 +1027,7 @@ class dataMan:
         :return: True if Succeeded
         :return: -1 if already contributing
         :return: -2 if late contrib not allowed and tried to contrib
+        :return: -3 if not same server as task
         """
         assert type(user_id) is int, "User ID must be an integer"
         assert type(task_id) is int, "Task ID must be an integer"
@@ -1034,15 +1039,21 @@ class dataMan:
             if self.get_allow_late_contrib(guild_id) is False:
                 return -2
 
+        if guild_id != self.crossref_task(task_id):
+            return -3
+
         return self.storage.mark_user_as_contributing(user_id, task_id, guild_id=int(guild_id))
 
-    def remove_contributor(self, user_id:int, task_id:int):
+    def remove_contributor(self, user_id:int, task_id:int, guild_id:int):
         assert type(user_id) is int, "User ID must be an integer"
         assert type(task_id) is int, "Task ID must be an integer"
 
         # Ensure the user is contributing
         if user_id not in self.get_contributors(task_id):
             return -1
+
+        if guild_id != self.crossref_task(task_id):
+            return -2
 
         return self.storage.remove_contributor(user_id, task_id)
 
@@ -1065,6 +1076,7 @@ class dataMan:
         assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"
         assert type(name_or_id) is str or type(name_or_id) is int, "Name must be a string or int"
         uid = int(user_id if user_id else guild_id)
+
         if user_id:
             return self.storage.mark_todo_finished(name_or_id, user_id=uid)
         else:

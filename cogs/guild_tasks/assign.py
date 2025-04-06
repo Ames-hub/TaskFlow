@@ -50,7 +50,7 @@ async def assign_cmd(ctx: lightbulb.SlashContext, task_id:int, user:hikari.User)
         )
         return
 
-    success = dm.assign_user_to_task(user_id=user.id, task_id=task_id)
+    success = dm.assign_user_to_task(user_id=user.id, task_id=task_id, guild_id=ctx.guild_id)
     if success:
         await ctx.respond(
             hikari.Embed(
@@ -59,6 +59,13 @@ async def assign_cmd(ctx: lightbulb.SlashContext, task_id:int, user:hikari.User)
             )
         )
         await livetasks.update(ctx.guild_id)
+    elif success == -1:
+        await ctx.respond(
+            hikari.Embed(
+                title="Insufficient Permissions",
+                description=f"That's a task for another server."
+            )
+        )
     else:
         await ctx.respond(
             hikari.Embed(

@@ -46,6 +46,13 @@ async def command(ctx: lightbulb.SlashContext, task_id:int):
                 description="The task is completed, late contribution is not allowed on this server."
             )
         )
+    elif success == -3:
+        await ctx.respond(
+            hikari.Embed(
+                title="Wrong Server",
+                description="That's not a task for this server!"
+            )
+        )
     else:
         await ctx.respond(
             hikari.Embed(

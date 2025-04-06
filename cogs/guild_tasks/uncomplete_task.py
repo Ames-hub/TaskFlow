@@ -19,6 +19,15 @@ plugin = lightbulb.Plugin(__name__)
 async def command(ctx: lightbulb.SlashContext, task_id:int):
     dm = dataMan()
 
+    if dm.crossref_task(task_id) != int(ctx.guild_id):
+        await ctx.respond(
+            hikari.Embed(
+                title="Wrong Server!",
+                description="That's a task for another server!"
+            )
+        )
+        return
+
     success = dm.mark_todo_not_finished(
         guild_id=int(ctx.guild_id),
         name_or_id=int(task_id),

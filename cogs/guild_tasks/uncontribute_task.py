@@ -21,7 +21,8 @@ async def command(ctx: lightbulb.SlashContext, task_id:int):
 
     success = dm.remove_contributor(
         task_id=int(task_id),
-        user_id=int(ctx.author.id)
+        user_id=int(ctx.author.id),
+        guild_id=int(ctx.guild_id)
     )
 
     if success:
@@ -36,6 +37,13 @@ async def command(ctx: lightbulb.SlashContext, task_id:int):
             hikari.Embed(
                 title="You're not already contributing!",
                 description="You're not already contributing to that task."
+            )
+        )
+    elif success == -2:
+        await ctx.respond(
+            hikari.Embed(
+                title="Wrong Server!",
+                description="You must be in the same server as the task!"
             )
         )
     else:
