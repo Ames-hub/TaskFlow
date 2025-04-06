@@ -1,5 +1,6 @@
 from datetime import datetime
 import lightbulb
+import logging
 import sqlite3
 import os
 
@@ -60,6 +61,10 @@ def modernize_db():
             'task_id': 'INT NOT NULL PRIMARY KEY',
             'user_id': 'INT NOT NULL',
         },
+        'guild_livelist_descs': {
+            'guild_id': 'INT NOT NULL PRIMARY KEY',
+            'description': 'TEXT'
+        }
     }
 
     for table_name, columns in table_dict.items():
@@ -100,55 +105,99 @@ modernize_db()
 
 class sqlite_storage:
     @staticmethod
-    def get_task_incharge(task_id):
+    def set_livelist_description(desc, guild_id):
+        conn = sqlite3.connect(guild_filepath)
         try:
-            conn = sqlite3.connect(guild_filepath)
+            cur = conn.cursor()
+            query = """
+            INSERT INTO guild_livelist_descs (guild_id, description) 
+            VALUES (?, ?) 
+            ON CONFLICT(guild_id) 
+            DO UPDATE SET description = excluded.description
+            """
+            cur.execute(query, (guild_id, desc))
+            conn.commit()
+            return True
+        except sqlite3.Error as err:
+            conn.rollback()
+            # Lists name and function
+            logging.error(f"An error occurred in {__name__} while trying to set the description for a guild's live list.", err)
+            return False
+        finally:
+            conn.close()
+
+    @staticmethod
+    def get_livelist_description(guild_id):
+        conn = sqlite3.connect(guild_filepath)
+        try:
+            cur = conn.cursor()
+            query = "SELECT description FROM guild_livelist_descs WHERE guild_id = ? LIMIT 1"
+            cur.execute(query, (int(guild_id),))
+            data = cur.fetchone()
+            return data[0] if data is not None else None
+        except sqlite3.Error as err:
+            conn.rollback()
+            logging.error("An error occurred Getting the show task completion", err)
+            return None
+        finally:
+            conn.close()
+
+    @staticmethod
+    def get_task_incharge(task_id):
+        conn = sqlite3.connect(guild_filepath)
+        try:
             cur = conn.cursor()
             query = "SELECT user_id FROM tasks_assigned_to_users WHERE task_id = ? LIMIT 1"
             cur.execute(query, (int(task_id),))
             data = cur.fetchone()
-            conn.close()  # Close the connection after fetching data
             return data[0] if data is not None else None
         except sqlite3.Error as err:
-            print("An error occurred Getting the show task completion", err)
+            conn.rollback()
+            logging.error("An error occurred Getting the show task completion", err)
             return False
+        finally:
+            conn.close()
 
     @staticmethod
     def assign_user_to_task(user_id:int, task_id:int):
+        conn = sqlite3.connect(guild_filepath)
         try:
-            conn = sqlite3.connect(guild_filepath)
             cur = conn.cursor()
             query = """
             INSERT INTO tasks_assigned_to_users (user_id, task_id) VALUES (?, ?)
             """
             cur.execute(query, (user_id, task_id))
             conn.commit()
-            conn.close()
             return True
         except sqlite3.Error as err:
-            print("An error occurred while setting the assigned user for a task:", err)
+            conn.rollback()
+            logging.error("An error occurred while setting the assigned user for a task:", err)
             return False
+        finally:
+            conn.close()
 
     @staticmethod
     def clear_task_incharge(task_id: int):
+        conn = sqlite3.connect(guild_filepath)
         try:
-            conn = sqlite3.connect(guild_filepath)
             cur = conn.cursor()
             query = """
             DELETE FROM tasks_assigned_to_users WHERE task_id = ?
             """
             cur.execute(query, (task_id,))
             conn.commit()
-            conn.close()
             return True
         except sqlite3.Error as err:
-            print("An error occurred while clearing the task in-charge:", err)
+            conn.rollback()
+            logging.error("An error occurred while clearing the task in-charge:", err)
             return False
+        finally:
+            conn.close()
 
     @staticmethod
     def save_livelist_format(guild_id, live_format):
+        conn = sqlite3.connect(guild_filepath)
         try:
-            conn = sqlite3.connect(guild_filepath)
             cur = conn.cursor()
             query = """
             INSERT INTO guild_livelist_formats (guild_id, text_format)
@@ -157,67 +206,77 @@ class sqlite_storage:
             """
             cur.execute(query, (int(guild_id), live_format))
             conn.commit()
-            conn.close()
             return True
         except sqlite3.Error as err:
-            print("An error occurred while setting the live format:", err)
+            conn.rollback()
+            logging.error("An error occurred while setting the live format:", err)
             return False
+        finally:
+            conn.close()
 
     @staticmethod
     def get_livelist_format(guild_id:int):
+        conn = sqlite3.connect(guild_filepath)
         try:
-            conn = sqlite3.connect(guild_filepath)
             cur = conn.cursor()
             query = "SELECT text_format FROM guild_livelist_formats WHERE guild_id = ? LIMIT 1"
             cur.execute(query, (int(guild_id),))
             data = cur.fetchone()
-            conn.close()  # Close the connection after fetching data
             return data[0] if data is not None else None
         except sqlite3.Error as err:
-            print("An error occurred Getting the show task completion", err)
+            conn.rollback()
+            logging.error("An error occurred Getting the show task completion", err)
             return False
+        finally:
+            conn.close()
 
     @staticmethod
     def get_show_task_completion(guild_id:int):
+        conn = sqlite3.connect(guild_filepath)
         try:
-            conn = sqlite3.connect(guild_filepath)
             cur = conn.cursor()
             query = "SELECT show_task_completion FROM guild_settings WHERE uid = ? LIMIT 1"
             cur.execute(query, (int(guild_id),))
             data = cur.fetchone()
-            conn.close()  # Close the connection after fetching data
             return bool(data[0]) if data else False
         except sqlite3.Error as err:
-            print("An error occurred Getting the show task completion", err)
+            conn.rollback()
+            logging.error("An error occurred Getting the show task completion", err)
             return False
+        finally:
+            conn.close()
 
     @staticmethod
     def toggle_show_task_completion(status:bool, guild_id:int):
+        conn = sqlite3.connect(guild_filepath)
         try:
-            conn = sqlite3.connect(guild_filepath)
             cur = conn.cursor()
             query = "UPDATE guild_settings SET show_task_completion = ? WHERE uid = ?"
             cur.execute(query, (status, int(guild_id),))
             conn.commit()
-            conn.close()
             return True
         except sqlite3.Error as err:
-            print("An error occurred trying to set a show task completion setting", err)
+            conn.rollback()
+            logging.error("An error occurred trying to set a show task completion setting", err)
             return False
+        finally:
+            conn.close()
 
     @staticmethod
     def set_new_task_data(task_id, task_name=None, task_desc=None, task_category=None):
         # Gets the task
+        conn = sqlite3.connect(guild_filepath)
         try:
-            conn = sqlite3.connect(guild_filepath)
             cur = conn.cursor()
             query = "SELECT name, description, category FROM todo_items WHERE id = ? LIMIT 1"
             cur.execute(query, (int(task_id),))
             old_name, old_description, old_category = cur.fetchone()
-            conn.close()  # Close the connection after fetching data
         except sqlite3.Error as err:
-            print("An error occurred Getting a task from the list to update a task!", err)
+            conn.rollback()
+            logging.error("An error occurred Getting a task from the list to update a task!", err)
             return False
+        finally:
+            conn.close()
 
         # Use old values if new ones are not provided
         if task_name is None:
@@ -228,8 +287,8 @@ class sqlite_storage:
             task_category = old_category
 
         # Update the task
+        conn = sqlite3.connect(guild_filepath)
         try:
-            conn = sqlite3.connect(guild_filepath)
             cur = conn.cursor()
             query = """
             UPDATE todo_items 
@@ -238,221 +297,261 @@ class sqlite_storage:
             """
             cur.execute(query, (task_name, task_desc, task_category, int(task_id)))
             conn.commit()  # Commit the changes to the database
-            conn.close()
             return True
         except sqlite3.Error as err:
-            print("An error occurred editing a task in the list!", err)
+            conn.rollback()
+            logging.error("An error occurred editing a task in the list!", err)
             return False
+        finally:
+            conn.close()
 
     @staticmethod
     def get_task_exists(task_id:int):
+        conn = sqlite3.connect(guild_filepath)
         try:
-            conn = sqlite3.connect(guild_filepath)
             cur = conn.cursor()
             query = "SELECT 1 FROM todo_items WHERE id = ? LIMIT 1;"
             cur.execute(query, (int(task_id),))
             exists = cur.fetchone() is not None
-            conn.close()
             return exists
         except sqlite3.Error as err:
-            print(f"Error checking task existence: {err}")
+            conn.rollback()
+            logging.error(f"Error checking task existence: {err}")
             return False
+        finally:
+            conn.close()
 
     @staticmethod
     def delete_task_from_list(task_id:int):
+        conn = sqlite3.connect(guild_filepath)
         try:
-            conn = sqlite3.connect(guild_filepath)
             cur = conn.cursor()
             query = "DELETE FROM todo_items WHERE id = ?;"
             cur.execute(query, (int(task_id),))
             conn.commit()
             return True
         except sqlite3.Error as err:
-            print("An error occured deleting a task from the list!", err)
+            conn.rollback()
+            logging.error("An error occured deleting a task from the list!", err)
             return False
+        finally:
+            conn.close()
 
     @staticmethod
     def get_is_task_completed(task_id:str):
+        conn = sqlite3.connect(guild_filepath)
         try:
-            conn = sqlite3.connect(guild_filepath)
             cur = conn.cursor()
             query = "SELECT completed FROM todo_items WHERE id = ?"
             cur.execute(query, (task_id,))
             result = cur.fetchone()
             return False if not result else bool(result[0])
         except sqlite3.Error as err:
-            print(f"Error checking task completion: {err}")
+            conn.rollback()
+            logging.error(f"Error checking task completion: {err}")
             return err
+        finally:
+            conn.close()
 
     @staticmethod
     def get_livechannel_style(guild_id:int):
         conn = sqlite3.connect(guild_filepath)
-        cur = conn.cursor()
+        try:
+            cur = conn.cursor()
 
-        query = """
-        SELECT style
-        FROM livechannel_styles
-        WHERE guild_id = ?
-        """
-        cur.execute(query, (guild_id,))
-        data = cur.fetchone()
-        conn.close()
+            query = """
+            SELECT style
+            FROM livechannel_styles
+            WHERE guild_id = ?
+            """
+            cur.execute(query, (guild_id,))
+            data = cur.fetchone()
+            return data[0] if data else "classic"
+        except sqlite3.Error as err:
+            conn.rollback()
+            logging.error(f"Error getting livechannel style for guild {guild_id}", err)
+            return 'classic'
+        finally:
+            conn.close()
 
-        return data[0] if data else "classic"
 
     @staticmethod
     def set_livechannel_style(style:str, guild_id:int):
         conn = sqlite3.connect(guild_filepath)
-        cur = conn.cursor()
+        try:
+            cur = conn.cursor()
 
-        query = """
-        INSERT OR REPLACE INTO livechannel_styles (guild_id, style)
-        VALUES (?, ?)
-        """
-        cur.execute(query, (guild_id, style))
-        conn.commit()
-        conn.close()
+            query = """
+            INSERT OR REPLACE INTO livechannel_styles (guild_id, style)
+            VALUES (?, ?)
+            """
+            cur.execute(query, (guild_id, style))
+            conn.commit()
+            return True
+        except sqlite3.Error as err:
+            conn.rollback()
+            logging.error(f"Couldn't set live channel style for guild {guild_id}", err)
+            return False
+        finally:
+            conn.close()
 
-        return True
-
+    # noinspection PyTypeChecker
     @staticmethod
-    def get_category_exists(category:str):
+    def get_category_exists(category: str) -> bool:
         conn = sqlite3.connect(guild_filepath)
-        cur = conn.cursor()
+        try:
+            cur = conn.cursor()
 
-        query = """
-        SELECT name
-        FROM todo_items
-        WHERE category = ?
-        """
-        cur.execute(query, (category,))
-        data = cur.fetchone()
-        conn.close()
-
-        return data is not None
+            query = """
+            SELECT name
+            FROM todo_items
+            WHERE category = ?
+            """
+            cur.execute(query, (category,))
+            data = cur.fetchone()
+            return data is not None
+        except sqlite3.Error as err:
+            logging.error(f"An error occurred checking if the category exists: {err}")
+            return False
+        finally:
+            conn.close()
 
     @staticmethod
-    def get_allow_late_contrib(guild_id:int):
+    def get_allow_late_contrib(guild_id: int):
         conn = sqlite3.connect(guild_filepath)
-        cur = conn.cursor()
+        try:
+            cur = conn.cursor()
 
-        query = """
-        SELECT allow_late_contrib
-        FROM guild_settings
-        WHERE uid = ?
-        """
-        cur.execute(query, (guild_id,))
-        data = cur.fetchone()
-        conn.close()
-
-        return bool(data[0]) if data else False
+            query = """
+            SELECT allow_late_contrib
+            FROM guild_settings
+            WHERE uid = ?
+            """
+            cur.execute(query, (guild_id,))
+            data = cur.fetchone()
+            return bool(data[0]) if data else False
+        except sqlite3.Error as err:
+            logging.error(f"An error occurred retrieving late contribution setting: {err}")
+            return False
+        finally:
+            conn.close()
 
     @staticmethod
-    def set_allow_late_contrib(guild_id:int, allow_late_contrib:bool):
+    def set_allow_late_contrib(guild_id: int, allow_late_contrib: bool):
         conn = sqlite3.connect(guild_filepath)
-        cur = conn.cursor()
+        try:
+            cur = conn.cursor()
 
-        query = """
-        INSERT OR REPLACE INTO guild_settings (uid, allow_late_contrib)
-        VALUES (?, ?)
-        """
-        cur.execute(query, (guild_id, allow_late_contrib))
-        conn.commit()
-        conn.close()
-
-        return True
+            query = """
+            INSERT OR REPLACE INTO guild_settings (uid, allow_late_contrib)
+            VALUES (?, ?)
+            """
+            cur.execute(query, (guild_id, allow_late_contrib))
+            conn.commit()
+            return True
+        except sqlite3.Error as err:
+            conn.rollback()
+            logging.error(f"An error occurred while setting late contribution: {err}")
+            return False
+        finally:
+            conn.close()
 
     @staticmethod
-    def add_todo_item(name, description, user_id=None, guild_id=None, added_by:int=None, deadline:datetime=None, category=None):
-        assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"
-        assert type(name) is str and type(description) is str, "Name and description must be strings"
-        assert type(added_by) is int or user_id is not None, "Added by must be an integer if user_id is None."
-        assert added_by is not None if guild_id is not None else True, "Added by is needed if guild_id is provided."
-        assert category is None or type(category) is str, "Category must be a string or None"
+    def add_todo_item(name, description, user_id=None, guild_id=None, added_by: int = None, deadline: datetime = None, category=None):
         conn = sqlite3.connect(user_file if user_id is not None else guild_filepath)
-        cur = conn.cursor()
+        try:
+            assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"
+            assert type(name) is str and type(description) is str, "Name and description must be strings"
+            assert type(added_by) is int or user_id is not None, "Added by must be an integer if user_id is None."
+            assert added_by is not None if guild_id is not None else True, "Added by is needed if guild_id is provided."
+            assert category is None or type(category) is str, "Category must be a string or None"
+            cur = conn.cursor()
 
-        uid = user_id if user_id else guild_id
-        query = """
-        INSERT INTO todo_items (uid, name, description, completed, added_by, deadline, guild_id, category)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """
-        cur.execute(query, (uid, name, description, False, added_by, deadline, guild_id, category))
-        conn.commit()
-
-        conn.close()
-
-        return True
+            uid = user_id if user_id else guild_id
+            query = """
+            INSERT INTO todo_items (uid, name, description, completed, added_by, deadline, guild_id, category)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """
+            cur.execute(query, (uid, name, description, False, added_by, deadline, guild_id, category))
+            conn.commit()
+            return True
+        except sqlite3.Error as err:
+            conn.rollback()
+            logging.error(f"An error occurred adding a to-do item: {err}")
+            return False
+        finally:
+            conn.close()
 
     @staticmethod
     def mark_todo_finished(identifier, user_id=None, guild_id=None):
-        """
-        Mark a task as done.
-        Provide user ID or Guild ID depending on if it's a user's task or a guild's task.
-        :param identifier:
-        :param user_id:
-        :param guild_id:
-        :return:
-        """
-        assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"
         conn = sqlite3.connect(user_file if user_id is not None else guild_filepath)
-        cur = conn.cursor()
+        try:
+            assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"
+            cur = conn.cursor()
 
-        uid = user_id if user_id else guild_id
-        query = """
-        UPDATE todo_items
-        SET completed = ?
-        WHERE uid = ?
-        """
+            uid = user_id if user_id else guild_id
+            query = """
+            UPDATE todo_items
+            SET completed = ?
+            WHERE uid = ?
+            """
 
-        arguments = (True, uid)
-        if identifier is not None:
-            if str(identifier).isnumeric():
-                query += "AND id = ?"
-            else:
-                query += "AND name LIKE ?"  # So people don't have to type the full name.
-            arguments += (identifier,)
+            arguments = (True, uid)
+            if identifier is not None:
+                if str(identifier).isnumeric():
+                    query += "AND id = ?"
+                else:
+                    query += "AND name LIKE ?"
+                arguments += (identifier,)
 
-        cur.execute(query, arguments)
+            cur.execute(query, arguments)
 
-        # Sets the 'completed_on' date to the current moment.
-        query = """
-        UPDATE todo_items
-        SET completed_on = CURRENT_TIMESTAMP
-        WHERE uid = ?
-        """
-        cur.execute(query, (uid,))
-        conn.commit()
-
-        conn.close()
-
-        return True
+            # Sets the 'completed_on' date to the current moment.
+            query = """
+            UPDATE todo_items
+            SET completed_on = CURRENT_TIMESTAMP
+            WHERE uid = ?
+            """
+            cur.execute(query, (uid,))
+            conn.commit()
+            return True
+        except sqlite3.Error as err:
+            conn.rollback()
+            logging.error(f"An error occurred marking the task as finished: {err}")
+            return False
+        finally:
+            conn.close()
 
     @staticmethod
     def undo_mark_todo_finished(identifier, user_id=None, guild_id=None):
-        assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"
-        assert type(identifier) is str or type(identifier) is int, "Identifier must be a string or an integer"
         conn = sqlite3.connect(user_file if user_id is not None else guild_filepath)
-        cur = conn.cursor()
+        try:
+            assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"
+            assert type(identifier) is str or type(identifier) is int, "Identifier must be a string or an integer"
+            cur = conn.cursor()
 
-        uid = user_id if user_id else guild_id
-        query = """
-        UPDATE todo_items
-        SET completed = ?
-        WHERE uid = ? 
-        """
-        arguments = (False, uid)
-        if str(identifier).isnumeric():
-            query += "AND id = ?"
-        else:
-            query += "AND name LIKE ?"  # So people don't have to type the full name.
-        arguments += (identifier,)
+            uid = user_id if user_id else guild_id
+            query = """
+            UPDATE todo_items
+            SET completed = ?
+            WHERE uid = ? 
+            """
+            arguments = (False, uid)
+            if str(identifier).isnumeric():
+                query += "AND id = ?"
+            else:
+                query += "AND name LIKE ?"
+            arguments += (identifier,)
 
-        cur.execute(query, arguments)
-        conn.commit()
-        conn.close()
-
-        return True
+            cur.execute(query, arguments)
+            conn.commit()
+            return True
+        except sqlite3.Error as err:
+            conn.rollback()
+            logging.error(f"An error occurred undoing the task completion: {err}")
+            return False
+        finally:
+            conn.close()
 
     @staticmethod
     def get_todo_items(filter_for='*', guild_id=None, user_id=None, identifier=None):
@@ -511,12 +610,12 @@ class sqlite_storage:
 
         try:
             cur.execute(query, arguments)
-        except sqlite3.OperationalError as e:
-            print(e)
-            print(query, arguments)
-            raise e
-        data = cur.fetchall()
-        conn.close()
+            data = cur.fetchall()
+        except sqlite3.OperationalError as err:
+            logging.error("Failed to create a to-do list task.", err)
+            return False
+        finally:
+            conn.close()
 
         # Filter out tasks that don't belong to the guild
         # Only filter by guild if a guild_id was actually provided
@@ -529,33 +628,44 @@ class sqlite_storage:
     @staticmethod
     def set_taskchannel(guild_id, channel_id):
         conn = sqlite3.connect(guild_filepath)
-        cur = conn.cursor()
+        try:
+            cur = conn.cursor()
 
-        query = """
-        INSERT OR REPLACE INTO guild_settings (uid, task_channel)
-        VALUES (?, ?)
-        """
-        cur.execute(query, (guild_id, channel_id))
-        conn.commit()
-        conn.close()
-
-        return True
+            query = """
+            INSERT OR REPLACE INTO guild_settings (uid, task_channel)
+            VALUES (?, ?)
+            """
+            cur.execute(query, (guild_id, channel_id))
+            conn.commit()
+            return True
+        except sqlite3.Error as err:
+            conn.rollback()
+            logging.error(f"Couldn't set task channel for guild {guild_id}", err)
+            return False
+        finally:
+            conn.close()
 
     @staticmethod
     def get_taskchannel(guild_id):
         conn = sqlite3.connect(guild_filepath)
-        cur = conn.cursor()
+        try:
+            cur = conn.cursor()
 
-        query = """
-        SELECT task_channel
-        FROM guild_settings
-        WHERE uid = ?
-        """
-        cur.execute(query, (guild_id,))
-        data = cur.fetchone()
-        conn.close()
+            query = """
+            SELECT task_channel
+            FROM guild_settings
+            WHERE uid = ?
+            """
+            cur.execute(query, (guild_id,))
+            data = cur.fetchone()
 
-        return data[0] if data else None
+            return data[0] if data else None
+        except sqlite3.Error as err:
+            conn.rollback()
+            logging.error(f"Couldn't get task channel for guild {guild_id}", err)
+            return False
+        finally:
+            conn.close()
 
     @staticmethod
     def clear_taskchannel(guild_id):
@@ -565,93 +675,123 @@ class sqlite_storage:
         :return:
         """
         conn = sqlite3.connect(guild_filepath)
-        cur = conn.cursor()
+        try:
+            cur = conn.cursor()
 
-        query = """
-        UPDATE guild_settings
-        SET task_channel = NULL
-        WHERE uid = ?
-        """
-        cur.execute(query, (guild_id,))
-        conn.commit()
-        conn.close()
-
-        return True
+            query = """
+            UPDATE guild_settings
+            SET task_channel = NULL
+            WHERE uid = ?
+            """
+            cur.execute(query, (guild_id,))
+            conn.commit()
+            return True
+        except sqlite3.Error as err:
+            conn.rollback()
+            logging.error(f"Error clearing task channel for {guild_id}", err)
+            return False
+        finally:
+            conn.close()
 
     @staticmethod
     def mark_user_as_contributing(user_id:int, task_id:int, guild_id:int):
         conn = sqlite3.connect(guild_filepath)
-        cur = conn.cursor()
+        try:
+            cur = conn.cursor()
 
-        query = """
-        INSERT INTO user_contribution_log (contributed_task_uid, contributor_uuid, task_for_guild_id)
-        VALUES (?, ?, ?)
-        """
-        cur.execute(query, (task_id, user_id, guild_id))
-        conn.commit()
-        conn.close()
+            query = """
+            INSERT INTO user_contribution_log (contributed_task_uid, contributor_uuid, task_for_guild_id)
+            VALUES (?, ?, ?)
+            """
+            cur.execute(query, (task_id, user_id, guild_id))
+            conn.commit()
+            return True
+        except sqlite3.Error as err:
+            conn.rollback()
+            logging.error("Error marking user as contributing", err)
+            return False
+        finally:
+            conn.close()
 
-        return True
 
     @staticmethod
     def remove_contributor(user_id:int, task_id:int):
         conn = sqlite3.connect(guild_filepath)
-        cur = conn.cursor()
+        try:
+            cur = conn.cursor()
 
-        query = """
-        DELETE FROM user_contribution_log
-        WHERE contributed_task_uid = ? AND contributor_uuid = ?
-        """
-        cur.execute(query, (task_id, user_id))
-        conn.commit()
-        conn.close()
+            query = """
+            DELETE FROM user_contribution_log
+            WHERE contributed_task_uid = ? AND contributor_uuid = ?
+            """
+            cur.execute(query, (task_id, user_id))
+            conn.commit()
 
-        return True
+            return True
+        except sqlite3.Error as err:
+            conn.rollback()
+            logging.error(f"Error removing contributor for user {user_id}, task {task_id}", err)
+            return False
+        finally:
+            conn.close()
 
     @staticmethod
     def get_contributors(task_id:int):
         conn = sqlite3.connect(guild_filepath)
-        cur = conn.cursor()
+        try:
+            cur = conn.cursor()
 
-        query = """
-        SELECT contributor_uuid
-        FROM user_contribution_log
-        WHERE contributed_task_uid = ?
-        """
-        cur.execute(query, (task_id,))
-        data = cur.fetchall()
-        conn.close()
+            query = """
+            SELECT contributor_uuid
+            FROM user_contribution_log
+            WHERE contributed_task_uid = ?
+            """
+            cur.execute(query, (task_id,))
+            data = cur.fetchall()
 
-        return [x[0] for x in data]  # Example output: [123456789, 987654321] (user IDs)
+            return [x[0] for x in data]  # Example output: [123456789, 987654321] (user IDs)
+        except sqlite3.Error as err:
+            conn.rollback()
+            logging.error(f"Error getting contributors for task {task_id}", err)
+            return []
+        finally:
+            conn.close()
 
     @staticmethod
     def get_user_contributions(user_id:int, guild_id:int=-1):
         conn = sqlite3.connect(guild_filepath)
-        cur = conn.cursor()
+        try:
+            cur = conn.cursor()
 
-        query = f"""
-        SELECT contributed_task_uid
-        FROM user_contribution_log
-        WHERE contributor_uuid = ?
-        {'AND task_for_guild_id = ?' if guild_id != -1 else ''}
-        """
-        cur.execute(query, (user_id, guild_id) if guild_id != -1 else (user_id,))
-        data = cur.fetchall()
+            query = f"""
+            SELECT contributed_task_uid
+            FROM user_contribution_log
+            WHERE contributor_uuid = ?
+            {'AND task_for_guild_id = ?' if guild_id != -1 else ''}
+            """
+            cur.execute(query, (user_id, guild_id) if guild_id != -1 else (user_id,))
+            data = cur.fetchall()
 
-        task_ids = [x[0] for x in data]  # Example output: [1, 2, 3] (task IDs)
+            task_ids = [x[0] for x in data]  # Example output: [1, 2, 3] (task IDs)
 
-        # get all the data for the tasks
-        query = """
-        SELECT name, description, completed, id, completed_on, added_by
-        FROM todo_items
-        WHERE id = ?
-        """
-        task_data = []
-        for task_id in task_ids:
-            cur.execute(query, (task_id,))
-            task_data.append(cur.fetchone())
+            # get all the data for the tasks
+            query = """
+            SELECT name, description, completed, id, completed_on, added_by
+            FROM todo_items
+            WHERE id = ?
+            """
+            task_data = []
+            for task_id in task_ids:
+                cur.execute(query, (task_id,))
+                task_data.append(cur.fetchone())
 
-        conn.close()
+            conn.close()
+        except sqlite3.Error as err:
+            conn.rollback()
+            logging.error(f"Error getting contributions from a user. user_id: {user_id}, guild: {guild_id}", err)
+            return False
+        finally:
+            conn.close()
 
         # Organize the data into a dictionary
         data = {}
@@ -670,22 +810,43 @@ class sqlite_storage:
     @staticmethod
     def crossref_task(task_id):
         conn = sqlite3.connect(guild_filepath)
-        cur = conn.cursor()
+        try:
+            cur = conn.cursor()
 
-        query = """
-        SELECT guild_id
-        FROM todo_items
-        WHERE id = ?
-        """
-        cur.execute(query, (task_id,))
-        data = cur.fetchone()
-        conn.close()
+            query = """
+            SELECT guild_id
+            FROM todo_items
+            WHERE id = ?
+            """
+            cur.execute(query, (task_id,))
+            data = cur.fetchone()
+            return int(data[0]) if data else None
+        except sqlite3.Error as err:
+            conn.rollback()
+            logging.error(f"Error crossreferencing task ID {task_id}", err)
+            return False
+        finally:
+            conn.close()
 
-        return int(data[0]) if data else None
 
+
+# noinspection PyNoneFunctionAssignment
 class dataMan:
+    """
+    Essentially a class that processes data after it's been retrieved and ensures the data sent to the funcs is correct.
+    """
     def __init__(self):
         self.storage = sqlite_storage
+
+    def get_livelist_description(self, guild_id:int):
+        guild_id = int(guild_id)
+        return self.storage.get_livelist_description(guild_id)
+
+    def set_livelist_description(self, desc:str|None, guild_id:int):
+        guild_id = int(guild_id)
+        if desc is not None:
+            desc = str(desc)
+        return self.storage.set_livelist_description(desc, guild_id)
 
     def get_task_incharge(self, task_id:int):
         task_id = int(task_id)
@@ -873,9 +1034,6 @@ class dataMan:
             if self.get_allow_late_contrib(guild_id) is False:
                 return -2
 
-        print(self.get_is_task_completed(task_id))
-        print(self.get_allow_late_contrib(guild_id))
-
         return self.storage.mark_user_as_contributing(user_id, task_id, guild_id=int(guild_id))
 
     def remove_contributor(self, user_id:int, task_id:int):
@@ -891,6 +1049,7 @@ class dataMan:
     def get_contributors(self, task_id:int) -> list[int]:
         assert type(task_id) is int, "Task ID must be an integer"
 
+        # noinspection PyTypeChecker
         return self.storage.get_contributors(task_id)
 
     def add_todo_item(self, name, description, added_by:int, user_id=None, guild_id=None, deadline:datetime=None, category=None):
@@ -970,7 +1129,8 @@ class dataMan:
         assert type(guild_id) is int, "Guild ID must be an integer"
         return self.storage.set_taskchannel(guild_id, channel_id)
 
-    def get_taskchannel(self, guild_id:int):
+    # noinspection PyTypeChecker
+    def get_taskchannel(self, guild_id:int) -> int|None :
         """
         Guild only command. Gets the channel that has a live-list of tasks.
         :param guild_id: The guild ID where the task channel is.

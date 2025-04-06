@@ -88,13 +88,16 @@ class livetasks:
             else:
                 style = data[0]
 
+        custom_desc = dataMan().get_livelist_description(guild_id)
+
         embed = hikari.Embed(
             title="Live Task List",
-            description=f"This is a live list of incomplete and newly completed tasks.\n{style} style",
+            description=f"{style} style",
             color=0x00ff00
         ).add_field(
             name="Details",
-            value=f"The details of {len(incomplete_tasks)} incomplete task(s) is attached below.\n\n"
+            value=f"{custom_desc}\n\n" if custom_desc is not None else "This is a live list of incomplete and newly completed tasks.\n"
+                  f"The details of {len(incomplete_tasks)} incomplete task(s) is attached below.\n\n"
         )
 
         # Sort tasks: prioritize tasks without a category
