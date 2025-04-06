@@ -989,7 +989,7 @@ class dataMan:
         :param task_id: The task ID to get the guild ID for.
         :return: The guild ID for the task.
         """
-        assert type(task_id) is int, "Task ID must be an integer"
+        task_id = int(task_id)
         return self.storage.crossref_task(task_id)
 
     def get_allow_late_contrib(self, guild_id:int):
