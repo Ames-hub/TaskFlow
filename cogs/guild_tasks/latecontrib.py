@@ -1,3 +1,4 @@
+from library.perms import perms
 from cogs.guild_tasks.group import group
 from library.storage import dataMan
 import lightbulb
@@ -16,6 +17,16 @@ plugin = lightbulb.Plugin(__name__)
 @lightbulb.command(name='latecontrib', description='Set if users can contribute to completed tasks late.')
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def latecontrib_cmd(ctx: lightbulb.SlashContext):
+    dm = dataMan()
+    allowed = await perms.is_privileged(
+        guild_id=ctx.guild_id,
+        user_id=ctx.author.id,
+        permission=dm.get_guild_configperm(ctx.guild_id)
+    )
+    if not allowed:
+        await perms.embeds.insufficient_perms(ctx, missing_perm="administrator")
+        return
+
     allowed = ctx.options['allowed']
     dataMan().set_allow_late_contrib(int(ctx.guild_id), bool(allowed))
 

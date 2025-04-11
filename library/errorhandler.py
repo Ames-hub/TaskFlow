@@ -2,12 +2,17 @@ import lightbulb
 import logging
 import hikari
 
+from library.perms import perms
+
 plugin = lightbulb.Plugin(__name__)
 
 @plugin.listener(lightbulb.CommandErrorEvent)
 async def on_error(event: lightbulb.CommandErrorEvent) -> None:
     if isinstance(event.exception, lightbulb.MissingRequiredPermission):
-        await event.context.respond("You don't have the required permissions to run this command.", flags=hikari.MessageFlag.EPHEMERAL)
+        await event.context.respond(
+            perms.embeds.insufficient_perms(event.context),
+            flags=hikari.MessageFlag.EPHEMERAL
+        )
     elif isinstance(event.exception, lightbulb.MissingRequiredRole):
         await event.context.respond("You don't have the required role to run this command.", flags=hikari.MessageFlag.EPHEMERAL)
     elif isinstance(event.exception, lightbulb.BotMissingRequiredPermission):

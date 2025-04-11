@@ -1,4 +1,6 @@
 from datetime import datetime
+
+import hikari
 import lightbulb
 import logging
 import sqlite3
@@ -64,6 +66,14 @@ def modernize_db():
         'guild_livelist_descs': {
             'guild_id': 'INT NOT NULL PRIMARY KEY',
             'description': 'TEXT'
+        },
+        'guild_taskmaster_roles': {
+            'guild_id': "INT NOT NULL PRIMARY KEY",
+            'role_id': "INT"
+        },
+        'guild_configperms': {
+            'guild_id': 'INT NOT NULL PRIMARY KEY',
+            'permission': 'TEXT DEFAULT NULL'
         }
     }
 
@@ -105,6 +115,82 @@ modernize_db()
 
 class sqlite_storage:
     @staticmethod
+    def set_guild_configperm(guild_id, permission):
+        conn = sqlite3.connect(guild_filepath)
+        try:
+            cur = conn.cursor()
+            query = """
+            INSERT INTO guild_configperms (guild_id, permission) 
+            VALUES (?, ?) 
+            ON CONFLICT(guild_id)
+            DO UPDATE SET permission = excluded.permission
+            """
+            cur.execute(query, (guild_id, permission))
+            conn.commit()
+            return True
+        except sqlite3.Error as err:
+            conn.rollback()
+            # Lists name and function
+            logging.error(f"An error occurred in {__name__} while trying to set the config perm for guild {guild_id}.", err)
+            return False
+        finally:
+            conn.close()
+
+    @staticmethod
+    def get_guild_configperm(guild_id):
+        conn = sqlite3.connect(guild_filepath)
+        try:
+            cur = conn.cursor()
+            query = "SELECT permission FROM guild_configperms WHERE guild_id = ? LIMIT 1"
+            cur.execute(query, (int(guild_id),))
+            data = cur.fetchone()
+            return data[0] if data is not None else None
+        except sqlite3.Error as err:
+            conn.rollback()
+            logging.error(f"An error occurred in {__name__} getting the config permisison for guild {guild_id}", err)
+            return None
+        finally:
+            conn.close()
+
+    @staticmethod
+    def set_taskmaster_role(guild_id, role_id):
+        conn = sqlite3.connect(guild_filepath)
+        try:
+            cur = conn.cursor()
+            query = """
+            INSERT INTO guild_taskmaster_roles (guild_id, role_id) 
+            VALUES (?, ?) 
+            ON CONFLICT(guild_id)
+            DO UPDATE SET role_id = excluded.role_id
+            """
+            cur.execute(query, (guild_id, role_id))
+            conn.commit()
+            return True
+        except sqlite3.Error as err:
+            conn.rollback()
+            # Lists name and function
+            logging.error(f"An error occurred in {__name__} while trying to set the taskmaster role for guild {guild_id}.", err)
+            return False
+        finally:
+            conn.close()
+
+    @staticmethod
+    def get_taskmaster_role(guild_id):
+        conn = sqlite3.connect(guild_filepath)
+        try:
+            cur = conn.cursor()
+            query = "SELECT role_id FROM guild_taskmaster_roles WHERE guild_id = ? LIMIT 1"
+            cur.execute(query, (int(guild_id),))
+            data = cur.fetchone()
+            return data[0] if data is not None else None
+        except sqlite3.Error as err:
+            conn.rollback()
+            logging.error(f"An error occurred in {__name__} getting the taskmaster role for {guild_id}", err)
+            return None
+        finally:
+            conn.close()
+
+    @staticmethod
     def set_livelist_description(desc, guild_id):
         conn = sqlite3.connect(guild_filepath)
         try:
@@ -137,7 +223,7 @@ class sqlite_storage:
             return data[0] if data is not None else None
         except sqlite3.Error as err:
             conn.rollback()
-            logging.error("An error occurred Getting the show task completion", err)
+            logging.error("An error occurred getting the live list description", err)
             return None
         finally:
             conn.close()
@@ -153,7 +239,7 @@ class sqlite_storage:
             return data[0] if data is not None else None
         except sqlite3.Error as err:
             conn.rollback()
-            logging.error("An error occurred Getting the show task completion", err)
+            logging.error(f"An error occurred getting the task incharge for task {task_id}", err)
             return False
         finally:
             conn.close()
@@ -838,6 +924,56 @@ class dataMan:
     def __init__(self):
         self.storage = sqlite_storage
 
+    def set_guild_configperm(self, guild_id, permission):
+        """
+        :param guild_id:
+        :param permission: A string permission.
+        :return:
+        """
+        guild_id = int(guild_id)
+        if not type(permission) is str:
+            raise ValueError(f"Permission not string! Got {type(permission)} ({permission})")
+
+        permission_list = [
+            'administrator'
+            'manage server'
+            'none'
+        ]
+
+        if not permission in permission_list:
+            if permission == "none":
+                permission = None
+
+            raise ValueError(f"Wrong permission! {permission}")
+
+        return self.storage.set_guild_configperm(guild_id, permission)
+
+    def get_guild_configperm(self, guild_id:int, crossref:bool=True):
+        guild_id = int(guild_id)
+        data = self.storage.get_guild_configperm(guild_id)
+
+        if crossref:
+            perm_crossref = {
+                'administrator': hikari.Permissions.ADMINISTRATOR,
+                'manage server': hikari.Permissions.MANAGE_GUILD,
+                'none': None
+            }
+            if data is not None:
+                return perm_crossref[data]
+            else:
+                return None
+        else:
+            return data
+
+    def get_taskmaster_role(self, guild_id):
+        guild_id = int(guild_id)
+        return self.storage.get_taskmaster_role(guild_id)
+
+    def set_taskmaster_role(self, guild_id, role_id):
+        guild_id = int(guild_id)
+        role_id = int(role_id)
+        return self.storage.set_taskmaster_role(guild_id, role_id)
+
     def get_livelist_description(self, guild_id:int):
         guild_id = int(guild_id)
         return self.storage.get_livelist_description(guild_id)
@@ -970,6 +1106,8 @@ class dataMan:
         assert style.lower() in ['classic', 'minimal', 'pinned', 'compact', 'pinned-minimal'], "Style must be valid"
         assert type(guild_id) is int, "Guild ID must be an integer"
 
+        # As the new style is set (which is not a custom one) We remove the custom style (if its set)
+        # So the custom doesn't over-ride preset.
         self.save_livelist_format(guild_id, None)
 
         return self.storage.set_livechannel_style(style, guild_id)

@@ -1,5 +1,6 @@
 from library.live_task_channel import livetasks
 from library.parsing import validate_deadline
+from library.perms import perms
 from cogs.guild_tasks.group import group
 from library.storage import dataMan
 import lightbulb
@@ -51,6 +52,13 @@ async def create_cmd(ctx: lightbulb.SlashContext):
     deadline_hmp = ctx.options.deadline_hmp
     deadline_date = ctx.options.deadline_date
     category = ctx.options.category
+
+    if perms().can_interact_tasks(user_id=ctx.author.id, guild_id=ctx.guild_id) is False:
+        await ctx.respond(
+            embed=perms.embeds.gen_interaction_tasks_embed(),
+            flags=hikari.MessageFlag.EPHEMERAL
+        )
+        return
 
     deadline_obj = validate_deadline(deadline_date, deadline_hmp)
     if isinstance(deadline_obj, str):

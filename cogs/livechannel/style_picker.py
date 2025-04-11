@@ -2,6 +2,7 @@ from cogs.livechannel.views.style_sel_view import view as styleview
 from cogs.livechannel.group import group
 from library.botapp import miru_client
 from library.storage import dataMan
+from library.perms import perms
 import lightbulb
 import hikari
 
@@ -24,6 +25,15 @@ dm = dataMan()
 @lightbulb.command(name='textstyle', description="Designate a live channel for your servers tasks.")
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def command(ctx: lightbulb.SlashContext):
+    allowed = await perms.is_privileged(
+        guild_id=ctx.guild_id,
+        user_id=ctx.author.id,
+        permission=dm.get_guild_configperm(ctx.guild_id)
+    )
+    if not allowed:
+        await perms.embeds.insufficient_perms(ctx, missing_perm="Manage Server")
+        return
+
     style: hikari.GuildChannel = ctx.options.style
 
     if not style:

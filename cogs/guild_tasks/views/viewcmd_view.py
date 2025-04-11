@@ -1,4 +1,5 @@
 from library.storage import dataMan
+from library.perms import perms
 import hikari
 import miru
 
@@ -84,14 +85,16 @@ class view_cmd_view:
         return embed, task_counter
 
     # noinspection PyMethodParameters
-    def init_view(viewself) -> miru.view:
+    async def init_view(viewself, user_id) -> miru.view:
         task_id = viewself.task_id
         dm = dataMan()
+
+        buttons_disabled:bool = not await perms().can_interact_tasks(viewself.guild_id, user_id=user_id)
 
         # noinspection PyUnusedLocal
         class mainview(miru.View):
             # Define a new Button with the Style of success (Green)
-            @miru.button(label="Toggle helping", style=hikari.ButtonStyle.SUCCESS)
+            @miru.button(label="Toggle helping", style=hikari.ButtonStyle.SUCCESS, disabled=buttons_disabled)
             async def tgl_helping_button(self, ctx: miru.ViewContext, button: miru.Button) -> None:
                 contributors = dm.get_contributors(task_id=int(task_id))
                 if not ctx.author.id in contributors:
@@ -114,13 +117,13 @@ class view_cmd_view:
                         embed=embed
                     )
                 else:
-                    dm.remove_contributor(task_id=int(task_id), user_id=int(ctx.author.id))
+                    dm.remove_contributor(task_id=int(task_id), user_id=int(ctx.author.id), guild_id=ctx.guild_id)
                     embed = viewself.generate_task_embed(int(ctx.author.id))[0]
                     await ctx.edit_response(
                         embed=embed
                     )
 
-            @miru.button(label="Toggle Done", style=hikari.ButtonStyle.SUCCESS)
+            @miru.button(label="Toggle Done", style=hikari.ButtonStyle.SUCCESS, disabled=buttons_disabled)
             async def tgl_done_button(self, ctx: miru.ViewContext, button: miru.Button) -> None:
                 completed = dm.get_is_task_completed(task_id_or_name=task_id)
 
@@ -139,7 +142,7 @@ class view_cmd_view:
 
             # Define a new Button that when pressed will stop the view
             # & invalidate all the buttons in this view
-            @miru.button(label="Exit", style=hikari.ButtonStyle.DANGER)
+            @miru.button(label="Exit", style=hikari.ButtonStyle.DANGER, disabled=buttons_disabled)
             async def stop_button(self, ctx: miru.ViewContext, button: miru.Button) -> None:
                 await ctx.edit_response(
                     embed=viewself.generate_task_embed(int(ctx.author.id))[0],

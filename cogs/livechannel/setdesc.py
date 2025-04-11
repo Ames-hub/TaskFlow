@@ -1,5 +1,6 @@
 from cogs.livechannel.views.set_desc_view import SetDescModal
 from library.live_task_channel import livetasks
+from library.perms import perms
 from cogs.livechannel.group import group
 from library.botapp import miru_client
 from library.storage import dataMan
@@ -21,6 +22,14 @@ dm = dataMan()
 @lightbulb.command(name='setdesc', description="Set a description for your live list.", pass_options=True)
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def command(ctx: lightbulb.SlashContext, description:str):
+    allowed = await perms.is_privileged(
+        guild_id=ctx.guild_id,
+        user_id=ctx.author.id,
+        permission=dm.get_guild_configperm(ctx.guild_id)
+    )
+    if not allowed:
+        await perms.embeds.insufficient_perms(ctx, missing_perm="Manage Server")
+        return
 
     if description is None:
         modal = SetDescModal()

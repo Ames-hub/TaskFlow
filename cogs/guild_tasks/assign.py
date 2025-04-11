@@ -1,4 +1,5 @@
 from library.live_task_channel import livetasks
+from library.perms import perms
 from cogs.guild_tasks.group import group
 from library.storage import dataMan
 import lightbulb
@@ -24,6 +25,16 @@ plugin = lightbulb.Plugin(__name__)
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def assign_cmd(ctx: lightbulb.SlashContext, task_id:int, user:hikari.User):
     dm = dataMan()
+
+    # Todo: make needing a permission to assign or unassign a task to someone toggleable.
+    allowed = await perms.is_privileged(
+        guild_id=ctx.guild_id,
+        user_id=ctx.author.id,
+        permission=dm.get_guild_configperm(ctx.guild_id)
+    )
+    if not allowed:
+        await perms.embeds.insufficient_perms(ctx, missing_perm="Manage Server")
+        return
 
     tasks_list = dm.get_todo_items(
         identifier=task_id,

@@ -41,11 +41,10 @@ async def view_cmd(ctx: lightbulb.SlashContext):
             flags=hikari.MessageFlag.EPHEMERAL
         )
     else:
-        viewmenu = view.init_view()
+        viewmenu = await view.init_view(user_id=ctx.author.id)
         await ctx.respond(flags=hikari.MessageFlag.EPHEMERAL, embed=embed, components=viewmenu.build())
         miru_client.start_view(viewmenu)
         await viewmenu.wait()
-
 
 def load(bot: lightbulb.BotApp) -> None:
     bot.add_plugin(plugin)

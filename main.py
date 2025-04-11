@@ -28,6 +28,8 @@ logging.basicConfig(
 from library.botapp import botapp
 
 # Loads the commands
+botapp.load_extensions_from("cogs/guild_permissions/")
+# botapp.load_extensions_from("cogs/task_incharge/")
 botapp.load_extensions_from("cogs/guild_tasks/")
 botapp.load_extensions_from("cogs/livechannel/")
 botapp.load_extensions_from("cogs/listeners/")
@@ -53,5 +55,7 @@ botapp.d['livelist_styles'] = {}
 botapp.d['DEBUG'] = DEBUG
 
 botapp.d['show_x_cache'] = {}
+
+botapp.d['guild_owner_ids_cache'] = {}
 
 botapp.run(shard_count=3 if DEBUG is False else 1)

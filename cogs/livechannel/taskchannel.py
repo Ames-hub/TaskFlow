@@ -1,6 +1,7 @@
 from library.live_task_channel import livetasks
 from cogs.livechannel.group import group
 from library.storage import dataMan
+from library.perms import perms
 import lightbulb
 import hikari
 
@@ -18,6 +19,15 @@ plugin = lightbulb.Plugin(__name__)
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def command(ctx: lightbulb.SlashContext):
     task_channel: hikari.GuildChannel = ctx.options.channel
+
+    allowed = await perms.is_privileged(
+        guild_id=ctx.guild_id,
+        user_id=ctx.author.id,
+        permission=dataMan().get_guild_configperm(ctx.guild_id)
+    )
+    if not allowed:
+        await perms.embeds.insufficient_perms(ctx, missing_perm="Manage Server")
+        return
 
     if task_channel.type != hikari.ChannelType.GUILD_TEXT:
         await ctx.respond("The task channel must be a text channel.")

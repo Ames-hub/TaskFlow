@@ -1,4 +1,5 @@
 from library.live_task_channel import livetasks
+from library.perms import perms
 from cogs.guild_tasks.group import group
 from library.storage import dataMan
 import lightbulb
@@ -19,6 +20,16 @@ plugin = lightbulb.Plugin(__name__)
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def cmd(ctx: lightbulb.SlashContext, status):
     dm = dataMan()
+
+    allowed = await perms.is_privileged(
+        guild_id=ctx.guild_id,
+        user_id=ctx.author.id,
+        permission=dm.get_guild_configperm(ctx.guild_id)
+    )
+    if not allowed:
+        await perms.embeds.insufficient_perms(ctx, missing_perm="Manage Server")
+        return
+
     status = status.lower()
     if status == "yes":
         status = True
