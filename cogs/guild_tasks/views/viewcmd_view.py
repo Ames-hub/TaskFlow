@@ -84,6 +84,7 @@ class view_cmd_view:
 
         return embed, task_counter
 
+    # TODO: Fix the bug where if you run the view and the permissions change for who can interact with tasks, it still allows you to interact
     # noinspection PyMethodParameters
     async def init_view(viewself, user_id) -> miru.view:
         task_id = viewself.task_id

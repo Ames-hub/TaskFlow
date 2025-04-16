@@ -15,6 +15,7 @@ async def cmd(ctx: lightbulb.SlashContext):
     dm = dataMan()
 
     can_interact = await perm.can_interact_tasks(user_id=ctx.author.id, guild_id=ctx.guild_id)
+    is_admin = hikari.Permissions.ADMINISTRATOR in await perm.get_user_permissions(user_id=ctx.author.id, guild_id=ctx.guild_id)
 
     embed = (
         hikari.Embed(
@@ -22,7 +23,7 @@ async def cmd(ctx: lightbulb.SlashContext):
             description="Your current authentication level is as described.",
         )
     )
-    if can_interact:
+    if can_interact or is_admin:
         embed.add_field(
             name="Can interact with tasks",
             value="You can create, delete, edit, complete and contribute to any task."
@@ -36,7 +37,7 @@ async def cmd(ctx: lightbulb.SlashContext):
 
     can_configure_bot = perms.can_configure_bot(ctx.guild_id, ctx.author.id)
 
-    if can_configure_bot:
+    if can_configure_bot or is_admin:
         embed.add_field(
             name="You can Configure the Bot",
             value="All bot configuration commands are open to your access."

@@ -935,16 +935,17 @@ class dataMan:
             raise ValueError(f"Permission not string! Got {type(permission)} ({permission})")
 
         permission_list = [
-            'administrator'
-            'manage server'
-            'none'
+            'administrator',
+            'manage server',
+            'none',
+            None
         ]
 
-        if not permission in permission_list:
-            if permission == "none":
-                permission = None
+        if permission not in permission_list:
+            raise ValueError(f"Invalid permission, outside of accepted list! {permission}")
 
-            raise ValueError(f"Wrong permission! {permission}")
+        if permission == 'none':
+            permission = None
 
         return self.storage.set_guild_configperm(guild_id, permission)
 

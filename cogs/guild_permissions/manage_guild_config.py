@@ -13,25 +13,20 @@ plugin = lightbulb.Plugin(__name__)
     description="Which permission do you need to configure the bot for the server?",
     required=True,
     type=hikari.OptionType.STRING,
-    choices=['Administrator', 'Manage Server', 'none']
+    choices=['Administrator', 'Manage Server', 'None']
 )
 @lightbulb.command(name='configperm', description='Set which permission is used to enable configuration of the bot.', pass_options=True)
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def cmd(ctx: lightbulb.SlashContext, permission:str):
     dm = dataMan()
+    permission = permission.lower()
 
     allowed = await perms.is_privileged(hikari.Permissions.ADMINISTRATOR, guild_id=ctx.guild_id, user_id=ctx.author.id)
     if not allowed:
         await perms.embeds.insufficient_perms(ctx, 'administrator')
         return
 
-    permission_crossref = {
-        'administrator': hikari.Permissions.ADMINISTRATOR,
-        'manage server': hikari.Permissions.MANAGE_GUILD,
-        'none': None
-    }
-
-    success = dm.set_guild_configperm(ctx.guild_id, permission_crossref[permission])
+    success = dm.set_guild_configperm(ctx.guild_id, permission)
 
     if success:
         await ctx.respond(
