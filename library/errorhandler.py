@@ -3,9 +3,12 @@ import lightbulb
 import traceback
 import datetime
 import logging
+import dotenv
 import hikari
 import io
+import os
 
+dotenv.load_dotenv('.env')
 plugin = lightbulb.Plugin(__name__)
 
 @plugin.listener(lightbulb.CommandErrorEvent)
@@ -46,7 +49,8 @@ async def on_error(event: lightbulb.CommandErrorEvent) -> None:
     else:
         await event.context.respond("An error occurred while running this command :(\nPlease try again later once we solve the problem.", flags=hikari.MessageFlag.EPHEMERAL)
 
-    dmc = await event.bot.rest.create_dm_channel(913574723475083274)  # The bot maintainer's ID.
+    maintainer_id = int(os.getenv("{PRIMARY_MAINTAINER_ID"))
+    dmc = await event.bot.rest.create_dm_channel(maintainer_id)  # The bot maintainer's ID.
 
     # Forms an attachment with the traceback using bytesIO library
     data = io.BytesIO(traceback.format_exc().encode("utf-8"))
@@ -57,7 +61,7 @@ async def on_error(event: lightbulb.CommandErrorEvent) -> None:
 
     await dmc.send(
         hikari.Embed(
-            title="Error!",
+            title=f"Error in guild ID {event.context.guild_id} :(",
             description=f"Command: {event.context.command.name}\n",
             timestamp=datetime.datetime.now(),
         )

@@ -99,7 +99,6 @@ class view:
                                         'added_by': 913574723475083274,
                                         'completed_on': datetime.datetime.now(),
                                     },
-                                    contrib_count=32
                                 )
                             )
                         )
