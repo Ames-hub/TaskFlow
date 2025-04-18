@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from library.storage import dataMan
 import lightbulb
 import logging
+import random
 import hikari
 
 CACHE_EXPIRATION_TIME = timedelta(seconds=15)
@@ -27,8 +28,8 @@ class livetasks:
                 completed_at = task[4]  # eg, 2024-07-15 18:52:16. Type str
                 # Converts to datetime obj
                 completed_at = datetime.strptime(completed_at, "%Y-%m-%d %H:%M:%S")
-                # If the task was completed more than 7 days ago, it will be filtered out
-                if datetime.now() - completed_at > timedelta(days=7):
+                # If the task was completed more than some days ago, it will be filtered out
+                if datetime.now() - completed_at > timedelta(days=3):
                     continue
                 else:
                     completed_tasks.append(task)
@@ -104,11 +105,14 @@ class livetasks:
         incomplete_tasks.sort(key=lambda task: task[8] is not None and task[8] != "")
         completed_tasks.sort(key=lambda task: task[8] is not None and task[8] != "")
 
+        # A system Batch ID used to keep track of pages in the embed
+        batch_id = random.randint(1000000000, 9999999999)
+
         # Add completed tasks to the embed
         failed_compile_count = 0
         failed_compile_ids = []
         for task in completed_tasks:
-            addition = livetasks.add_task_field(task, embed, style)
+            addition = livetasks.add_task_field(task, embed, style, batch_id)
             if addition is False:
                 failed_compile_count =+ 1
                 failed_compile_ids.append(task[3])
@@ -116,7 +120,7 @@ class livetasks:
             else:
                 embed = addition
 
-        # Categorize remaining incomplete tasks
+        # Categorise remaining incomplete tasks
         category_sorted_tasks = {}
         for task in incomplete_tasks:
             category = task[8] or ""  # Empty category comes first
@@ -127,7 +131,7 @@ class livetasks:
         # Add sorted tasks to the embed
         for category in sorted(category_sorted_tasks.keys(), key=lambda x: x != ""):
             for task in category_sorted_tasks[category]:
-                addition = livetasks.add_task_field(task, embed, style)
+                addition = livetasks.add_task_field(task, embed, style, batch_id)
                 if addition is False:
                     failed_compile_count =+ 1
                     failed_compile_ids.append(task[3])
@@ -151,7 +155,7 @@ class livetasks:
         return embed
 
     @staticmethod
-    def add_task_field(task:tuple, embed, style):
+    def add_task_field(task:tuple, embed, style, batch_id:int):
         task_name = task[0]
         task_desc = task[1]
         completed = bool(task[2])
@@ -230,7 +234,36 @@ class livetasks:
                                       f"Deadline: {deadline}, type: {type(deadline)} ", err)
                         return False
 
-        efield = embed.fields[0].value
+        # Ensures >1024 letters do not go on 1 page
+        page_no = 0
+        page_threshold = 900
+        amount_added = len(task_name) + len(task_desc) + len(deadline_txt) + len(completed_text) + len(f"<@{added_by}>") + len(contributors)
+        # If amount_added is > 1024, we cannot add it. Period.
+        if amount_added > page_threshold:
+            return False
+
+        if plugin.bot.d.get(f'batch-{batch_id}', None) is None:
+            # If it doesn't exist, make it.
+            plugin.bot.d[f'batch-{batch_id}'] = {}
+            plugin.bot.d[f'batch-{batch_id}'][page_no] = amount_added
+            plugin.bot.d[f'batch-{batch_id}']['current_page'] = 0
+        else:
+            # The page must have been saved, so we retrieve it.
+            page_no = plugin.bot.d[f'batch-{batch_id}']['current_page']
+            # Else, add the total. Increment page if needed.
+            if plugin.bot.d[f'batch-{batch_id}'][page_no] + amount_added > page_threshold:
+                page_no += 1
+                plugin.bot.d[f'batch-{batch_id}']['current_page'] = page_no
+                plugin.bot.d[f'batch-{batch_id}'][page_no] = 0
+                # Creates a new embed field for the page
+                embed.add_field(
+                    name=f"Details (p{page_no})",
+                    value="",
+                    inline=False
+                )
+            plugin.bot.d[f'batch-{batch_id}'][page_no] += amount_added
+
+        efield = embed.fields[page_no].value
 
         if category is not None and category != "":
             if style in ['classic']:

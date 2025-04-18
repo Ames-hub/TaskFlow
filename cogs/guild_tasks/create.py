@@ -36,7 +36,8 @@ plugin = lightbulb.Plugin(__name__)
     description="What's the task? Describe here in as much detail as you like.",
     required=False,
     default='...',
-    type=hikari.OptionType.STRING
+    type=hikari.OptionType.STRING,
+    max_length=2000
 )
 @lightbulb.option(
     name='name',
@@ -53,7 +54,7 @@ async def create_cmd(ctx: lightbulb.SlashContext):
     deadline_date = ctx.options.deadline_date
     category = ctx.options.category
 
-    if perms().can_interact_tasks(user_id=ctx.author.id, guild_id=ctx.guild_id) is False:
+    if await perms().can_interact_tasks(user_id=ctx.author.id, guild_id=ctx.guild_id) is False:
         await ctx.respond(
             embed=perms.embeds.gen_interaction_tasks_embed(),
             flags=hikari.MessageFlag.EPHEMERAL

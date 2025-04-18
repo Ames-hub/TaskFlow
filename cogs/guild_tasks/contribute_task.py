@@ -20,7 +20,7 @@ plugin = lightbulb.Plugin(__name__)
 async def command(ctx: lightbulb.SlashContext, task_id:int):
     dm = dataMan()
 
-    if perms().can_interact_tasks(user_id=ctx.author.id, guild_id=ctx.guild_id) is False:
+    if await perms().can_interact_tasks(user_id=ctx.author.id, guild_id=ctx.guild_id) is False:
         await ctx.respond(
             embed=perms.embeds.gen_interaction_tasks_embed(),
             flags=hikari.MessageFlag.EPHEMERAL

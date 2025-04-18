@@ -15,11 +15,29 @@ class main_view:
     def gen_init_embed(self):
         task_list = ""
         self.task_data = self.get_task_data()
+
+        # Tests to see how long the descriptions are and if they should be included in the embed
+        total_length_trunciated = 0
+        for task in self.task_data:
+            task_desc = self.task_data[task]['description']
+            if len(task_desc) > 400:
+                task_desc = task_desc[:400] + "... (trunciated)"
+
+            total_length_trunciated += len(task_desc)
+
+        include_desc = True
+        if total_length_trunciated > 600:
+            include_desc = False
+
         for task in self.task_data:
             task = self.task_data[task]
             completed_text = '❌' if not task["completed"] else '✅'
             q_or_s = "'" if len(task['description']) > 0 else ""
-            task_list += f"({str(task['id'])}) {task['name']} {q_or_s}{task['description']}{q_or_s} {completed_text}\n"
+            if not include_desc:
+                q_or_s = ""
+            if len(task['description']) > 100:
+                task['description'] = task['description'][:100] + "... (trunciated)"
+            task_list += f"({str(task['id'])}) {task['name']} {q_or_s}{task['description'] if include_desc else ""}{q_or_s} {completed_text}\n"
 
         return (
             hikari.Embed(
@@ -75,7 +93,8 @@ class main_view:
                         label="Description",
                         placeholder="What's the new description?",
                         required=False,
-                        style=hikari.TextInputStyle.SHORT
+                        style=hikari.TextInputStyle.PARAGRAPH,
+                        max_length=2000,
                     )
                     new_category = miru.TextInput(
                         label="Category",

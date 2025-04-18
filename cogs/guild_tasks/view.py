@@ -31,18 +31,25 @@ async def view_cmd(ctx: lightbulb.SlashContext):
         )
         return False
 
-    embed, task_counter = view.generate_task_embed(int(ctx.author.id))
+    data = view.generate_task_embed(int(ctx.author.id))
+    task_counter = data['task_c']
+    embed:hikari.Embed = data['embed']
+    attachment = data['attached']
 
     if task_counter != 1:
         if task_counter != 0:
-            embed.set_footer("There are too many tasks to track. Please use its ID to track a specific task.")
+            embed.add_field(
+                name="Too many tasks.",
+                value="There are too many tasks to track. Please use its ID to track the specific task."
+            )
         await ctx.respond(
             embed,
-            flags=hikari.MessageFlag.EPHEMERAL
+            flags=hikari.MessageFlag.EPHEMERAL,
+            attachment=attachment
         )
     else:
         viewmenu = await view.init_view(user_id=ctx.author.id)
-        await ctx.respond(flags=hikari.MessageFlag.EPHEMERAL, embed=embed, components=viewmenu.build())
+        await ctx.respond(flags=hikari.MessageFlag.EPHEMERAL, embed=embed, components=viewmenu.build(), attachment=attachment)
         miru_client.start_view(viewmenu)
         await viewmenu.wait()
 

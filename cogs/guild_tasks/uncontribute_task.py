@@ -18,7 +18,7 @@ plugin = lightbulb.Plugin(__name__)
 @lightbulb.command(name='uncontribute', description="Stop contributing to a task", pass_options=True)
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def command(ctx: lightbulb.SlashContext, task_id:int):
-    if perms().can_interact_tasks(user_id=ctx.author.id, guild_id=ctx.guild_id) is False:
+    if await perms().can_interact_tasks(user_id=ctx.author.id, guild_id=ctx.guild_id) is False:
         await ctx.respond(
             embed=perms.embeds.gen_interaction_tasks_embed(),
             flags=hikari.MessageFlag.EPHEMERAL
