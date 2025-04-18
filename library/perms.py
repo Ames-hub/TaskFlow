@@ -81,7 +81,7 @@ class perms:
         taskhelper_role_id = dataMan().get_taskmaster_role(guild_id)
 
         if taskhelper_role_id is not None:
-            # The task interaction's have been locked to a role by admins. Check if user has the role.
+            # The task interaction has been locked to a role by admins. Check if the user has the role.
             roles = member.get_roles()
             for role in roles:
                 # Allow admins and task helpers
@@ -98,7 +98,7 @@ class perms:
         @staticmethod
         async def insufficient_perms(interaction_context:lightbulb.Context|lightbulb.SlashContext, missing_perm=None):
             """
-            Builds an embed and responds in the function.
+            Builds an embed and responds to the interaction context with it.
             :param interaction_context: The slash context for the command.
             :param missing_perm:
             :return:

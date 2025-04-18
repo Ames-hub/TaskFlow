@@ -58,4 +58,9 @@ botapp.d['show_x_cache'] = {}
 
 botapp.d['guild_owner_ids_cache'] = {}
 
-botapp.run(shard_count=3 if DEBUG is False else 1)
+botapp.d['servercount_memory'] = {
+    'count': None,
+    'last_updated': None,
+}
+
+botapp.run(shard_count=5 if DEBUG is False else 1)
