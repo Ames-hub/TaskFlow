@@ -1,3 +1,4 @@
+from library.botapp import botapp
 from library.storage import dataMan
 import lightbulb
 import hikari
@@ -35,16 +36,7 @@ class perms:
         member:hikari.Member = await plugin.bot.rest.fetch_member(guild=guild_id, user=user_id)
 
         # If the user is the owner of the guild, return all permissions.
-        if plugin.bot.d['guild_owner_ids_cache'].get(guild_id, None) is None:
-            guild = member.get_guild()
-            if guild is not None:
-                owner_id = guild.owner_id
-            else:
-                guild = await plugin.bot.rest.fetch_guild(guild_id)
-                owner_id = guild.owner_id
-            plugin.bot.d['guild_owner_ids_cache'][guild_id] = owner_id
-        else:
-            owner_id = plugin.bot.d['guild_owner_ids_cache'][guild_id]
+        owner_id = perms.get_guild_owner_id(guild_id)
 
         if owner_id == member.id:
             return hikari.Permissions.all_permissions()
@@ -60,6 +52,21 @@ class perms:
 
         return perms_list
 
+    @staticmethod
+    async def get_guild_owner_id(guild_id):
+
+        if plugin.bot.d['guild_owner_ids_cache'].get(guild_id, None) is None:
+            guild = botapp.cache.get_guild(guild_id)
+            if guild is not None:
+                owner_id = guild.owner_id
+            else:
+                guild = await plugin.bot.rest.fetch_guild(guild_id)
+                owner_id = guild.owner_id
+            plugin.bot.d['guild_owner_ids_cache'][guild_id] = owner_id
+        else:
+            owner_id = plugin.bot.d['guild_owner_ids_cache'][guild_id]
+
+        return int(owner_id)
 
     @staticmethod
     async def can_configure_bot(guild_id:int, user_id:int):
@@ -83,6 +90,9 @@ class perms:
         if taskhelper_role_id is not None:
             # The task interaction has been locked to a role by admins. Check if the user has the role.
             roles = member.get_roles()
+            guild_owner_id = await perms.get_guild_owner_id(guild_id)
+            if guild_owner_id == user_id:
+                return True
             for role in roles:
                 # Allow admins and task helpers
                 if hikari.Permissions.ADMINISTRATOR in role.permissions:

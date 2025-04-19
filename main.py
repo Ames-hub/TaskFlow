@@ -30,12 +30,17 @@ from library.botapp import botapp
 # Loads the commands
 botapp.load_extensions_from("cogs/guild_permissions/")
 # botapp.load_extensions_from("cogs/task_incharge/")
+botapp.load_extensions_from("cogs/task_templates/")
 botapp.load_extensions_from("cogs/guild_tasks/")
 botapp.load_extensions_from("cogs/livechannel/")
 botapp.load_extensions_from("cogs/listeners/")
 botapp.load_extensions_from("cogs/tasks/")
 botapp.load_extensions_from("cogs/other")
 botapp.load_extensions_from("library/")
+
+# MAIN VARIABLES
+botapp.d['max_name_length'] = 100
+botapp.d['max_desc_length'] = 2000
 
 # Creates a program-wide list to store message IDs from the bot to easily detect if we should
 # Inspect a message's reactions to determine its completion status (and a couple other things)

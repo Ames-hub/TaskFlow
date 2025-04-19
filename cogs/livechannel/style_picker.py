@@ -1,4 +1,5 @@
 from cogs.livechannel.views.style_sel_view import view as styleview
+from library.live_task_channel import livetasks
 from cogs.livechannel.group import group
 from library.botapp import miru_client
 from library.storage import dataMan
@@ -85,6 +86,9 @@ async def command(ctx: lightbulb.SlashContext):
                 ),
                 flags=hikari.MessageFlag.EPHEMERAL
             )
+
+            if ctx.bot.d['DEBUG'] is True:
+                await livetasks.update(ctx.guild_id)
         else:
             await ctx.respond(
                 hikari.Embed(

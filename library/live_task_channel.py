@@ -279,25 +279,45 @@ class livetasks:
         if custom_live_text is None:
             # Quote or space
             q_or_s = '"' if len(task_desc) > 0 else ''
-            no_deadline_nl = "\n" if len(deadline_txt) == 0 else ""
+
             if style == 'classic':
-                efield = efield + f"{task_name}\n(ID: {identifier})\n"
-                efield = efield + f"{task_desc}{"\n" if len(task_desc) != 0 else ""}{completed_text}{"\n" if show_x else ""}Added by: <@{added_by}>\n{len(contributors)} helping\n{no_deadline_nl}"
+                efield += f"{task_name}\n"
+                efield += f"(ID: {identifier})\n"
+                efield +=  f"{task_desc}{"\n" if len(task_desc) != 0 else ""}"
+                efield += f"{completed_text}{"\n" if show_x else ""}"
+                efield += f"Added by: <@{added_by}>\n"
+                efield += f"{len(contributors)} helping\n"
+
+                if assigned_user is not None:
+                    efield += f"Assigned to <@{assigned_user}>\n{"\n" if len(deadline_txt) == 0 else ""}"
+                if len(deadline_txt) > 0:
+                    # Checks if the last character is a newline
+                    is_newline = efield[-1] == "\n"
+                    efield += f"{deadline_txt}{"\n\n" if not is_newline else ""}"
+
             elif style == 'minimal':
-                efield = efield + f"({identifier}) {task_name}{" " if show_x else ""}{completed_text}\n{no_deadline_nl}"
+                efield = efield + f"({identifier}){" " if show_x else ""}{completed_text} {task_name}\n{"\n" if len(deadline_txt) == 0 else ""}"
+                if len(deadline_txt) > 0:
+                    efield = efield + f"{deadline_txt}\n\n"
             elif style == 'pinned':
-                efield = efield + f"- ({identifier}) {task_name}{" " if show_x else ""}{completed_text}\n{q_or_s}{task_desc}{q_or_s} {len(contributors)} people helping.\nAdded by <@{added_by}>\n{no_deadline_nl}"
+                efield += f"- ({identifier}) {task_name}{" " if show_x else ""}{completed_text}\n"
+                efield += f"{q_or_s}{task_desc}{q_or_s} {len(contributors)} people helping.\n"
+                efield += f"Added by <@{added_by}>\n"
+
+                if assigned_user is not None:
+                    efield += f"Assigned to <@{assigned_user}>\n{"\n" if len(deadline_txt) == 0 else ""}"
+                if len(deadline_txt) > 0:
+                    # Checks if the last character is a newline
+                    is_newline = efield[-1] == "\n"
+                    efield += f"{deadline_txt}{"\n\n" if not is_newline else ""}"
             elif style == 'pinned-minimal':
-                efield = efield + f"- ({identifier}) {task_name}{" " if show_x else ""}{completed_text}\n{no_deadline_nl}"
+                efield = efield + f"- ({identifier}){" " if show_x else ""}{completed_text} {task_name}\n\n"
             elif style == 'compact':
-                efield = efield + f"({identifier}) {task_name} {completed_text}{" " if show_x else ""}{q_or_s}{task_desc}{q_or_s} {len(contributors)} helping. <@{added_by}>\n{no_deadline_nl}"
+                efield = efield + f"({identifier}) {task_name} {completed_text}{" " if show_x else ""}{q_or_s}{task_desc}{q_or_s} {len(contributors)} helping. <@{added_by}>\n"
+                if len(deadline_txt) > 0:
+                    efield += f"{deadline_txt}\n\n"
             else:
                 raise ValueError("Invalid style")
-
-            if assigned_user is not None:
-                efield = efield + f"Assigned to <@{assigned_user}>\n"
-            if len(deadline_txt) > 0:
-                efield = efield + f"{deadline_txt}\n"
         else:
             efield = efield + f"{parse_livelist_format(custom_live_text, task_id=identifier)}\n"
             if len(deadline_txt) > 0:

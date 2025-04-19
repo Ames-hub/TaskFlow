@@ -1,5 +1,5 @@
 from library.live_task_channel import livetasks
-from library.parsing import validate_deadline
+from library.parsing import parse_deadline
 from library.botapp import miru_client
 from library.storage import dataMan
 import datetime
@@ -128,7 +128,7 @@ class views:
 
                     # The callback function is called after the user hits 'Submit'
                     async def callback(self, ctx: miru.ModalContext) -> None:
-                        deadline_obj = validate_deadline(
+                        deadline_obj = parse_deadline(
                             deadline_date=self.deadline_dmy.value,
                             deadline_hmp=self.deadline_hm.value
                         )

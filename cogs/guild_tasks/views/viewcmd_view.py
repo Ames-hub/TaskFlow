@@ -58,9 +58,6 @@ class view_cmd_view:
             added_by = task[5]
             category = task[8]
 
-            if category is not None:
-                name = f"**{category}**"
-
             completed_text = "Completed: " + ('❌' if not completed else '✅')
 
             # Trunciate description if too long.
@@ -85,6 +82,19 @@ class view_cmd_view:
                     desc_value += f"\nViewer is not contributing to this task."
                 else:
                     desc_value += f"\nViewer did not contribute to this task."
+
+            if category:
+                desc_value += f"\nCategory: {category}"
+
+            contributor_count = len(dataMan().get_contributors(task_id))
+            if contributor_count > 0:
+                desc_value += f"\nContributor count: {contributor_count}"
+
+            in_charge = dataMan().get_task_incharge(task_id)
+            if in_charge:
+                desc_value += f"\nAssigned User: <@{in_charge}>"
+
+            
 
             task_counter += 1
             embed.add_field(

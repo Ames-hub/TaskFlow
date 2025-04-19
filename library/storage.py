@@ -18,8 +18,8 @@ os.makedirs("data", exist_ok=True)
 
 def modernize_db():
     """
-    This function is used to modernize the database to the current version. It will check if the tables exist and
-    if they don't, it will create them. If the tables do exist, it will check if the columns are up to date and if
+    This function is used to modernise the database to the current version. It will check if the tables exist, and
+    if they don't, it will create them. If the tables do exist, it will check if the columns are up to date, and if
     they aren't, it will update them.
 
     :return:
@@ -74,6 +74,15 @@ def modernize_db():
         'guild_configperms': {
             'guild_id': 'INT NOT NULL PRIMARY KEY',
             'permission': 'TEXT DEFAULT NULL'
+        },
+        'task_templates': {
+            'identifier': 'INTEGER PRIMARY KEY AUTOINCREMENT',
+            'guild_id': 'INT NOT NULL',
+            'name': 'TEXT NOT NULL',
+            'task_name': 'TEXT DEFAULT NULL',
+            'task_desc': 'TEXT DEFAULT NULL',
+            'task_category': 'TEXT DEFAULT NULL',
+            'task_deadline': 'DATETIME DEFAULT NULL',
         }
     }
 
@@ -114,6 +123,84 @@ def modernize_db():
 modernize_db()
 
 class sqlite_storage:
+    # noinspection PyTypeChecker
+    @staticmethod
+    def create_task_template(template_name, task_name, task_desc, task_category, task_deadline, guild_id) -> dict:
+        """
+        Returns a dictionary with the task template data.
+
+        Like {success: bool, template_id: int}
+
+        :param guild_id:
+        :param template_name: name of the template.
+        :param task_name: name of the task.
+        :param task_desc: description of the task.
+        :param task_category: category of the task.
+        :param task_deadline: deadline of the task.
+        :return:
+        """
+        conn = sqlite3.connect(guild_filepath)
+        try:
+            cur = conn.cursor()
+            cur.execute(f'''
+            INSERT INTO task_templates (name, task_name, task_desc, task_category, task_deadline, guild_id)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (template_name, task_name, task_desc, task_category, task_deadline, guild_id))
+            template_id = cur.lastrowid
+            conn.commit()
+            return {'success': True, 'template_id': template_id}
+        except sqlite3.OperationalError as e:
+            logging.error(f"An error occurred while creating a task template: {e}")
+            conn.rollback()
+            return {'success': False, 'template_id': None}
+        finally:
+            conn.close()
+
+    @staticmethod
+    def get_task_template(identifier:int|str):
+        # TODO: Make this compatible with the name too.
+
+        conn = sqlite3.connect(guild_filepath)
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT identifier, name, task_name, task_desc, task_category, task_deadline, guild_id FROM task_templates WHERE identifier = ?",
+                (identifier,)
+            )
+            data = cur.fetchone()
+            return {
+                'id': data[0],
+                'name': data[1],
+                'task_name': data[2],
+                'task_desc': data[3],
+                'task_category': data[4],
+                'task_deadline': data[5],
+                'guild_id': data[6]
+            }
+        except sqlite3.OperationalError as err:
+            logging.error(f"An error occurred while getting the task templates: {err}", exc_info=True)
+            conn.rollback()
+            return False
+        finally:
+            conn.close()
+
+    # noinspection PyTypeChecker
+    @staticmethod
+    def delete_task_template(identifier:int) -> bool:
+        conn = sqlite3.connect(guild_filepath)
+        try:
+            cur = conn.cursor()
+            cur.execute(f'''
+                DELETE FROM task_templates WHERE identifier = ? -- Due to sensitivity, only allow task ID integer
+            ''', (identifier,))
+            conn.commit()
+        except sqlite3.OperationalError as e:
+            logging.error(f"An error occurred while creating a task template: {e}")
+            conn.rollback()
+            return False
+        finally:
+            conn.close()
+
     @staticmethod
     def set_guild_configperm(guild_id, permission):
         conn = sqlite3.connect(guild_filepath)
@@ -642,8 +729,8 @@ class sqlite_storage:
     @staticmethod
     def get_todo_items(filter_for='*', guild_id=None, user_id=None, identifier=None):
         """
-        Gets the to do items from the database.
-        :param filter_for: The filter to apply to the to do items. Can be 'incompleted', 'completed', or '*'.
+        Gets the to-do items from the database.
+        :param filter_for: The filter to apply to the to-do items. Can be 'incompleted', 'completed', or '*'.
         :param guild_id: The guild ID to get the to do items for.
         :param user_id: The user ID to get the to do items for.
         :param identifier: The identifier to filter the to do items by. Can be the task ID or the task name.
@@ -879,7 +966,7 @@ class sqlite_storage:
         finally:
             conn.close()
 
-        # Organize the data into a dictionary
+        # Organise the data into a dictionary
         data = {}
         for task in task_data:
             data[task[3]] = {
@@ -914,8 +1001,6 @@ class sqlite_storage:
         finally:
             conn.close()
 
-
-
 # noinspection PyNoneFunctionAssignment
 class dataMan:
     """
@@ -923,6 +1008,48 @@ class dataMan:
     """
     def __init__(self):
         self.storage = sqlite_storage
+
+    def create_task_template(self, template_name, task_name, task_desc, task_category, task_deadline:datetime|None, guild_id):
+        """
+        Creates a task template after validating the input data.
+    
+        :param guild_id:
+        :param template_name: The name of the template
+        :param task_name: The name of the task
+        :param task_desc: The description of the task
+        :param task_category: The category of the task
+        :param task_deadline: The deadline of the task
+        :return: Dictionary with success status and template ID
+        """
+        template_name = str(template_name).strip()
+        if task_name is not None:
+            task_name = str(task_name).strip()
+        if task_desc is not None:
+            task_desc = str(task_desc).strip()
+
+        if task_deadline is not None:
+            if not isinstance(task_deadline, datetime):
+                raise ValueError("Task deadline must be a datetime object if provided")
+
+        return self.storage.create_task_template(
+            template_name=template_name,
+            task_name=task_name,
+            task_desc=task_desc,
+            task_category=task_category,
+            task_deadline=task_deadline,
+            guild_id=guild_id
+        )
+
+    def get_task_template(self, identifier):
+        if str(identifier).isnumeric():
+            identifier = int(identifier)
+        else:
+            identifier = str(identifier).strip()
+        return self.storage.get_task_template(identifier)
+
+    def delete_task_template(self, identifier):
+        identifier = int(identifier)
+        return self.storage.delete_task_template(identifier)
 
     def set_guild_configperm(self, guild_id, permission):
         """
@@ -960,6 +1087,7 @@ class dataMan:
                 'none': None
             }
             if data is not None:
+                # noinspection PyTypeChecker
                 return perm_crossref[data]
             else:
                 return None
@@ -1107,7 +1235,7 @@ class dataMan:
         assert style.lower() in ['classic', 'minimal', 'pinned', 'compact', 'pinned-minimal'], "Style must be valid"
         assert type(guild_id) is int, "Guild ID must be an integer"
 
-        # As the new style is set (which is not a custom one) We remove the custom style (if its set)
+        # As the new style is set (which is not custom), We remove the custom style (if it's set)
         # So the custom doesn't over-ride preset.
         self.save_livelist_format(guild_id, None)
 
@@ -1133,7 +1261,7 @@ class dataMan:
 
     def get_allow_late_contrib(self, guild_id:int):
         """
-        Guild only command. Gets the setting for allowing late contributions.
+        Guild-only command. Gets the setting for allowing late contributions.
         :param guild_id: The guild ID to get the setting for.
         :return: The setting for allowing late contributions.
         """
@@ -1142,7 +1270,7 @@ class dataMan:
 
     def set_allow_late_contrib(self, guild_id:int, allow_late_contrib:bool):
         """
-        Guild only command. Sets the setting for allowing late contributions.
+        Guild-only command. Sets the setting for allowing late contributions.
         :param guild_id: The guild ID to set the setting for.
         :param allow_late_contrib: The setting for allowing late contributions.
         :return:
@@ -1165,8 +1293,8 @@ class dataMan:
         :return: False if failed
         :return: True if Succeeded
         :return: -1 if already contributing
-        :return: -2 if late contrib not allowed and tried to contrib
-        :return: -3 if not same server as task
+        :return: -2 if late contrib is not allowed and tried to contrib
+        :return: -3 in a different server as the task
         """
         assert type(user_id) is int, "User ID must be an integer"
         assert type(task_id) is int, "Task ID must be an integer"
@@ -1271,7 +1399,7 @@ class dataMan:
 
     def set_taskchannel(self, guild_id:int, channel_id:int):
         """
-        Guild only command. Sets the channel that has a live-list of tasks.
+        Guild-only command. Sets the channel that has a live-list of tasks.
         :param guild_id: The guild ID where the task channel is.
         :param channel_id: The channel ID to set as the task channel.
         :return:
@@ -1283,7 +1411,7 @@ class dataMan:
     # noinspection PyTypeChecker
     def get_taskchannel(self, guild_id:int) -> int|None :
         """
-        Guild only command. Gets the channel that has a live-list of tasks.
+        Guild-only command. Gets the channel that has a live-list of tasks.
         :param guild_id: The guild ID where the task channel is.
         :return: The channel ID of the task channel.
         """
@@ -1296,7 +1424,7 @@ class dataMan:
 
     def clear_taskchannel(self, guild_id:int):
         """
-        Guild only command. Clears the task channel for the guild.
+        Guild-only command. Clears the task channel for the guild.
         :param guild_id: The guild ID to clear the task channel for.
         :return:
         """

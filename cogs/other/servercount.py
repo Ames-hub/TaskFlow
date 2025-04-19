@@ -8,7 +8,7 @@ plugin = lightbulb.Plugin(__name__)
 @lightbulb.app_command_permissions(dm_enabled=True)
 @lightbulb.command(name='servercount', description='Get a number of servers the bot is in.')
 @lightbulb.implements(lightbulb.SlashCommand)
-async def github_linking(ctx: lightbulb.SlashContext):
+async def server_count(ctx: lightbulb.SlashContext):
     # A basic cache system to prevent spamming the API
     if ctx.bot.d['servercount_memory']['last_updated'] is not None:
         if ctx.bot.d['servercount_memory']['last_updated'] - datetime.datetime.now() < datetime.timedelta(minutes=5):

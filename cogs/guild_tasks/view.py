@@ -11,7 +11,7 @@ plugin = lightbulb.Plugin(__name__)
 @lightbulb.option(
     name='name_or_id',
     description='What is the name or ID for the task you want to view?',
-    required=False,
+    required=True,
     default=None
 )
 @lightbulb.command(name='view', description="View a tasks details.")

@@ -51,7 +51,7 @@ def parse_livelist_format(format_text:str, task_id:int=None, task_item:dict=None
 
     return format_text
 
-def validate_deadline(deadline_date: str = None, deadline_hmp: str = None):
+def parse_deadline(deadline_date: str = None, deadline_hmp: str = None):
     """
     Validates if a string is good to be converted to a datetime object.
     Returns a datetime object based on the strings if it is

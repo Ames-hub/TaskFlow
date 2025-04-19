@@ -1,5 +1,5 @@
 from library.live_task_channel import livetasks
-from library.parsing import validate_deadline
+from library.parsing import parse_deadline
 from library.perms import perms
 from cogs.guild_tasks.group import group
 from library.storage import dataMan
@@ -43,6 +43,7 @@ plugin = lightbulb.Plugin(__name__)
     name='name',
     description='What name do you want to give the item?',
     required=True,
+    max_length=100,
     type=hikari.OptionType.STRING
 )
 @lightbulb.command(name='create', description='Create an item for your guild\'s to-do list.')
@@ -61,7 +62,7 @@ async def create_cmd(ctx: lightbulb.SlashContext):
         )
         return
 
-    deadline_obj = validate_deadline(deadline_date, deadline_hmp)
+    deadline_obj = parse_deadline(deadline_date, deadline_hmp)
     if isinstance(deadline_obj, str):
         await ctx.respond(deadline_obj)
         return

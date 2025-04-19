@@ -1,5 +1,5 @@
 from library.live_task_channel import livetasks
-from library.botapp import miru_client
+from library.botapp import miru_client, botapp
 from library.storage import dataMan
 import hikari
 import miru
@@ -87,14 +87,15 @@ class main_view:
                         label="Name",
                         placeholder="What's the new name of the task?",
                         required=False,
-                        style=hikari.TextInputStyle.SHORT
+                        style=hikari.TextInputStyle.SHORT,
+                        max_length=botapp.d['max_name_length'],
                     )
                     new_desc = miru.TextInput(
                         label="Description",
                         placeholder="What's the new description?",
                         required=False,
                         style=hikari.TextInputStyle.PARAGRAPH,
-                        max_length=2000,
+                        max_length=botapp.d['max_desc_length'],
                     )
                     new_category = miru.TextInput(
                         label="Category",
