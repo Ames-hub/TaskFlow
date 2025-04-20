@@ -19,6 +19,9 @@ dm = dataMan()
     required=False,
     default=None
 )
+@lightbulb.add_checks(
+    lightbulb.guild_only
+)
 @lightbulb.command(name='setdesc', description="Set a description for your live list.", pass_options=True)
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def command(ctx: lightbulb.SlashContext, description:str):

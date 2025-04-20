@@ -14,6 +14,9 @@ plugin = lightbulb.Plugin(__name__)
     required=True,
     default=None
 )
+@lightbulb.add_checks(
+    lightbulb.guild_only
+)
 @lightbulb.command(name='view', description="View a tasks details.")
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def view_cmd(ctx: lightbulb.SlashContext):

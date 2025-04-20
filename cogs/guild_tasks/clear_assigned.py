@@ -15,6 +15,9 @@ plugin = lightbulb.Plugin(__name__)
     required=True,
     default=None
 )
+@lightbulb.add_checks(
+    lightbulb.guild_only
+)
 @lightbulb.command(name='unassign', description="Remove from a task who's been assigned", pass_options=True)
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def assign_cmd(ctx: lightbulb.SlashContext, task_id:int):

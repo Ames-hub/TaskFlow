@@ -15,6 +15,9 @@ plugin = lightbulb.Plugin(__name__)
     type=hikari.OptionType.USER,
     default=None
 )
+@lightbulb.add_checks(
+    lightbulb.guild_only
+)
 @lightbulb.command(
     name='workcount',
     description="Count the amount of tasks a user has contributed to.",

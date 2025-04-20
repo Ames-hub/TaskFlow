@@ -15,6 +15,9 @@ plugin = lightbulb.Plugin(__name__)
     required=True,
     type=hikari.OptionType.INTEGER
 )
+@lightbulb.add_checks(
+    lightbulb.guild_only
+)
 @lightbulb.command(name='uncomplete', description="Use this command to mark a task as incomplete", pass_options=True)
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def command(ctx: lightbulb.SlashContext, task_id:int):

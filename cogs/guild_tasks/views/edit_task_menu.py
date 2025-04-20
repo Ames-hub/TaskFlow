@@ -107,10 +107,38 @@ class main_view:
 
                     # The callback function is called after the user hits 'Submit'
                     async def callback(self, ctx: miru.ModalContext) -> None:
+                        task_name = self.new_name.value
+                        task_desc = self.new_desc.value
+
+                        if task_name == "*":
+                            await ctx.edit_response(
+                                hikari.Embed(
+                                    title="Task name cannot be '*'",
+                                    description="You can't name your task '*'. That's reserved."
+                                )
+                            )
+                            return
+                        elif len(task_name) > botapp.d['max_name_length']:
+                            await ctx.edit_response(
+                                hikari.Embed(
+                                    title="Task name too long!",
+                                    description=f"Task names cannot be longer than {botapp.d['max_name_length']} characters."
+                                )
+                            )
+                            return
+                        if len(task_desc) > botapp.d['max_desc_length']:
+                            await ctx.edit_response(
+                                hikari.Embed(
+                                    title="Task description too long!",
+                                    description=f"Task descriptions cannot be longer than {botapp.d['max_desc_length']} characters."
+                                )
+                            )
+                            return
+
                         dataMan().set_new_task_data(
                             task_id=task_id,
-                            task_name=self.new_name.value,
-                            task_desc=self.new_desc.value,
+                            task_name=task_name,
+                            task_desc=task_desc,
                             task_category=self.new_category.value
                         )
                         await ctx.edit_response(

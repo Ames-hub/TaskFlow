@@ -9,6 +9,9 @@ plugin = lightbulb.Plugin(__name__)
 
 @group.child
 @lightbulb.app_command_permissions(dm_enabled=False)
+@lightbulb.add_checks(
+    lightbulb.guild_only
+)
 @lightbulb.command(name='edit', description='Edit a task', pass_options=True)
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def edit_task_cmd(ctx: lightbulb.SlashContext):

@@ -1,6 +1,6 @@
 from library.live_task_channel import livetasks
+from library.botapp import miru_client, botapp
 from library.parsing import parse_deadline
-from library.botapp import miru_client
 from library.storage import dataMan
 import datetime
 import hikari
@@ -60,7 +60,7 @@ class views:
                 task_id = select.values[0]
                 dm = dataMan()
 
-                # Gets if its completed or not
+                # Gets if it's completed or not
                 task_done = dm.get_is_task_completed(task_id_or_name=task_id)
 
                 if task_done is False:
@@ -144,10 +144,42 @@ class views:
                             )
                             return
 
+                        task_name = str(self.name.value)
+                        task_desc = str(self.desc.value)
+
+                        if task_name == "*":
+                            await ctx.edit_response(
+                                embed=(
+                                    hikari.Embed(
+                                        title="Task name cannot be '*'",
+                                        description="You can't name your task '*'. That's reserved."
+                                    )
+                                )
+                            )
+                        elif len(task_name) > botapp.d['max_name_length']:
+                            await ctx.edit_response(
+                                embed=(
+                                    hikari.Embed(
+                                        title="Task name too long!",
+                                        description=f"Task names cannot be longer than {botapp.d['max_name_length']} characters."
+                                    )
+                                )
+                            )
+                            return
+                        if len(task_desc) > botapp.d['max_desc_length']:
+                            await ctx.edit_response(
+                                embed=(
+                                    hikari.Embed(
+                                        title="Task description too long!",
+                                        description=f"Task descriptions cannot be longer than {botapp.d['max_desc_length']} characters."
+                                    )
+                                )
+                            )
+
                         dataMan().add_todo_item(
                             added_by=ctx.author.id,
-                            name=str(self.name.value),
-                            description=str(self.desc.value),
+                            name=task_name,
+                            description=task_desc,
                             guild_id=ctx.guild_id,
                             category=self.category.value,
                             deadline=deadline_obj

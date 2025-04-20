@@ -81,6 +81,21 @@ class main_view:
                         task_category = str(self.task_catagory.value).strip()
                         task_deadline_time = str(self.task_deadline_time.value).strip()
 
+                        if template_name == "*":
+                            await ctx.edit_response(
+                                hikari.Embed(
+                                    title="Template Creation Failed!",
+                                    description="Template name cannot be \"*\" as that's reserved for the system!"
+                                )
+                            )
+                        if task_name == "*":
+                            await ctx.edit_response(
+                                hikari.Embed(
+                                    title="Template Creation Failed!",
+                                    description="Task name cannot be \"*\" as that's reserved for the system!"
+                                )
+                            )
+
                         deadline_obj = None
                         if task_deadline_time != "":
                             try:

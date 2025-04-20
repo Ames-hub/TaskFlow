@@ -39,7 +39,11 @@ def modernize_db():
             'guild_id': 'INT DEFAULT NULL',
             'category': 'TEXT DEFAULT NULL',
         },
-        'livechannel_styles': {
+        'task_template_usage': {  # Used to know which tasks use which template
+            'template_id': 'INT NOT NULL',
+            'task_id': 'INT NOT NULL PRIMARY KEY',
+        },
+        'livechannel_styles': {  # Used to know which guild uses which style
             'guild_id': 'INT PRIMARY KEY',
             'style': 'TEXT DEFAULT "classic"',
         },
@@ -49,21 +53,21 @@ def modernize_db():
             'allow_late_contrib': 'BOOLEAN DEFAULT FALSE',
             'show_task_completion': 'BOOLEAN DEFAULT TRUE',
         },
-        'user_contribution_log': {
+        'user_contribution_log': {  # Saves who is helping opposed to who is in charge
             'contributed_task_uid': 'INT NOT NULL REFERENCES todo_items(uid)',
             'contributor_uuid': 'INT NOT NULL',
             'contribution_date': 'DATE DEFAULT CURRENT_TIMESTAMP',
             'task_for_guild_id': 'INT NOT NULL',
         },
-        'guild_livelist_formats': {
+        'guild_livelist_formats': {  # Saves the custom live list format
             'guild_id': 'TEXT NOT NULL PRIMARY KEY',
             'text_format': 'TEXT'
         },
-        'tasks_assigned_to_users': {
+        'tasks_assigned_to_users': {  # Saves the users assigned as an I/C to a task
             'task_id': 'INT NOT NULL PRIMARY KEY',
             'user_id': 'INT NOT NULL',
         },
-        'guild_livelist_descs': {
+        'guild_livelist_descs': {  # A Feature request that allows people to modify the description of the livelist
             'guild_id': 'INT NOT NULL PRIMARY KEY',
             'description': 'TEXT'
         },
@@ -71,7 +75,7 @@ def modernize_db():
             'guild_id': "INT NOT NULL PRIMARY KEY",
             'role_id': "INT"
         },
-        'guild_configperms': {
+        'guild_configperms': {  # Saves who can configure the bot per the guild permissions
             'guild_id': 'INT NOT NULL PRIMARY KEY',
             'permission': 'TEXT DEFAULT NULL'
         },
@@ -123,6 +127,47 @@ def modernize_db():
 modernize_db()
 
 class sqlite_storage:
+    @staticmethod
+    def create_task_from_template(template_id, guild_id, task_creator_id:int):
+        template_data = dataMan().get_task_template(template_id, guild_id)
+        if template_data is False:
+            return False
+        if template_data is None:
+            return None
+        unique_template_id = template_data['id']
+        task_name = template_data['task_name']
+        task_desc = template_data['task_desc']
+        task_cat = template_data['task_category']
+        task_deadline = template_data['task_deadline']
+        template_guild_id = template_data['guild_id']
+
+        if guild_id != template_guild_id:
+            return -1  # Wrong guild
+
+        conn = sqlite3.connect(guild_filepath)
+        try:
+            cur = conn.cursor()
+            cur.execute(f'''
+                INSERT INTO todo_items (name, description, category, guild_id, deadline, added_by, completed)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (task_name, task_desc, task_cat, guild_id, task_deadline, task_creator_id, False)
+            )
+            conn.commit()
+
+            cur.execute(f'''
+                INSERT INTO task_template_usage (task_id, template_id)
+                VALUES (?, ?)''',
+                (cur.lastrowid, unique_template_id)
+            )
+            conn.commit()
+            return True
+        except sqlite3.Error as err:
+            conn.rollback()
+            logging.error(f"An error occurred while creating a task from a template: {err}", err)
+            return False
+        finally:
+            conn.close()
+
     # noinspection PyTypeChecker
     @staticmethod
     def create_task_template(template_name, task_name, task_desc, task_category, task_deadline, guild_id) -> dict:
@@ -157,17 +202,50 @@ class sqlite_storage:
             conn.close()
 
     @staticmethod
-    def get_task_template(identifier:int|str):
-        # TODO: Make this compatible with the name too.
-
+    def get_task_template(template_id: int | str, guild_id:int):
         conn = sqlite3.connect(guild_filepath)
         try:
             cur = conn.cursor()
-            cur.execute(
-                "SELECT identifier, name, task_name, task_desc, task_category, task_deadline, guild_id FROM task_templates WHERE identifier = ?",
-                (identifier,)
-            )
+            if template_id == "*":
+                cur.execute('''
+                    SELECT identifier, name, task_name, task_desc, task_category, task_deadline, guild_id
+                    FROM task_templates
+                    WHERE guild_id = ?''', (guild_id,)
+                )
+                data = cur.fetchall()
+
+                parsed_dict = {}
+                for data_item in data:
+                    parsed_dict[data_item[0]] = {
+                        'id': data_item[0],
+                        'name': data_item[1],
+                        'task_name': data_item[2],
+                        'task_desc': data_item[3],
+                        'task_category': data_item[4],
+                        'task_deadline': data_item[5],
+                        'guild_id': data_item[6]
+                    }
+                return parsed_dict
+
+            if str(template_id).isdigit():
+                cur.execute(
+                    """
+                    SELECT identifier, name, task_name, task_desc, task_category, task_deadline, guild_id
+                    FROM task_templates WHERE identifier = ? AND guild_id = ?
+                    """,
+                    (template_id, guild_id,)
+                )
+            else:
+                cur.execute(
+                    """
+                    SELECT identifier, name, task_name, task_desc, task_category, task_deadline, guild_id
+                    FROM task_templates WHERE name LIKE ? AND guild_id = ?
+                    """,
+                    (f"%{template_id}%",)
+                )
             data = cur.fetchone()
+            if not data:
+                return None
             return {
                 'id': data[0],
                 'name': data[1],
@@ -194,6 +272,7 @@ class sqlite_storage:
                 DELETE FROM task_templates WHERE identifier = ? -- Due to sensitivity, only allow task ID integer
             ''', (identifier,))
             conn.commit()
+            return True
         except sqlite3.OperationalError as e:
             logging.error(f"An error occurred while creating a task template: {e}")
             conn.rollback()
@@ -1001,13 +1080,28 @@ class sqlite_storage:
         finally:
             conn.close()
 
-# noinspection PyNoneFunctionAssignment
+
+# noinspection PyNoneFunctionAssignment,PyTypeChecker
 class dataMan:
     """
     Essentially a class that processes data after it's been retrieved and ensures the data sent to the funcs is correct.
     """
     def __init__(self):
         self.storage = sqlite_storage
+
+    def create_task_from_template(self, template_id:int, guild_id:int, task_creator_id:int):
+        if str(template_id).isdigit():
+            template_id = int(template_id)
+        else:
+            template_id = str(template_id)
+        guild_id = int(guild_id)
+
+        # Ensures the template exists
+        template = self.storage.get_task_template(template_id, guild_id)
+        if template is None:  # Template not found
+            return None
+
+        return self.storage.create_task_from_template(template_id, guild_id, task_creator_id)
 
     def create_task_template(self, template_name, task_name, task_desc, task_category, task_deadline:datetime|None, guild_id):
         """
@@ -1040,12 +1134,16 @@ class dataMan:
             guild_id=guild_id
         )
 
-    def get_task_template(self, identifier):
+    def get_task_template(self, identifier, guild_id:int) -> dict:
         if str(identifier).isnumeric():
             identifier = int(identifier)
         else:
             identifier = str(identifier).strip()
-        return self.storage.get_task_template(identifier)
+
+        if guild_id:
+            guild_id = int(guild_id)
+
+        return self.storage.get_task_template(identifier, guild_id)
 
     def delete_task_template(self, identifier):
         identifier = int(identifier)

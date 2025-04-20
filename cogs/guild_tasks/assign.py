@@ -21,6 +21,9 @@ plugin = lightbulb.Plugin(__name__)
     required=False,
     default=None
 )
+@lightbulb.add_checks(
+    lightbulb.guild_only
+)
 @lightbulb.command(name='assign', description="Assign a member to a task as an in-charge", pass_options=True)
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def assign_cmd(ctx: lightbulb.SlashContext, task_id:int, user:hikari.User):

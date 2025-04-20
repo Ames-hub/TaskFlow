@@ -16,6 +16,9 @@ plugin = lightbulb.Plugin(__name__)
     type=hikari.OptionType.STRING,
     choices=['Yes', 'No']
 )
+@lightbulb.add_checks(
+    lightbulb.guild_only
+)
 @lightbulb.command(name='xtoggle', description='Toggle the Red X on the list', pass_options=True)
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def cmd(ctx: lightbulb.SlashContext, status):

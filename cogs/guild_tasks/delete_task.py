@@ -15,6 +15,9 @@ plugin = lightbulb.Plugin(__name__)
     required=True,
     type=hikari.OptionType.INTEGER,
 )
+@lightbulb.add_checks(
+    lightbulb.guild_only
+)
 @lightbulb.command(name='delete', description='Delete a task from the list.', pass_options=True)
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def delete_task_cmd(ctx: lightbulb.SlashContext, task_id:int):

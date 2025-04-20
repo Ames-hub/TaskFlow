@@ -14,6 +14,9 @@ plugin = lightbulb.Plugin(__name__)
     required=True,
     type=hikari.OptionType.BOOLEAN,
 )
+@lightbulb.add_checks(
+    lightbulb.guild_only
+)
 @lightbulb.command(name='latecontrib', description='Set if users can contribute to completed tasks late.')
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def latecontrib_cmd(ctx: lightbulb.SlashContext):

@@ -15,6 +15,9 @@ plugin = lightbulb.Plugin(__name__)
     required=True,
     type=hikari.OptionType.INTEGER
 )
+@lightbulb.add_checks(
+    lightbulb.guild_only
+)
 @lightbulb.command(name='contribute', description="Contribute to a task", pass_options=True)
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def command(ctx: lightbulb.SlashContext, task_id:int):

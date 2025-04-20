@@ -14,6 +14,9 @@ plugin = lightbulb.Plugin(__name__)
     required=True,
     type=hikari.OptionType.STRING,
 )
+@lightbulb.add_checks(
+    lightbulb.guild_only
+)
 @lightbulb.command(name='view', description="View a template's details.", pass_options=True)
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def get_template(ctx: lightbulb.SlashContext, identifier):
@@ -24,15 +27,19 @@ async def get_template(ctx: lightbulb.SlashContext, identifier):
         )
         return
 
-    template_data = dataMan().get_task_template(identifier=identifier)
+    template_data = dataMan().get_task_template(identifier=identifier, guild_id=ctx.guild_id)
+
+    if len(template_data['task_desc']) != 0:
+        description_txt = f"**Task Description:** {template_data['task_desc']}\n"
+    else:
+        description_txt = ""
 
     await ctx.respond(
         hikari.Embed(
             title=f"({template_data['id']}) Template: {template_data['name']}",
-            description=f"**Description:** {template_data['task_name']}\n"
-                        f"**Task Type:** {template_data['task_desc']}\n"
-                        f"**Task Category:** {template_data['task_category']}\n"
-                        f"**Task Deadline:** {template_data['task_deadline']}\n"
+            description=f"**Name:** {template_data['task_name']}\n{description_txt}"
+                        f"**Category:** {template_data['task_category']}\n"
+                        f"**Deadline:** {template_data['task_deadline']}\n"
         ),
         flags=hikari.MessageFlag.EPHEMERAL
     )

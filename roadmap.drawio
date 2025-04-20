@@ -424,13 +424,13 @@
         <mxCell id="NMTUODGjlIO52O_gNEFz-13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="NMTUODGjlIO52O_gNEFz-10" target="NMTUODGjlIO52O_gNEFz-12" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="FocgppxJEofwwOu1AvBv-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="NMTUODGjlIO52O_gNEFz-10" target="FocgppxJEofwwOu1AvBv-1">
+        <mxCell id="FocgppxJEofwwOu1AvBv-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="NMTUODGjlIO52O_gNEFz-10" target="FocgppxJEofwwOu1AvBv-1" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="NMTUODGjlIO52O_gNEFz-10" value="Task Templates Possible" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" parent="1" vertex="1">
           <mxGeometry x="650" y="1580" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="FocgppxJEofwwOu1AvBv-10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="NMTUODGjlIO52O_gNEFz-12" target="FocgppxJEofwwOu1AvBv-9">
+        <mxCell id="FocgppxJEofwwOu1AvBv-10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="NMTUODGjlIO52O_gNEFz-12" target="FocgppxJEofwwOu1AvBv-9" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="NMTUODGjlIO52O_gNEFz-12" value="Recurring tasks Possible" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
@@ -633,46 +633,46 @@
         <mxCell id="s9dYylVE_jDBHlCoKm3X-5" value="Filter By Template" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="1980" y="240" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="FocgppxJEofwwOu1AvBv-5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="FocgppxJEofwwOu1AvBv-1" target="FocgppxJEofwwOu1AvBv-2">
+        <mxCell id="FocgppxJEofwwOu1AvBv-5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="FocgppxJEofwwOu1AvBv-1" target="FocgppxJEofwwOu1AvBv-2" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="FocgppxJEofwwOu1AvBv-8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="FocgppxJEofwwOu1AvBv-1" target="FocgppxJEofwwOu1AvBv-7">
+        <mxCell id="FocgppxJEofwwOu1AvBv-8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="FocgppxJEofwwOu1AvBv-1" target="FocgppxJEofwwOu1AvBv-7" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="FocgppxJEofwwOu1AvBv-1" value="Template creation" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" vertex="1" parent="1">
+        <mxCell id="FocgppxJEofwwOu1AvBv-1" value="Template creation" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" parent="1" vertex="1">
           <mxGeometry x="830" y="1690" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="FocgppxJEofwwOu1AvBv-6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="FocgppxJEofwwOu1AvBv-2" target="FocgppxJEofwwOu1AvBv-3">
+        <mxCell id="FocgppxJEofwwOu1AvBv-6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="FocgppxJEofwwOu1AvBv-2" target="FocgppxJEofwwOu1AvBv-3" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="FocgppxJEofwwOu1AvBv-2" value="Template deletion" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="FocgppxJEofwwOu1AvBv-2" value="Template deletion" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" parent="1" vertex="1">
           <mxGeometry x="1010" y="1690" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="FocgppxJEofwwOu1AvBv-3" value="Template modification" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="FocgppxJEofwwOu1AvBv-3" value="Template modification" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="1190" y="1690" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="FocgppxJEofwwOu1AvBv-7" value="Template viewing" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" vertex="1" parent="1">
+        <mxCell id="FocgppxJEofwwOu1AvBv-7" value="Template viewing" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" parent="1" vertex="1">
           <mxGeometry x="830" y="1800" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="FocgppxJEofwwOu1AvBv-12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="FocgppxJEofwwOu1AvBv-9" target="FocgppxJEofwwOu1AvBv-11">
+        <mxCell id="FocgppxJEofwwOu1AvBv-12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="FocgppxJEofwwOu1AvBv-9" target="FocgppxJEofwwOu1AvBv-11" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="FocgppxJEofwwOu1AvBv-16" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="FocgppxJEofwwOu1AvBv-9" target="FocgppxJEofwwOu1AvBv-15">
+        <mxCell id="FocgppxJEofwwOu1AvBv-16" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="FocgppxJEofwwOu1AvBv-9" target="FocgppxJEofwwOu1AvBv-15" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="FocgppxJEofwwOu1AvBv-9" value="Recurring tasks creation" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="FocgppxJEofwwOu1AvBv-9" value="Recurring tasks creation" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="1010" y="1580" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="FocgppxJEofwwOu1AvBv-14" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="FocgppxJEofwwOu1AvBv-11" target="FocgppxJEofwwOu1AvBv-13">
+        <mxCell id="FocgppxJEofwwOu1AvBv-14" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="FocgppxJEofwwOu1AvBv-11" target="FocgppxJEofwwOu1AvBv-13" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="FocgppxJEofwwOu1AvBv-11" value="Recurring tasks Deletion" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="FocgppxJEofwwOu1AvBv-11" value="Recurring tasks Deletion" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="1190" y="1580" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="FocgppxJEofwwOu1AvBv-13" value="Recurring tasks Modification" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="FocgppxJEofwwOu1AvBv-13" value="Recurring tasks Modification" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="1370" y="1580" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="FocgppxJEofwwOu1AvBv-15" value="Recurring tasks viewing" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="FocgppxJEofwwOu1AvBv-15" value="Recurring tasks viewing" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="1010" y="1470" width="120" height="60" as="geometry" />
         </mxCell>
       </root>

@@ -62,6 +62,15 @@ async def create_cmd(ctx: lightbulb.SlashContext):
         )
         return
 
+    if task_name == "*":
+        await ctx.respond(
+            hikari.Embed(
+                title="Task name cannot be '*'",
+                description="You can't name your task '*'. That's reserved."
+            )
+        )
+        return
+
     deadline_obj = parse_deadline(deadline_date, deadline_hmp)
     if isinstance(deadline_obj, str):
         await ctx.respond(deadline_obj)

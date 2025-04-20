@@ -23,6 +23,9 @@ dm = dataMan()
     choices=style_choices,
     required=False,
 )
+@lightbulb.add_checks(
+    lightbulb.guild_only
+)
 @lightbulb.command(name='textstyle', description="Designate a live channel for your servers tasks.")
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def command(ctx: lightbulb.SlashContext):

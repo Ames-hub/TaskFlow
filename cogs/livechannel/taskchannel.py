@@ -15,6 +15,9 @@ plugin = lightbulb.Plugin(__name__)
     type=hikari.OptionType.CHANNEL,
     required=True
 )
+@lightbulb.add_checks(
+    lightbulb.guild_only
+)
 @lightbulb.command(name='channel', description="Designate a live channel for your guild's tasks.")
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def command(ctx: lightbulb.SlashContext):

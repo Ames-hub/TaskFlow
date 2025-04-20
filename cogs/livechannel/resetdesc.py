@@ -9,6 +9,9 @@ dm = dataMan()
 
 @group.child
 @lightbulb.app_command_permissions(dm_enabled=False)
+@lightbulb.add_checks(
+    lightbulb.guild_only
+)
 @lightbulb.command(name='resetdesc', description="Reset the description for your server's live list", pass_options=True)
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def command(ctx: lightbulb.SlashContext):
