@@ -139,7 +139,7 @@ async def on_error(event: lightbulb.CommandErrorEvent) -> None:
         await alert_maintainer(event)
 
     print(f"An error occurred while running a command: {event.exception}")
-    logging.error(f"An error occurred while running a command: {event.exception}")
+    logging.error(f"An error occurred while running a command: {event.exception}", exc_info=event.exception)
     
 def load(bot: lightbulb.BotApp) -> None:
     bot.add_plugin(lightbulb.Plugin(__name__))
