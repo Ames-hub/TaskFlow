@@ -1,0 +1,122 @@
+from library.botapp import botapp, miru_client
+import datetime
+import dotenv
+import hikari
+import miru
+
+from library.storage import dataMan
+
+dotenv.load_dotenv('.env')
+
+class main_view:
+    def __init__(self, reporter_id, ticket_id):
+        self.reporter_id = reporter_id
+        self.ticket_id = ticket_id
+
+    def init_view(self):
+        reporter_id = self.reporter_id
+        ticket_id = self.ticket_id
+        class Menu_Init(miru.View):
+            # noinspection PyUnusedLocal
+            @miru.button(label="Exit", style=hikari.ButtonStyle.DANGER)
+            async def stop_button(self, ctx: miru.ViewContext, button: miru.Button) -> None:
+                await ctx.edit_response(
+                    hikari.Embed(
+                        title="Exitting menu.",
+                    ),
+                    components=[]
+                )
+                self.stop()  # Called to stop the view
+
+            # noinspection PyUnusedLocal
+            @miru.text_select(
+                options=[
+                    miru.SelectOption(
+                        label="Resolved",
+                        value="RESOLVED"
+                    ),
+                    miru.SelectOption(
+                        label="Unable to reproduce",
+                        value="NO-REPRODUCE"
+                    ),
+                    miru.SelectOption(
+                        label="Intended functionality",
+                        value="INTENDED"
+                    ),
+                    miru.SelectOption(
+                        label="Unclear Bug Report",
+                        value="UNCLEAR"
+                    ),
+                    miru.SelectOption(
+                        label="To the Backburner",
+                        value="BACKBURNER"
+                    ),
+                    miru.SelectOption(
+                        label="No Fix will be implemented",
+                        value="WONT-FIX"
+                    )
+                ]
+            )
+            async def respond_btn(self, ctx: miru.ViewContext, select: miru.text_select) -> None:
+                report_result = str(select.values[0])
+
+                # TODO: Have this show their full bug report as well as the result so they know what happened if they forgot.
+                if report_result == "RESOLVED":
+                    report_result = "Thank you for reporting the bug! It has been resolved and the fix will be rolled out as soon as possible :)"
+                elif report_result == "NO-REPRODUCE":
+                    report_result = ("Thank you for reporting the bug!\n"
+                                     "Unfortunately, we didn't have enough information to recreate the bug, which is a crucial step in fixing it.\n\n"
+                                     "If you can provide more information, please report the bug once more with that extra info. Thanks!")
+                elif report_result == "INTENDED":
+                    report_result = "Thank you, however what was reported was not a bug, but rather an intended feature, so nothing has been done.\n"
+                elif report_result == "UNCLEAR":
+                    report_result = "The bug report was not clear enough to be quite understood, so nothing was able to be done."
+                elif report_result == "BACKBURNER":
+                    report_result = ("Thank you! The bug has been noted and will be worked on. However due to its nature or the current situation;\n\n"
+                                     "It has been placed on the backburner and will be worked on when possible.\n\n"
+                                     "Please note: This does not mean we're ignoring it, it just means that we're not working on it right now.")
+                elif report_result == "WONT-FIX":
+                    report_result = ("Thank you for reporting the bug!\n"
+                                     "We've decided to not fix this bug and leave it as-is or improve it as a feature.")
+
+                try:
+                    dmc = await botapp.rest.create_dm_channel(reporter_id)
+                    await dmc.send(
+                        hikari.Embed(
+                            title="Bug report result",
+                            description=f"This is regarding a bug report you filed a while ago with Ticket ID {ticket_id}.\n\n",
+                            color=0x00ff00,
+                            timestamp=datetime.datetime.now().astimezone()
+                        )
+                        .add_field(name="Result", value=report_result)
+                    )
+                    # Mark the ticket as resolved
+                    dataMan().mark_bugreport_resolved(ticket_id)
+
+                    self.stop()
+                    from cogs.other.views.bug_manage_view import main_view as bug_manage_view
+
+                    view = bug_manage_view()
+                    viewmenu = view.init_view()
+
+                    await ctx.edit_response(
+                        view.gen_embed().add_field(
+                            name="Bug report result sent!",
+                            value="The user has been informed of the result of their bug report."
+                        ),
+                        components=viewmenu.build()
+                    )
+
+                    miru_client.start_view(viewmenu)
+                    await viewmenu.wait()
+                except (hikari.ForbiddenError, hikari.NotFoundError):
+                    await ctx.edit_response(
+                        hikari.Embed(
+                            title="Couldn't send DM to reporter!",
+                            description="This is likely due to the bot not having access to the user's DM channel. Please try again later."
+                        ),
+                        components=[]
+                    )
+                    return
+
+        return Menu_Init()

@@ -10,7 +10,7 @@ plugin = lightbulb.Plugin(__name__)
 @lightbulb.command(name='bug_report', description='Is something wrong with the bot? Please report it here!')
 @lightbulb.implements(lightbulb.SlashCommand)
 async def bug_report(ctx: lightbulb.SlashContext):
-    view = main_view()
+    view = main_view(int(ctx.author.id))
     embed = view.gen_embed()
     viewmenu = view.init_view()
     await ctx.respond(flags=hikari.MessageFlag.EPHEMERAL, embed=embed, components=viewmenu.build())

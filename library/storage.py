@@ -87,6 +87,14 @@ def modernize_db():
             'task_desc': 'TEXT DEFAULT NULL',
             'task_category': 'TEXT DEFAULT NULL',
             'task_deadline': 'DATETIME DEFAULT NULL',
+        },
+        'bug_report_cases': {
+            'ticket_id': 'INTEGER PRIMARY KEY AUTOINCREMENT',
+            'resolved': 'BOOLEAN DEFAULT FALSE',
+            'reporter_id': 'INT NOT NULL',
+            'stated_bug': 'TEXT NOT NULL',
+            'stated_reproduction': 'TEXT NOT NULL',
+            'additional_info': 'TEXT',
         }
     }
 
@@ -121,12 +129,91 @@ def modernize_db():
             )
             try:
                 cur.execute(f'CREATE TABLE {table_name} ({columns_str});')
-            except sqlite3.OperationalError:
+            except sqlite3.OperationalError as err:
+                print(f"There was a problem creating the table {table_name} with columns {columns_str}")
+                logging.error(f"An error occurred while creating the table {table_name} with columns {columns_str}", err)
                 exit(1)
 
 modernize_db()
 
 class sqlite_storage:
+    @staticmethod
+    def create_bugreport_ticket(reporter_id, stated_bug, stated_reproduction, additional_info=None, return_ticket=False):
+        conn = sqlite3.connect(guild_filepath)
+        try:
+            cur = conn.cursor()
+            cur.execute(f'''
+                INSERT INTO bug_report_cases (reporter_id, stated_bug, stated_reproduction, additional_info)
+                VALUES (?, ?, ?, ?)
+                ''',
+            (int(reporter_id), stated_bug, stated_reproduction, additional_info)
+            )
+            conn.commit()
+            if return_ticket:
+                return cur.lastrowid
+            return True
+        except sqlite3.OperationalError as err:
+            logging.error(f"An error occurred while creating a bug report ticket: {err}", err)
+            conn.rollback()
+            return False
+        finally:
+            conn.close()
+
+    @staticmethod
+    def mark_bugreport_resolved(ticket_id):
+        conn = sqlite3.connect(guild_filepath)
+        try:
+            cur = conn.cursor()
+            cur.execute(f'''
+                UPDATE bug_report_cases SET resolved = TRUE WHERE ticket_id = ?
+            ''', (ticket_id,))
+            conn.commit()
+            return True
+        except sqlite3.OperationalError as err:
+            logging.error(f"An error occurred while trying to mark a bug report as resolved: {err}", err)
+            conn.rollback()
+            return False
+        finally:
+            conn.close()
+
+    @staticmethod
+    def list_bug_reports(unresolved_only=True, ticket_id:int=None):
+        conn = sqlite3.connect(guild_filepath)
+        try:
+            cur = conn.cursor()
+
+            query = "SELECT ticket_id, reporter_id, resolved, stated_bug, stated_reproduction, additional_info FROM bug_report_cases"
+            if unresolved_only:
+                query += " WHERE resolved = FALSE"
+
+            if ticket_id is not None:
+                if unresolved_only is False:
+                    query += " WHERE ticket_id = ?"
+                else:
+                    query += " AND ticket_id = ?"
+
+            args = (ticket_id,) if ticket_id is not None else ()
+
+            cur.execute(query, args)
+            data = cur.fetchall()
+            parsed_data = []
+            for row in data:
+                parsed_data.append({
+                    'ticket_id': row[0],
+                    'reporter_id': row[1],
+                    'resolved': row[2],
+                    'stated_bug': row[3],
+                    'stated_reproduction': row[4],
+                    'additional_info': row[5]
+                })
+
+            return parsed_data
+        except sqlite3.OperationalError as err:
+            logging.error(f"An error occurred while trying to get the list of bug reports: {err}", err)
+            return None
+        finally:
+            conn.close()
+
     @staticmethod
     def create_task_from_template(template_id, guild_id, task_creator_id:int):
         template_data = dataMan().get_task_template(template_id, guild_id)
@@ -1102,6 +1189,26 @@ class dataMan:
     def __init__(self):
         self.storage = sqlite_storage
 
+    def list_bug_reports(self, unresolved_only=False, ticket_id:int=None):
+        unresolved_only = bool(unresolved_only)
+        if ticket_id is not None:
+            ticket_id = int(ticket_id)
+        return self.storage.list_bug_reports(unresolved_only, ticket_id)
+
+    def create_bugreport_ticket(self, reporter_id, stated_bug:str, stated_reproduction:str, additional_info:str=None, return_ticket=False):
+        reporter_id = int(reporter_id)
+        return self.storage.create_bugreport_ticket(
+            reporter_id=reporter_id,
+            return_ticket=return_ticket,
+            stated_bug=stated_bug,
+            stated_reproduction=stated_reproduction,
+            additional_info=additional_info
+        )
+
+    def mark_bugreport_resolved(self, ticket_id):
+        ticket_id = int(ticket_id)
+        return self.storage.mark_bugreport_resolved(ticket_id)
+
     def create_task_from_template(self, template_id:int, guild_id:int, task_creator_id:int):
         if str(template_id).isdigit():
             template_id = int(template_id)
@@ -1455,15 +1562,7 @@ class dataMan:
         assert type(name) is str and type(description) is str, "Name and description must be strings"
         uid = int(user_id if user_id else guild_id)
         if user_id:
-            return self.storage.add_todo_item(
-                name,
-                description,
-                user_id=uid,
-                deadline=deadline,
-                added_by=int(added_by),
-                category=category,
-                return_task_id=return_task_id
-            )
+            return self.storage.add_todo_item(name, description, user_id=uid, deadline=deadline, added_by=int(added_by), category=category)
         else:
             return self.storage.add_todo_item(
                 name,

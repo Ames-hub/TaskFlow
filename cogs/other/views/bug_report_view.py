@@ -1,4 +1,6 @@
+from cogs.other.views.bug_manage_view import main_view as bug_manage_view
 from library.botapp import miru_client
+from library.storage import dataMan
 import dotenv
 import hikari
 import miru
@@ -7,8 +9,8 @@ import os
 dotenv.load_dotenv('.env')
 
 class main_view:
-    def __init__(self):
-        pass
+    def __init__(self, author_id):
+        self.author_id = author_id
 
     # noinspection PyMethodMayBeStatic
     def gen_embed(self):
@@ -21,7 +23,7 @@ class main_view:
                 name="How to report a bug",
                 value="1. You need to Click the button below to open the reporting screen.\n\n"
                       "2. When you see the screen, fill out the fields to the best of your ability. Please be specific and detailed ^^\n\n"
-                      "3. Once you're click the submit button!"
+                      "3. Once you're done, click the submit button!"
             )
         )
 
@@ -38,6 +40,25 @@ class main_view:
                     components=[]
                 )
                 self.stop()  # Called to stop the view
+
+            # Simpler than figuring out 'add_item' since the documentation on it is not enough.
+            if int(self.author_id) == int(os.getenv('PRIMARY_MAINTAINER_ID')):
+                # noinspection PyUnusedLocal
+                @miru.button(label="Manage", style=hikari.ButtonStyle.SECONDARY)
+                async def bug_manage_button(self, ctx: miru.ViewContext, button: miru.Button) -> None:
+                    # Stop current view to start new one
+                    self.stop()
+
+                    view = bug_manage_view()
+                    viewmenu = view.init_view()
+
+                    await ctx.edit_response(
+                        embed=view.gen_embed(),
+                        components=viewmenu.build()  # Change to a completely different view.
+                    )
+
+                    miru_client.start_view(viewmenu)
+                    await viewmenu.wait()
 
             # noinspection PyUnusedLocal
             @miru.button(label="Show Reporting Screen!", emoji="🪲")
@@ -75,9 +96,18 @@ class main_view:
                         if additional == "":
                             additional = None
 
+                        # Remembers that THIS user reported a bug so we can tell them how it went
+                        ticket_id = dataMan().create_bugreport_ticket(
+                            reporter_id=ctx.author.id,
+                            stated_bug=self.bug.value,
+                            stated_reproduction=self.reproduce.value,
+                            additional_info=additional,
+                            return_ticket=True
+                        )
+
                         embed = (
                             hikari.Embed(
-                                title="Bug report",
+                                title=f"Bug report ({ticket_id})",
                                 description=f"We got a bug report from {ctx.author.username}! ({ctx.author.id})\n\n",
                             )
                             .add_field(name="Bug", value=self.bug.value)
@@ -92,8 +122,12 @@ class main_view:
                         await ctx.edit_response(
                             hikari.Embed(
                                 title="Bug reported!",
-                                description="Thank you for reporting the bug!"
-                            )
+                                description="Thank you for reporting the bug!\n"
+                                            "The bug has been forwarded to the project maintainers and will be fixed as soon as possible.\n"
+                                            f"Your ticket ID: {ticket_id}",
+                                color=0x00ff00,
+                            ),
+                            components=[]
                         )
 
                 modal = MyModal()
@@ -101,4 +135,6 @@ class main_view:
                 await builder.create_modal_response(ctx.interaction)
                 miru_client.start_modal(modal)
 
-        return Menu_Init()
+        menu = Menu_Init()
+
+        return menu
