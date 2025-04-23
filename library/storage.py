@@ -709,7 +709,15 @@ class sqlite_storage:
             conn.close()
 
     @staticmethod
-    def add_todo_item(name, description, user_id=None, guild_id=None, added_by: int = None, deadline: datetime = None, category=None):
+    def add_todo_item(
+            name,
+            description,
+            user_id=None,
+            guild_id=None,
+            added_by: int = None,
+            deadline: datetime = None,
+            category=None,
+            return_task_id=False):
         conn = sqlite3.connect(user_file if user_id is not None else guild_filepath)
         try:
             assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"
@@ -726,6 +734,11 @@ class sqlite_storage:
             """
             cur.execute(query, (uid, name, description, False, added_by, deadline, guild_id, category))
             conn.commit()
+
+            if return_task_id:
+                task_id = cur.lastrowid
+                return task_id
+
             return True
         except sqlite3.Error as err:
             conn.rollback()
@@ -1428,14 +1441,39 @@ class dataMan:
         # noinspection PyTypeChecker
         return self.storage.get_contributors(task_id)
 
-    def add_todo_item(self, name, description, added_by:int, user_id=None, guild_id=None, deadline:datetime=None, category=None):
+    def add_todo_item(
+            self,
+            name,
+            description,
+            added_by:int,
+            user_id=None,
+            guild_id=None,
+            deadline:datetime=None,
+            category=None,
+            return_task_id:bool=False):
         assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"
         assert type(name) is str and type(description) is str, "Name and description must be strings"
         uid = int(user_id if user_id else guild_id)
         if user_id:
-            return self.storage.add_todo_item(name, description, user_id=uid, deadline=deadline, added_by=int(added_by), category=category)
+            return self.storage.add_todo_item(
+                name,
+                description,
+                user_id=uid,
+                deadline=deadline,
+                added_by=int(added_by),
+                category=category,
+                return_task_id=return_task_id
+            )
         else:
-            return self.storage.add_todo_item(name, description, guild_id=uid, added_by=int(added_by), deadline=deadline, category=category)
+            return self.storage.add_todo_item(
+                name,
+                description,
+                guild_id=uid,
+                added_by=int(added_by),
+                deadline=deadline,
+                category=category,
+                return_task_id=return_task_id
+            )
 
     def mark_todo_finished(self, name_or_id, user_id=None, guild_id=None):
         assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"

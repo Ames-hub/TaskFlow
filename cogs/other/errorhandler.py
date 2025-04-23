@@ -132,8 +132,9 @@ async def on_error(event: lightbulb.CommandErrorEvent) -> None:
                 ),
                 flags=hikari.MessageFlag.EPHEMERAL
             )
-        await alert_maintainer(event)
+
         logging.info("Error!", exc_info=event.exception)
+        await alert_maintainer(event)
     else:
         await event.context.respond("An error occurred while running this command :(\nPlease try again later once we solve the problem.", flags=hikari.MessageFlag.EPHEMERAL)
         await alert_maintainer(event)

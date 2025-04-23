@@ -79,21 +79,35 @@ async def create_cmd(ctx: lightbulb.SlashContext):
     data = dataMan()
 
     if category is not None:
-        category_exists = data.get_category_exists
+        category_exists = data.get_category_exists(category)
     else:
         category_exists = False
 
-    data.add_todo_item(
+    task_id = data.add_todo_item(
         guild_id=ctx.guild_id,
         name=task_name,
         description=task_desc,
         added_by=ctx.author.id,
         deadline=deadline_obj,
-        category=category
+        category=category,
+        return_task_id=True
     )
 
-    await ctx.respond(f"{'New category created! and, ' if category_exists else ''}{'y' if category_exists else 'Y'}our task has been added to the guild to-do list!"
-                      f"\n{f'We will remind you on {deadline_obj}' if deadline_obj else ''}")
+    embed = (
+        hikari.Embed(
+            title=f"New task added! ({task_id})",
+            description=f"**Name:** {task_name} | ID: {task_id}\n**Description:** {task_desc}\n"
+                        f"**Deadline:** {deadline_obj}\n" if deadline_obj else ""
+                        f"**Category:** {category}" if category else ""
+        )
+    )
+    if category_exists is False and category is not None:
+        embed.add_field(
+            name="Category added!",
+            value=f"The category '{category}' has been added to your list of categories."
+        )
+
+    await ctx.respond(embed)
     await livetasks.update(ctx.guild_id)
 
 def load(bot: lightbulb.BotApp) -> None:
