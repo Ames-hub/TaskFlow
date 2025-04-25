@@ -43,7 +43,7 @@ async def create_cmd(ctx: lightbulb.SlashContext, template_name_or_id):
             ),
             flags=hikari.MessageFlag.EPHEMERAL
         )
-        await livetasks.update(ctx.guild_id)
+        await livetasks.update_for_guild(ctx.guild_id)
     elif success == -1:
         await ctx.respond(
             embed=hikari.Embed(

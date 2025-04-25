@@ -72,7 +72,7 @@ async def assign_cmd(ctx: lightbulb.SlashContext, task_id:int, user:hikari.User)
                 description=f"<@{user.id}> is now the designated in-charge for the task."
             )
         )
-        await livetasks.update(ctx.guild_id)
+        await livetasks.update_for_guild(ctx.guild_id)
     elif success == -1:
         await ctx.respond(
             hikari.Embed(

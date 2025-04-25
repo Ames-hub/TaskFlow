@@ -68,7 +68,7 @@ class views:
                 else:
                     dm.mark_todo_not_finished(name_or_id=task_id, guild_id=viewself.guild_id)
 
-                await livetasks.update(int(ctx.guild_id))
+                await livetasks.update_for_guild(int(ctx.guild_id))
                 await ctx.edit_response(viewself.gen_init_embed())
 
             # noinspection PyUnusedLocal
@@ -192,7 +192,7 @@ class views:
                                 )
                             )
                         )
-                        await livetasks.update(int(ctx.guild_id))
+                        await livetasks.update_for_guild(int(ctx.guild_id))
 
                 modal = MyModal()
                 builder = modal.build_response(miru_client)

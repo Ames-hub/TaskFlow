@@ -144,7 +144,7 @@ class main_view:
                         await ctx.edit_response(
                             embed=viewself.gen_init_embed(),
                         )
-                        await livetasks.update(int(ctx.guild_id))
+                        await livetasks.update_for_guild(int(ctx.guild_id))
 
                 modal = MyModal()
                 builder = modal.build_response(miru_client)

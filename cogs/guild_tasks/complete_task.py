@@ -59,7 +59,7 @@ async def command(ctx: lightbulb.SlashContext, task_id:int):
             )
         )
 
-    await livetasks.update(int(ctx.guild_id))
+    await livetasks.update_for_guild(int(ctx.guild_id))
 
 
 def load(bot: lightbulb.BotApp) -> None:

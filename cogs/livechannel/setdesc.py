@@ -60,7 +60,7 @@ async def command(ctx: lightbulb.SlashContext, description:str):
             )
             return
 
-    await livetasks.update(ctx.guild_id)
+    await livetasks.update_for_guild(ctx.guild_id)
 
 def load(bot: lightbulb.BotApp) -> None:
     bot.add_plugin(plugin)

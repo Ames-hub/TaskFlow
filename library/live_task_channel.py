@@ -11,18 +11,9 @@ plugin = lightbulb.Plugin(__name__)
 
 class livetasks:
     @staticmethod
-    async def update(guild_id):
-        incomplete_tasks = dataMan().get_todo_items(guild_id=int(guild_id), filter_for='incompleted')
-        unfiltered_completed_tasks = dataMan().get_todo_items(guild_id=int(guild_id), filter_for='completed')
-        task_channel = dataMan().get_taskchannel(int(guild_id))
-
-        if task_channel is None:
-            return False
-
-        # Filters out completed tasks that have been completed for more than 7 days
-        # This is to prevent the list from getting too long.
+    def filter_out_old_completed_tasks(task_list):
         completed_tasks = []
-        for task in unfiltered_completed_tasks:
+        for task in task_list:
             completed = task[2]
             if completed:
                 completed_at = task[4]  # eg, 2024-07-15 18:52:16. Type str
@@ -33,8 +24,66 @@ class livetasks:
                     continue
                 else:
                     completed_tasks.append(task)
+        return completed_tasks
+
+    @staticmethod
+    async def update_to_target(guild_id, target_user_id=None, target_channel_id:int=None):
+        """
+        A Function to update the live task list to a target channel or user.
+        """
+
+        if target_user_id is None:
+            target_channel_id = int(target_channel_id)
+        else:
+            target_user_id = int(target_user_id)
+
+        guild_id = int(guild_id)
+
+        incomplete_tasks = dataMan().get_todo_items(guild_id=guild_id, filter_for='incompleted')
+        completed_tasks = livetasks.filter_out_old_completed_tasks(
+            task_list=dataMan().get_todo_items(
+                guild_id=guild_id,
+                filter_for='completed',
+            )
+        )
 
         embed = livetasks.gen_livetasklist_embed(completed_tasks, incomplete_tasks)
+
+        if embed is False:
+            return False
+
+        if target_user_id is not None:
+            pm_channel = await plugin.bot.rest.create_dm_channel(target_user_id)
+            try:
+                await pm_channel.send(embed=embed)
+            except hikari.errors.NotFoundError:
+                return False
+            except hikari.errors.ForbiddenError:
+                return False
+            except hikari.errors.BadRequestError:
+                return False
+        else:
+            try:
+                await plugin.bot.rest.create_message(embed=embed, channel=target_channel_id)
+            except hikari.errors.NotFoundError:
+                logging.info(f"Target channel for guild {guild_id} not found. Disabling live task list.")
+                return False
+
+    @staticmethod
+    async def update_for_guild(guild_id):
+        incomplete_tasks = dataMan().get_todo_items(guild_id=int(guild_id), filter_for='incompleted')
+        unfiltered_completed_tasks = dataMan().get_todo_items(guild_id=int(guild_id), filter_for='completed')
+        task_channel = dataMan().get_taskchannel(int(guild_id))
+
+        if task_channel is None:
+            return False
+
+        # Filters out completed tasks that have been completed for more than 7 days
+        # This is to prevent the list from getting too long.
+        completed_tasks = livetasks.filter_out_old_completed_tasks(unfiltered_completed_tasks)
+
+        embed = livetasks.gen_livetasklist_embed(completed_tasks, incomplete_tasks)
+
         if embed is False:
             try:
                 await plugin.bot.rest.create_message(

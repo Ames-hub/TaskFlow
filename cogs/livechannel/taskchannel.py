@@ -43,7 +43,7 @@ async def command(ctx: lightbulb.SlashContext):
         await ctx.respond("Failed to set task channel. Please try again later.")
 
     try:
-        await livetasks.update(ctx.guild_id)
+        await livetasks.update_for_guild(ctx.guild_id)
     except hikari.errors.ForbiddenError:
         await ctx.edit_last_response(
             "I do not have permission to send messages in the task channel, so I rolled back changes."

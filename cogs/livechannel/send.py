@@ -16,7 +16,7 @@ plugin = lightbulb.Plugin(__name__)
 async def command(ctx: lightbulb.SlashContext):
     success = False
     try:
-        await livetasks.update(ctx.guild_id)
+        await livetasks.update_for_guild(ctx.guild_id)
         success = True
     except hikari.errors.ForbiddenError:
         await ctx.edit_last_response(

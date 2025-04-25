@@ -9,6 +9,7 @@ dotenv.load_dotenv('.env')
 
 intents = [
     hikari.Intents.MESSAGE_CONTENT,
+    hikari.Intents.GUILDS,
     hikari.Intents.GUILD_MESSAGES,  # TODO: Find out what the hell is listening for MessageDeleteEvent
 ]
 # Calculates perm bits for the bot's intents.

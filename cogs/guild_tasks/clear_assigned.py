@@ -63,7 +63,7 @@ async def assign_cmd(ctx: lightbulb.SlashContext, task_id:int):
                 description=f"Task no longer has an incharge."
             )
         )
-        await livetasks.update(ctx.guild_id)
+        await livetasks.update_for_guild(ctx.guild_id)
     else:
         await ctx.respond(
             hikari.Embed(

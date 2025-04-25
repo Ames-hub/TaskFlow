@@ -91,7 +91,7 @@ async def command(ctx: lightbulb.SlashContext):
             )
 
             if ctx.bot.d['DEBUG'] is True:
-                await livetasks.update(ctx.guild_id)
+                await livetasks.update_for_guild(ctx.guild_id)
         else:
             await ctx.respond(
                 hikari.Embed(

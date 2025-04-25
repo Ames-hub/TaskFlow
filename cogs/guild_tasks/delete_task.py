@@ -56,7 +56,7 @@ async def delete_task_cmd(ctx: lightbulb.SlashContext, task_id:int):
                 description="Task deleted",
             )
         )
-        await livetasks.update(int(ctx.guild_id))
+        await livetasks.update_for_guild(int(ctx.guild_id))
     else:
         await ctx.respond(
             hikari.Embed(
