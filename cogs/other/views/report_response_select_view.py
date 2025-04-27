@@ -94,7 +94,7 @@ class main_view:
 
                     listen_msg = await ctx.author.send(
                         "Please respond with ONLY how you'd like the bot to respond. We'll send it word-for-word as the result.\n"
-                        f"You have T-<T:{int((datetime.now() + timedelta(minutes=timeout_mins)).timestamp())}:R> minutes to respond."
+                        f"Response window expiration <t:{int((datetime.now() + timedelta(minutes=timeout_mins)).timestamp())}:R>"
                     )
                     try:
                         found_msg:hikari.events.DMMessageCreateEvent = await botapp.wait_for(
