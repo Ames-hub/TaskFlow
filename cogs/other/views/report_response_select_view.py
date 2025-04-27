@@ -144,12 +144,27 @@ class main_view:
                         )
                         return
 
+                embed_cannot_send = hikari.Embed(
+                    title="Couldn't send DM to reporter!",
+                    description="This is likely due to the bot not having access to the user's DM channel.\n"
+                                "Please try again later."
+                )
+
                 try:
                     if custom_content is not None:
                         report_result = custom_content
 
                     bug_ticket = dataMan().list_bug_reports(ticket_id=ticket_id)[0]
-                    dmc = await botapp.rest.create_dm_channel(reporter_id)
+
+                    try:
+                        dmc = await botapp.rest.create_dm_channel(reporter_id)
+                    except (hikari.ForbiddenError, hikari.NotFoundError, hikari.BadRequestError):
+                        await ctx.edit_response(
+                            embed_cannot_send,
+                            components=[]
+                        )
+                        return
+
                     await dmc.send(
                         hikari.Embed(
                             title="Bug report result",
@@ -185,10 +200,7 @@ class main_view:
                     await viewmenu.wait()
                 except (hikari.ForbiddenError, hikari.NotFoundError):
                     await ctx.edit_response(
-                        hikari.Embed(
-                            title="Couldn't send DM to reporter!",
-                            description="This is likely due to the bot not having access to the user's DM channel. Please try again later."
-                        ),
+                        embed_cannot_send,
                         components=[]
                     )
                     return
