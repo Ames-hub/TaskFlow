@@ -58,6 +58,10 @@ class main_view:
                     miru.SelectOption(
                         label="I want to respond personally",
                         value="CUSTOM"
+                    ),
+                    miru.SelectOption(
+                        label="Hide Bug Report",
+                        value="HIDE"
                     )
                 ]
             )
@@ -84,6 +88,25 @@ class main_view:
                 elif report_result == "WONT-FIX":
                     report_result = ("Thank you for reporting the bug!\n"
                                      "We've decided to not fix this bug and leave it as-is or improve it as a feature.")
+                elif report_result == "HIDE":
+                    dataMan().mark_bugreport_resolved(ticket_id)
+
+                    self.stop()
+                    from cogs.other.views.bug_manage_view import main_view as bug_manage_view
+
+                    view = bug_manage_view()
+                    viewmenu = view.init_view()
+
+
+                    await ctx.edit_response(
+                        view.gen_embed().add_field(
+                            name="Bug Report Hidden.",
+                            value="The user has not been informed of anything."
+                        ),
+                        components=viewmenu.build()
+                    )
+
+                    return
                 elif report_result == "CUSTOM":
                     await ctx.edit_response(
                         hikari.Embed(
@@ -94,6 +117,7 @@ class main_view:
 
                     listen_msg = await ctx.author.send(
                         "Please respond with ONLY how you'd like the bot to respond. We'll send it word-for-word as the result.\n"
+                        "Enter `CANCEL` to cancel custom response.\n"
                         f"Response window expiration <t:{int((datetime.now() + timedelta(minutes=timeout_mins)).timestamp())}:R>"
                     )
                     try:
@@ -111,11 +135,20 @@ class main_view:
                         )
                         return
                     custom_content = found_msg.message.content
+                    if custom_content.lower() == "cancel":
+                        await ctx.edit_response(
+                            hikari.Embed(
+                                title="Response cancelled.",
+                                description="You cancelled the custom response."
+                            ),
+                        )
+                        return
 
                 try:
                     if custom_content is not None:
                         report_result = custom_content
 
+                    bug_ticket = dataMan().list_bug_reports(ticket_id=ticket_id)[0]
                     dmc = await botapp.rest.create_dm_channel(reporter_id)
                     await dmc.send(
                         hikari.Embed(
@@ -123,6 +156,11 @@ class main_view:
                             description=f"This is regarding a bug report you filed a while ago with Ticket ID {ticket_id}.\n\n",
                             color=0x00ff00,
                             timestamp=datetime.now().astimezone()
+                        )
+                        .add_field(
+                            name=f"Bug Report {ticket_id}",
+                            value=f"Status: {"RESOLVED" if report_result not in ['BACKBURNER', 'UNCLEAR', 'NO-REPRODUCE'] else "UNRESOLVED"}\n" 
+                                  f"Stated Bug: {bug_ticket['stated_bug']}"
                         )
                         .add_field(name="Result", value=report_result)
                     )

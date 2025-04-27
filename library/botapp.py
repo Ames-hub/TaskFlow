@@ -11,6 +11,7 @@ intents = [
     hikari.Intents.MESSAGE_CONTENT,
     hikari.Intents.GUILDS,
     hikari.Intents.GUILD_MESSAGES,  # TODO: Find out what the hell is listening for MessageDeleteEvent
+    hikari.Intents.DM_MESSAGES,  # Used for custom bug report responses
 ]
 # Calculates perm bits for the bot's intents.
 intent_val = 0

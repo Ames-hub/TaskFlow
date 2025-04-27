@@ -101,7 +101,7 @@ async def alert_maintainer(event):
     dataMan().create_bugreport_ticket(
         reporter_id=event.context.author.id,
         stated_bug=f"I encountered an error in the {command_name.replace("_", " ")} command!",
-        stated_reproduction=f"Run the command with options {event.context.options}",
+        stated_reproduction=f"Run the command with options {event.context.options.items()}",
         additional_info="This bug report was sent automatically!"
     )
 
