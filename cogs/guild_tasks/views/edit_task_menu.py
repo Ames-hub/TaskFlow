@@ -4,17 +4,91 @@ from library.storage import dataMan
 import hikari
 import miru
 
+
+def init_edit_modal(task_id):
+    class Edit_modal(miru.Modal, title="Modify a task, leave blank to keep unchanged."):
+        new_name = miru.TextInput(
+            label="Name",
+            placeholder="What's the new name of the task?",
+            required=False,
+            style=hikari.TextInputStyle.SHORT,
+            max_length=botapp.d['max_name_length'],
+        )
+        new_desc = miru.TextInput(
+            label="Description",
+            placeholder="What's the new description?",
+            required=False,
+            style=hikari.TextInputStyle.PARAGRAPH,
+            max_length=botapp.d['max_desc_length'],
+        )
+        new_category = miru.TextInput(
+            label="Category",
+            placeholder="To what category does this task now belong?",
+            required=False,
+            style=hikari.TextInputStyle.SHORT
+        )
+
+        # TODO: Make deadline modifiable
+
+        # The callback function is called after the user hits 'Submit'
+        async def callback(self, ctx: miru.ModalContext) -> None:
+            task_name = self.new_name.value
+            task_desc = self.new_desc.value
+
+            if task_name == "*":
+                embed = hikari.Embed(
+                    title="Task name cannot be '*'",
+                    description="You can't name your task '*'. That's reserved."
+                )
+                await ctx.respond(embed)
+                return
+            elif len(task_name) > botapp.d['max_name_length']:
+                embed = hikari.Embed(
+                    title="Task name too long!",
+                    description=f"Task names cannot be longer than {botapp.d['max_name_length']} characters."
+                )
+                await ctx.respond(embed)
+                return
+            if len(task_desc) > botapp.d['max_desc_length']:
+                embed = hikari.Embed(
+                    title="Task description too long!",
+                    description=f"Task descriptions cannot be longer than {botapp.d['max_desc_length']} characters."
+                )
+                await ctx.respond(embed)
+                return
+
+            dataMan().set_new_task_data(
+                task_id=task_id,
+                task_name=task_name,
+                task_desc=task_desc,
+                task_category=self.new_category.value
+            )
+
+            await ctx.respond(
+                embed=(
+                    hikari.Embed(
+                        title="Task edited!",
+                        description="Your task was successfully edited."
+                    )
+                ),
+                components=[]
+            )
+
+            await livetasks.update_for_guild(int(ctx.guild_id))
+
+    return Edit_modal()
+
 class main_view:
     def __init__(self, guild_id):
         self.guild_id = guild_id
         self.task_data = self.get_task_data()
+        self.task_data_options = self.gen_task_options()
 
     def get_task_data(self):
         return dataMan().get_todo_items(only_keys=['id', 'name', 'description', 'completed'], guild_id=int(self.guild_id), filter_for='*')
 
     def gen_init_embed(self):
         task_list = ""
-        self.task_data = self.get_task_data()
 
         # Tests to see how long the descriptions are and if they should be included in the embed
         total_length_trunciated = 0
@@ -49,21 +123,27 @@ class main_view:
             )
         )
 
+    def gen_task_options(self):
+        tasks_data_options = []
+        if len(self.task_data) == 0:
+            return -1
+        if len(self.task_data) <= 25:
+            for task_id, task in self.task_data.items():
+                tasks_data_options.append(
+                    miru.SelectOption(
+                        label=f"({task['id']}) {task['name']}",
+                        value=str(task['id'])
+                    )
+                )
+
+        self.task_data_options = tasks_data_options
+        return tasks_data_options
+
     # noinspection PyMethodParameters
     def init_view(viewself):
         """
         Make sure to use keys_only=['id', 'name']).values() for tasks_data
         """
-        tasks_data_options = []
-        if len(viewself.task_data) == 0:
-            return -1
-        for task_id, task in viewself.task_data.items():
-            tasks_data_options.append(
-                miru.SelectOption(
-                    label=f"({task['id']}) {task['name']}",
-                    value=str(task['id'])
-                )
-            )
 
         # noinspection PyUnusedLocal
         class Menu_Init(miru.View):
@@ -72,85 +152,20 @@ class main_view:
             async def stop_button(self, ctx: miru.ViewContext, button: miru.Button) -> None:
                 await ctx.edit_response(
                     hikari.Embed(
-                        title="Exitting menu.",
-                        description="Have any suggestions? Be sure to let us know on the github!",
+                        title="Exiting menu.",
+                        description="Goodbye!",
                     ),
                     components=[]
                 )
                 self.stop()  # Called to stop the view
 
-            @miru.text_select(options=tasks_data_options, placeholder="Edit Task")
+            @miru.text_select(options=viewself.task_data_options, placeholder="Edit Task")
             async def select_task_to_edit(self, ctx: miru.ViewContext, select: miru.TextSelect):
                 task_id = select.values[0]
-                class MyModal(miru.Modal, title="Modify a task, leave blank to keep unchanged."):
-                    new_name = miru.TextInput(
-                        label="Name",
-                        placeholder="What's the new name of the task?",
-                        required=False,
-                        style=hikari.TextInputStyle.SHORT,
-                        max_length=botapp.d['max_name_length'],
-                    )
-                    new_desc = miru.TextInput(
-                        label="Description",
-                        placeholder="What's the new description?",
-                        required=False,
-                        style=hikari.TextInputStyle.PARAGRAPH,
-                        max_length=botapp.d['max_desc_length'],
-                    )
-                    new_category = miru.TextInput(
-                        label="Category",
-                        placeholder="To what category does this task now belong?",
-                        required=False,
-                        style=hikari.TextInputStyle.SHORT
-                    )
-                    # TODO: Make deadline modifiable
 
-                    # The callback function is called after the user hits 'Submit'
-                    async def callback(self, ctx: miru.ModalContext) -> None:
-                        task_name = self.new_name.value
-                        task_desc = self.new_desc.value
-
-                        if task_name == "*":
-                            await ctx.edit_response(
-                                hikari.Embed(
-                                    title="Task name cannot be '*'",
-                                    description="You can't name your task '*'. That's reserved."
-                                )
-                            )
-                            return
-                        elif len(task_name) > botapp.d['max_name_length']:
-                            await ctx.edit_response(
-                                hikari.Embed(
-                                    title="Task name too long!",
-                                    description=f"Task names cannot be longer than {botapp.d['max_name_length']} characters."
-                                )
-                            )
-                            return
-                        if len(task_desc) > botapp.d['max_desc_length']:
-                            await ctx.edit_response(
-                                hikari.Embed(
-                                    title="Task description too long!",
-                                    description=f"Task descriptions cannot be longer than {botapp.d['max_desc_length']} characters."
-                                )
-                            )
-                            return
-
-                        dataMan().set_new_task_data(
-                            task_id=task_id,
-                            task_name=task_name,
-                            task_desc=task_desc,
-                            task_category=self.new_category.value
-                        )
-                        await ctx.edit_response(
-                            embed=viewself.gen_init_embed(),
-                        )
-                        await livetasks.update_for_guild(int(ctx.guild_id))
-
-                modal = MyModal()
+                modal = init_edit_modal(task_id)
                 builder = modal.build_response(miru_client)
-
                 await builder.create_modal_response(ctx.interaction)
-
                 miru_client.start_modal(modal)
 
         return Menu_Init()

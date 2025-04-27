@@ -1,8 +1,8 @@
 from library.live_task_channel import livetasks
 from library.parsing import parse_deadline
-from library.perms import perms
 from cogs.guild_tasks.group import group
 from library.storage import dataMan
+from library.perms import perms
 import lightbulb
 import hikari
 
@@ -37,14 +37,15 @@ plugin = lightbulb.Plugin(__name__)
     required=False,
     default='...',
     type=hikari.OptionType.STRING,
-    max_length=2000
 )
 @lightbulb.option(
     name='name',
     description='What name do you want to give the item?',
     required=True,
-    max_length=100,
     type=hikari.OptionType.STRING
+)
+@lightbulb.add_checks(
+    lightbulb.guild_only
 )
 @lightbulb.command(name='create', description='Create an item for your guild\'s to-do list.')
 @lightbulb.implements(lightbulb.SlashSubCommand)
@@ -67,6 +68,22 @@ async def create_cmd(ctx: lightbulb.SlashContext):
             hikari.Embed(
                 title="Task name cannot be '*'",
                 description="You can't name your task '*'. That's reserved."
+            )
+        )
+        return
+    if len(task_name) > plugin.bot.d['max_name_length']:
+        await ctx.respond(
+            hikari.Embed(
+                title="Task name too long!",
+                description=f"Task names cannot be longer than {plugin.bot.d['max_name_length']} characters."
+            )
+        )
+        return
+    if len(task_desc) > plugin.bot.d['max_desc_length']:
+        await ctx.respond(
+            hikari.Embed(
+                title="Task description too long!",
+                description=f"Task descriptions cannot be longer than {plugin.bot.d['max_desc_length']} characters."
             )
         )
         return
