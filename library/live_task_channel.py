@@ -102,7 +102,8 @@ class livetasks:
                 return False
 
         try:
-            await plugin.bot.rest.create_message(embed=embed, channel=task_channel)
+            for single_embed in embed:
+                await plugin.bot.rest.create_message(embed=single_embed, channel=task_channel)
         except hikari.errors.NotFoundError:
             logging.info(f"Task channel for guild {guild_id} not found. Disabling live task list.")
             dataMan().clear_taskchannel(guild_id)
@@ -113,11 +114,11 @@ class livetasks:
     @staticmethod
     def gen_livetasklist_embed(completed_tasks, incomplete_tasks):
         if len(completed_tasks) + len(incomplete_tasks) == 0:
-            return hikari.Embed(
+            return [hikari.Embed(  # <- Return a list even when empty
                 title="Live Task List",
                 description="Unfortunately, there are no tasks incomplete or complete to display.",
                 color=0x00ff00
-            )
+            )]
 
         try:
             guild_id = completed_tasks[0][7]
@@ -140,71 +141,118 @@ class livetasks:
 
         custom_desc = dataMan().get_livelist_description(guild_id)
 
-        embed = hikari.Embed(
-            title="Live Task List",
-            description=f"{style} style",
-            color=0x00ff00
-        ).add_field(
-            name="Details",
-            value=f"{custom_desc}\n\n" if custom_desc is not None else "This is a live list of incomplete and newly completed tasks.\n"
-                  f"The details of {len(incomplete_tasks)} incomplete task(s) is attached below.\n\n"
-        )
+        # New Embed Creation for when too much text
+        def create_new_embed():
+            new_embed = hikari.Embed(
+                title="Live Task List",
+                description=f"{style} style",
+                color=0x00ff00
+            ).add_field(
+                name="Information",
+                value=f"{custom_desc}\n\n" if custom_desc is not None else "This is a live list of incomplete and newly completed tasks.\nThe details of {len(incomplete_tasks)} incomplete task(s) is attached below.\n\n"
+            )
+            return new_embed
 
-        # Sort tasks: prioritize tasks without a category
+        embeds = [create_new_embed()]
+        current_embed = embeds[-1]
+
+        # Sort tasks
         incomplete_tasks.sort(key=lambda task: task[8] is not None and task[8] != "")
         completed_tasks.sort(key=lambda task: task[8] is not None and task[8] != "")
 
-        # A system Batch ID used to keep track of pages in the embed
         batch_id = random.randint(1000000000, 9999999999)
 
-        # Add completed tasks to the embed
         failed_compile_count = 0
         failed_compile_ids = []
-        for task in completed_tasks:
-            addition = livetasks.add_task_field(task, embed, style, batch_id)
-            if addition is False:
-                failed_compile_count =+ 1
-                failed_compile_ids.append(task[3])
-                continue
-            else:
-                embed = addition
 
-        # Categorise remaining incomplete tasks
+        # Helper to get the current embed size
+        def embed_total_length(embed):
+            length = len(embed.title or "") + len(embed.description or "")
+            for field in embed.fields:
+                length += len(field.name or "") + len(field.value or "")
+            return length
+
+        def safe_add_task(task):
+            """
+            Turns out that adding tasks to an embed without going over 6000 characters is a pain.
+            This function makes it less pain :>
+            """
+            nonlocal current_embed
+            nonlocal batch_id  # keep using it
+
+            # 1. Generate the text FIRST
+            preview_embed = livetasks.add_task_field(task, current_embed, style, batch_id, dry_run=True)
+
+            # 2. Calculate size if added
+            future_size = embed_total_length(current_embed) + len(preview_embed)
+
+            # 3. If the future size exceeds 6000, start a new embed
+            if future_size > 6000:
+                current_embed = create_new_embed()
+                embeds.append(current_embed)
+                batch_id = random.randint(1000000000, 9999999999)
+                plugin.bot.d[f'batch-{batch_id}'] = {'current_page': 1}
+                current_embed.add_field(name="Details Page 1", value="", inline=False)
+
+            # 4. Actually add a task for real now
+            addition = livetasks.add_task_field(task, current_embed, style, batch_id)
+            if addition is False:
+                return False
+            return addition
+
+        # Add completed tasks
+        for task in completed_tasks:
+            if safe_add_task(task) is False:
+                failed_compile_count += 1
+                failed_compile_ids.append(task[3])
+
+        # Add incomplete tasks
         category_sorted_tasks = {}
         for task in incomplete_tasks:
-            category = task[8] or ""  # Empty category comes first
+            category = task[8] or ""
             if category not in category_sorted_tasks:
                 category_sorted_tasks[category] = []
             category_sorted_tasks[category].append(task)
 
-        # Add sorted tasks to the embed
         for category in sorted(category_sorted_tasks.keys(), key=lambda x: x != ""):
             for task in category_sorted_tasks[category]:
-                addition = livetasks.add_task_field(task, embed, style, batch_id)
-                if addition is False:
-                    failed_compile_count =+ 1
+                if safe_add_task(task) is False:
+                    failed_compile_count += 1
                     failed_compile_ids.append(task[3])
-                    continue
-                else:
-                    embed = addition
 
+        # Add failure info if needed
         if failed_compile_count != 0:
-            failed_compile_ids_str = []
-            for uuid in failed_compile_ids:
-                failed_compile_ids_str.append(str(uuid))
-            embed.add_field(
-                name="Tasks could not compile",
-                value=f"While trying to compile this list, {failed_compile_count} task(s) could not compile.\n"
-                      "Check their data, is anything especially unusual?\nRegardless, Maintainers have been alerted.\n"
-                      f"Couldn't compile Tasks with IDs: {", ".join(failed_compile_ids_str)}"
+            failed_text = (
+                f"While trying to compile this list, {failed_compile_count} task(s) could not compile.\n"
+                f"Couldn't compile Tasks with IDs: {', '.join(map(str, failed_compile_ids))}"
             )
-            logging.warning(f"Tried to compile some tasks for guild {guild_id} but {failed_compile_count} tasks couldn't compile. Please debug.\n"
-                            f"Problematic ID(s)/v: {failed_compile_ids}")
+            if embed_total_length(current_embed) + len(failed_text) > 6000:
+                current_embed = create_new_embed()
+                embeds.append(current_embed)
+            current_embed.add_field(
+                name="Tasks could not compile",
+                value=failed_text
+            )
+            logging.warning(
+                f"Tried to compile some tasks for guild {guild_id} but {failed_compile_count} tasks couldn't compile. Please debug.\n"
+                f"Problematic ID(s)/v: {failed_compile_ids}")
 
-        return embed
+        # Clean up: remove any totally empty fields
+        for embed in embeds:
+            field_id = 0
+            for field in embed.fields:
+                if len(field.value) == 0:
+                    embed.remove_field(field_id)
+                field_id += 1
+
+        total_pages = len(embeds)
+        for idx, embed in enumerate(embeds, start=1):
+            embed.set_footer(text=f"Page {idx} of {total_pages}")
+
+        return embeds
 
     @staticmethod
-    def add_task_field(task:tuple, embed, style, batch_id:int):
+    def add_task_field(task: tuple, embed, style, batch_id: int, dry_run=False):
         task_name = task[0]
         task_desc = task[1]
         completed = bool(task[2])
@@ -223,159 +271,112 @@ class livetasks:
 
         # Check cache status
         cache_result = plugin.bot.d['show_x_cache'].get(int(guild_id))
-
         if cache_result:
             cached_status = cache_result['status']
             cached_time = cache_result['timenow']
-
-            # Check if the cache is still valid
             if isinstance(cached_status, bool) and (datetime.now() - cached_time) < CACHE_EXPIRATION_TIME:
                 show_x = cached_status
             else:
-                # Cache is outdated or invalid
                 show_x = bool(dataMan().get_show_task_completion(guild_id))
                 plugin.bot.d['show_x_cache'][int(guild_id)] = {
                     'status': show_x,
                     'timenow': datetime.now()
                 }
         else:
-            # No cache found for the guild, fetch fresh data
             show_x = bool(dataMan().get_show_task_completion(guild_id))
             plugin.bot.d['show_x_cache'][int(guild_id)] = {
                 'status': show_x,
                 'timenow': datetime.now()
             }
 
-        if show_x is False and bool(completed) is False:
+        if show_x is False and not completed:
             completed_text = ""
 
         if task_desc == "...":
             task_desc = ""
-        else:
-            task_desc = f"{task_desc}"
 
-        # Get task contributors
         contributors = dataMan().get_contributors(task_id=identifier)
+        assigned_user = dataMan().get_task_incharge(task_id=identifier)
+        custom_live_text = dataMan().get_livelist_format(guild_id)
 
         deadline_txt = ""
-        if not completed:
-            if deadline is not None:
+        if not completed and deadline is not None:
+            try:
                 deadline = datetime.strptime(deadline, "%Y-%m-%d %H:%M:%S")
                 if deadline < datetime.now():
                     deadline_txt += f"⚠️ Deadline expired <t:{int(deadline.timestamp())}:R>!\n"
                 else:
-                    try:
-                        deadline_txt += f"Deadline: {deadline.strftime("%d/%m/%Y %I:%M %p")}\n"
-                    except OSError:
-                        deadline_txt += "Deadline is too far in the future to display!\n"
-                    except Exception as err:
-                        logging.error(f"Something's wrong with converting deadline date to strftime for task id {identifier}\n"
-                                      f"Deadline: {deadline}, type: {type(deadline)} ", err)
-                        return False
+                    deadline_txt += f"Deadline: {deadline.strftime('%d/%m/%Y %I:%M %p')}\n"
+                    deadline_txt += f"Time left: <t:{int(deadline.timestamp())}:R>\n\n"
+            except Exception as err:
+                logging.error(f"Deadline formatting error for task {identifier}: {err}")
+                return False
 
-                    try:
-                        deadline_txt += f"Time left: <t:{int(deadline.timestamp())}:R>\n\n"
-                    except OSError:
-                        # Handles if someone tries to put in like, year 9999
-                        deadline_txt += "A POSIX timestamp can't go that far in the future!\n\n"
-                    except Exception as err:
-                        logging.error(f"Something's wrong with converting deadline date to timestamp for task id {identifier}\n"
-                                      f"Deadline: {deadline}, type: {type(deadline)} ", err)
-                        return False
+        # Build the text segment we want to add
 
-        # Ensures >1024 letters do not go on 1 page
-        page_no = 0
-        page_threshold = 900
-        amount_added = len(task_name) + len(task_desc) + len(deadline_txt) + len(completed_text) + len(f"<@{added_by}>") + len(contributors)
-        # If amount_added is > 1024, we cannot add it. Period.
-        if amount_added > page_threshold:
-            return False
+        q_or_s = '"' if len(task_desc) > 0 else ''
+        segment = ""
 
-        if plugin.bot.d.get(f'batch-{batch_id}', None) is None:
-            # If it doesn't exist, make it.
-            plugin.bot.d[f'batch-{batch_id}'] = {}
-            plugin.bot.d[f'batch-{batch_id}'][page_no] = amount_added
-            plugin.bot.d[f'batch-{batch_id}']['current_page'] = 0
-        else:
-            # The page must have been saved, so we retrieve it.
-            page_no = plugin.bot.d[f'batch-{batch_id}']['current_page']
-            # Else, add the total. Increment page if needed.
-            if plugin.bot.d[f'batch-{batch_id}'][page_no] + amount_added > page_threshold:
-                page_no += 1
-                plugin.bot.d[f'batch-{batch_id}']['current_page'] = page_no
-                plugin.bot.d[f'batch-{batch_id}'][page_no] = 0
-                # Creates a new embed field for the page
-                embed.add_field(
-                    name=f"Details (p{page_no})",
-                    value="",
-                    inline=False
-                )
-            plugin.bot.d[f'batch-{batch_id}'][page_no] += amount_added
-
-        efield = embed.fields[page_no].value
-
-        if category is not None and category != "":
-            if style in ['classic']:
-                if f"-- **__{category}__** --" not in efield:
-                    efield += f"\n-- **__{category}__** --\n\n"
-            elif style in ['pinned', 'pinned-minimal', 'minimal', 'compact']:
-                if f"# {category}" not in efield:
-                    efield += f"**__{category}__**\n"
-
-        custom_live_text = dataMan().get_livelist_format(guild_id)
-        assigned_user = dataMan().get_task_incharge(task_id=identifier)
+        # Add category heading if not already present
+        if category:
+            segment += f"**__{category}__**\n" if style in ['pinned', 'compact', 'minimal', 'pinned-minimal'] else f"-- **__{category}__** --\n\n"
 
         if custom_live_text is None:
-            # Quote or space
-            q_or_s = '"' if len(task_desc) > 0 else ''
-
             if style == 'classic':
-                efield += f"{task_name}\n"
-                efield += f"(ID: {identifier})\n"
-                efield +=  f"{task_desc}{"\n" if len(task_desc) != 0 else ""}"
-                efield += f"{completed_text}{"\n" if show_x else ""}"
-                efield += f"Added by: <@{added_by}>\n"
-                efield += f"{len(contributors)} helping\n"
-
-                if assigned_user is not None:
-                    efield += f"Assigned to <@{assigned_user}>\n{"\n" if len(deadline_txt) == 0 else ""}"
-                if len(deadline_txt) > 0:
-                    # Checks if the last character is a newline
-                    is_newline = efield[-1] == "\n"
-                    efield += f"{deadline_txt}{"\n\n" if not is_newline else ""}"
-
+                segment += f"{task_name}\n(ID: {identifier})\n{task_desc}\n{completed_text}\nAdded by: <@{added_by}>\n{len(contributors)} helping\n"
+                if assigned_user:
+                    segment += f"Assigned to <@{assigned_user}>\n"
+                if deadline_txt:
+                    segment += f"{deadline_txt}\n"
             elif style == 'minimal':
-                efield = efield + f"({identifier}){" " if show_x else ""}{completed_text} {task_name}\n{"\n" if len(deadline_txt) == 0 else ""}"
-                if len(deadline_txt) > 0:
-                    efield = efield + f"{deadline_txt}\n\n"
+                segment += f"({identifier}) {' ' if show_x else ''}{completed_text} {task_name}\n"
+                if deadline_txt:
+                    segment += f"{deadline_txt}\n"
             elif style == 'pinned':
-                efield += f"- ({identifier}) {task_name}{" " if show_x else ""}{completed_text}\n"
-                efield += f"{q_or_s}{task_desc}{q_or_s} {len(contributors)} people helping.\n"
-                efield += f"Added by <@{added_by}>\n"
-
-                if assigned_user is not None:
-                    efield += f"Assigned to <@{assigned_user}>\n{"\n" if len(deadline_txt) == 0 else ""}"
-                if len(deadline_txt) > 0:
-                    # Checks if the last character is a newline
-                    is_newline = efield[-1] == "\n"
-                    efield += f"{deadline_txt}{"\n\n" if not is_newline else ""}"
+                segment += f"- ({identifier}) {task_name} {' ' if show_x else ''}{completed_text}\n{q_or_s}{task_desc}{q_or_s} {len(contributors)} people helping.\nAdded by <@{added_by}>\n"
+                if assigned_user:
+                    segment += f"Assigned to <@{assigned_user}>\n"
+                if deadline_txt:
+                    segment += f"{deadline_txt}\n"
             elif style == 'pinned-minimal':
-                efield = efield + f"- ({identifier}){" " if show_x else ""}{completed_text} {task_name}\n\n"
+                segment += f"- ({identifier}) {' ' if show_x else ''}{completed_text} {task_name}\n"
             elif style == 'compact':
-                efield = efield + f"({identifier}) {task_name} {completed_text}{" " if show_x else ""}{q_or_s}{task_desc}{q_or_s} {len(contributors)} helping. <@{added_by}>\n"
-                if len(deadline_txt) > 0:
-                    efield += f"{deadline_txt}\n\n"
+                segment += f"({identifier}) {task_name} {completed_text} {' ' if show_x else ''}{q_or_s}{task_desc}{q_or_s} {len(contributors)} helping. <@{added_by}>\n"
+                if deadline_txt:
+                    segment += f"{deadline_txt}\n"
             else:
                 raise ValueError("Invalid style")
         else:
-            efield = efield + f"{parse_livelist_format(custom_live_text, task_id=identifier)}\n"
-            if len(deadline_txt) > 0:
-                efield = efield + f"{deadline_txt}\n"
+            segment += f"{parse_livelist_format(custom_live_text, task_id=identifier)}\n"
+            if deadline_txt:
+                segment += f"{deadline_txt}\n"
 
+        # Now deal with embed and fields safely under 1024 characters
+
+        key = f"batch-{batch_id}"
+        if plugin.bot.d.get(key) is None:
+            plugin.bot.d[key] = {'current_page': 1}
+            embed.add_field(name="Details Page 1", value="", inline=False)
+
+        page_no = plugin.bot.d[key]['current_page']
+        field = embed.fields[page_no]
+
+        # If adding this segment overflows, move to the next page
+        if len(field.value) + len(segment) > 1024:
+            page_no += 1
+            plugin.bot.d[key]['current_page'] = page_no
+            embed.add_field(name=f"Details Page {page_no}", value="", inline=False)
+            field = embed.fields[page_no]
+
+        if dry_run:
+            return segment  # Return the text that would be added
+
+        # Append safely
+        new_value = field.value + segment
         embed.edit_field(
-            0,
-            "Details",
-            efield,
+            page_no,
+            field.name,
+            new_value,
             inline=False
         )
 

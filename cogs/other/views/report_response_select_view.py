@@ -1,10 +1,10 @@
 from library.botapp import botapp, miru_client
-import datetime
+from datetime import datetime, timedelta
+from library.storage import dataMan
 import dotenv
 import hikari
 import miru
 
-from library.storage import dataMan
 
 dotenv.load_dotenv('.env')
 
@@ -54,11 +54,17 @@ class main_view:
                     miru.SelectOption(
                         label="No Fix will be implemented",
                         value="WONT-FIX"
+                    ),
+                    miru.SelectOption(
+                        label="I want to respond personally",
+                        value="CUSTOM"
                     )
                 ]
             )
             async def respond_btn(self, ctx: miru.ViewContext, select: miru.text_select) -> None:
                 report_result = str(select.values[0])
+                custom_content = None
+                timeout_mins = 3
 
                 # TODO: Have this show their full bug report as well as the result so they know what happened if they forgot.
                 if report_result == "RESOLVED":
@@ -78,15 +84,45 @@ class main_view:
                 elif report_result == "WONT-FIX":
                     report_result = ("Thank you for reporting the bug!\n"
                                      "We've decided to not fix this bug and leave it as-is or improve it as a feature.")
+                elif report_result == "CUSTOM":
+                    await ctx.edit_response(
+                        hikari.Embed(
+                            title="Custom response",
+                            description="We've sent you a DM. Respond with ONLY how you'd like the bot to respond."
+                        )
+                    )
+
+                    listen_msg = await ctx.author.send(
+                        "Please respond with ONLY how you'd like the bot to respond. We'll send it word-for-word as the result.\n"
+                        f"You have T-<T:{int((datetime.now() + timedelta(minutes=timeout_mins)).timestamp())}:R> minutes to respond."
+                    )
+                    try:
+                        found_msg:hikari.events.DMMessageCreateEvent = await botapp.wait_for(
+                            hikari.events.DMMessageCreateEvent,
+                            timeout=timedelta(minutes=timeout_mins).total_seconds(),
+                            predicate=ctx.author.id == listen_msg.author.id,
+                        )
+                    except TimeoutError:
+                        await ctx.edit_response(
+                            hikari.Embed(
+                                title="Response timed out!",
+                                description="You took too long to respond."
+                            ),
+                        )
+                        return
+                    custom_content = found_msg.message.content
 
                 try:
+                    if custom_content is not None:
+                        report_result = custom_content
+
                     dmc = await botapp.rest.create_dm_channel(reporter_id)
                     await dmc.send(
                         hikari.Embed(
                             title="Bug report result",
                             description=f"This is regarding a bug report you filed a while ago with Ticket ID {ticket_id}.\n\n",
                             color=0x00ff00,
-                            timestamp=datetime.datetime.now().astimezone()
+                            timestamp=datetime.now().astimezone()
                         )
                         .add_field(name="Result", value=report_result)
                     )

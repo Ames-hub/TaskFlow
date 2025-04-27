@@ -1,3 +1,4 @@
+from library.storage import dataMan
 from library.botapp import botapp
 from library.perms import perms
 import lightbulb
@@ -29,12 +30,11 @@ async def alert_maintainer(event):
 
     # For some reason, event.context.command.name is only returning the group for subcommands. So we must
     # Do it in this more complicated way by examining the exception and looking for the command.
-    path_filter = os.path.join(os.getcwd())  # Eg: D:\Projects\github\TaskFlow
-    err_directory = None
-
     command_name = "N/A"
     command_desc = "N/A"
     is_command = False
+    path_filter = os.getcwd()
+
     for tb_line in tb:
         if f"File \"{path_filter}" in tb_line:
             # Finds the text inbetween the quotes
@@ -77,7 +77,7 @@ async def alert_maintainer(event):
             description=f"Command: {command_name}\n"
                         f"Description: {command_desc}\n"
                         f"Is Command: {is_command}\n"
-                        f"File Path: {err_directory}\n",
+                        f"File Exception Path: {err_directory}\n",
             timestamp=datetime.datetime.now().astimezone(),
             color=hikari.Color(0xff0000)
         )
@@ -90,8 +90,19 @@ async def alert_maintainer(event):
             value=f"The user encountered the error \n\"{event.exception}\" at the posted timestamp. A full traceback is attached.\n\n"
                   f"Invoker: {event.context.author.id} ({event.context.author.username})\n"
                   f"In a Guild?: {in_guild}\n"
+                  f"Is this a DM?: {not in_guild}\n"
+                  # Modify those numbers without also setting the primary_maintainer_id in .env to somebody else, and I will cry :3
+                  f"Is this bot an official instance?: {botapp.get_me().id in [1262021444615933962, 1090899298650169385]}\n"
         ),
         attachment=attachment
+    )
+
+    # Log a bug report without sending the DM
+    dataMan().create_bugreport_ticket(
+        reporter_id=event.context.author.id,
+        stated_bug=f"I encountered an error in the {command_name.replace("_", " ")} command!",
+        stated_reproduction=f"Run the command with options {event.context.options}",
+        additional_info="This bug report was sent automatically!"
     )
 
 # For some reason, using plugin.listener doesn't work
@@ -105,6 +116,7 @@ async def on_error(event: lightbulb.CommandErrorEvent) -> None:
             perms.embeds.insufficient_perms(event.context),
             flags=hikari.MessageFlag.EPHEMERAL
         )
+        return
     elif isinstance(event.exception, lightbulb.MissingRequiredRole):
         await event.context.respond("You don't have the required role to run this command.", flags=hikari.MessageFlag.EPHEMERAL)
         return
@@ -123,6 +135,8 @@ async def on_error(event: lightbulb.CommandErrorEvent) -> None:
     elif isinstance(event.exception, lightbulb.errors.CommandIsOnCooldown):
         await event.context.respond(f"You have {event.exception.retry_after:.2f} seconds left before you can run this command again.")
         return
+
+    # THE BELOW ARE UNHANDLED, UNEXPECTED ERRORS.
     elif isinstance(event.exception, Exception):
         if event.context:
             await event.context.respond(
