@@ -39,8 +39,9 @@ def modernize_db():
             'category': 'TEXT DEFAULT NULL',
         },
         'task_template_usage': {  # Used to know which tasks use which template
+            'usage_id': 'INTEGER PRIMARY KEY AUTOINCREMENT',
             'template_id': 'INT NOT NULL',
-            'task_id': 'INT NOT NULL PRIMARY KEY',
+            'task_id': 'INT NOT NULL',
         },
         'livechannel_styles': {  # Used to know which guild uses which style
             'guild_id': 'INT PRIMARY KEY',
@@ -233,17 +234,16 @@ class sqlite_storage:
         conn = sqlite3.connect(guild_filepath)
         try:
             cur = conn.cursor()
-            sqlite_storage.add_todo_item(
+            task_id = sqlite_storage.add_todo_item(
                 name=task_name,
                 description=task_desc,
                 guild_id=guild_id,
                 category=task_cat,
                 deadline=task_deadline,
-                added_by=task_creator_id,
+                added_by=int(task_creator_id),
                 return_task_id=True
             )
 
-            task_id = cur.lastrowid
             cur.execute(f'''
                 INSERT INTO task_template_usage (task_id, template_id)
                 VALUES (?, ?)''',
@@ -817,12 +817,11 @@ class sqlite_storage:
             assert category is None or type(category) is str, "Category must be a string or None"
             cur = conn.cursor()
 
-            uid = user_id if user_id else guild_id
             query = """
             INSERT INTO todo_items (name, description, completed, added_by, deadline, guild_id, category)
             VALUES (?, ?, ?, ?, ?, ?, ?)
             """
-            cur.execute(query, (uid, name, description, False, added_by, deadline, guild_id, category))
+            cur.execute(query, (name, description, False, added_by, deadline, guild_id, category))
             conn.commit()
 
             if return_task_id:
@@ -836,6 +835,7 @@ class sqlite_storage:
             return False
         finally:
             conn.close()
+            return False
 
     @staticmethod
     def mark_todo_finished(identifier, user_id=None, guild_id=None):
@@ -1216,6 +1216,7 @@ class dataMan:
         else:
             template_id = str(template_id)
         guild_id = int(guild_id)
+        task_creator_id = int(task_creator_id)
 
         # Ensures the template exists
         template = self.storage.get_task_template(template_id, guild_id)

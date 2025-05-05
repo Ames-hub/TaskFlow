@@ -366,19 +366,35 @@ class livetasks:
             page_no += 1
             plugin.bot.d[key]['current_page'] = page_no
             embed.add_field(name=f"Details Page {page_no}", value="", inline=False)
-            field = embed.fields[page_no]
 
         if dry_run:
-            return segment  # Return the text that would be added
+            return segment
 
-        # Append safely
-        new_value = field.value + segment
-        embed.edit_field(
-            page_no,
-            field.name,
-            new_value,
-            inline=False
-        )
+        # Ensure we have our pagination state
+        key = f"batch-{batch_id}"
+        if plugin.bot.d.get(key) is None:
+            plugin.bot.d[key] = {'current_page': 1}
+            embed.add_field(name="Details Page 1", value="", inline=False)
+
+        # Now split the segment into <=1024-char chunks
+        max_len = 1024
+        chunks = [segment[i:i + max_len] for i in range(0, len(segment), max_len)]
+        page_no = plugin.bot.d[key]['current_page']
+
+        for chunk in chunks:
+            # grab the current field (might be freshly empty)
+            field = embed.fields[page_no]
+
+            # if even this chunk overflows the current field, make a new page
+            if len(field.value) + len(chunk) > max_len:
+                page_no += 1
+                plugin.bot.d[key]['current_page'] = page_no
+                embed.add_field(name=f"Details Page {page_no}", value="", inline=False)
+                field = embed.fields[page_no]
+
+            # append the chunk
+            new_value = field.value + chunk
+            embed.edit_field(page_no, field.name, new_value, inline=False)
 
         return embed
 
