@@ -236,6 +236,7 @@ class sqlite_storage:
             sqlite_storage.add_todo_item(
                 name=task_name,
                 description=task_desc,
+                guild_id=guild_id,
                 category=task_cat,
                 deadline=task_deadline,
                 added_by=task_creator_id,
