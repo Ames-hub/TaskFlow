@@ -12,12 +12,14 @@ plugin = lightbulb.Plugin(__name__)
 @lightbulb.option(
     name='task_id',
     description='What is the name or ID for the task?',
+    type=hikari.OptionType.INTEGER,
     required=True,
     default=None
 )
 @lightbulb.option(
     name='user',
     description='Which user do you want to assign?',
+    type=hikari.OptionType.USER,
     required=False,
     default=None
 )

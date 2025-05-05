@@ -29,6 +29,26 @@ class main_view:
                 self.stop()  # Called to stop the view
 
             # noinspection PyUnusedLocal
+            @miru.button(label="back", style=hikari.ButtonStyle.SECONDARY)
+            async def back_btn(self, ctx: miru.ViewContext, select: miru.text_select) -> None:
+                self.stop()
+                from cogs.other.views.bug_manage_view import main_view as bug_manage_view
+
+                view = bug_manage_view()
+                viewmenu = view.init_view()
+
+                await ctx.edit_response(
+                    view.gen_embed().add_field(
+                        name="Bug report result sent!",
+                        value="The user has been informed of the result of their bug report."
+                    ),
+                    components=viewmenu.build()
+                )
+
+                miru_client.start_view(viewmenu)
+                await viewmenu.wait()
+
+            # noinspection PyUnusedLocal
             @miru.text_select(
                 options=[
                     miru.SelectOption(
