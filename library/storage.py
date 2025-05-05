@@ -1,9 +1,8 @@
 from datetime import datetime
-
-import hikari
 import lightbulb
 import logging
 import sqlite3
+import hikari
 import os
 
 plugin = lightbulb.Plugin(__name__)
@@ -67,7 +66,7 @@ def modernize_db():
             'task_id': 'INT NOT NULL PRIMARY KEY',
             'user_id': 'INT NOT NULL',
         },
-        'guild_livelist_descs': {  # A Feature request that allows people to modify the description of the livelist
+        'guild_livelist_descs': {  # A Feature request that allows people to modify the description of the live list
             'guild_id': 'INT NOT NULL PRIMARY KEY',
             'description': 'TEXT'
         },
@@ -234,17 +233,20 @@ class sqlite_storage:
         conn = sqlite3.connect(guild_filepath)
         try:
             cur = conn.cursor()
-            cur.execute(f'''
-                INSERT INTO todo_items (name, description, category, guild_id, deadline, added_by, completed)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            ''', (task_name, task_desc, task_cat, guild_id, task_deadline, task_creator_id, False)
+            sqlite_storage.add_todo_item(
+                name=task_name,
+                description=task_desc,
+                category=task_cat,
+                deadline=task_deadline,
+                added_by=task_creator_id,
+                return_task_id=True
             )
-            conn.commit()
 
+            task_id = cur.lastrowid
             cur.execute(f'''
                 INSERT INTO task_template_usage (task_id, template_id)
                 VALUES (?, ?)''',
-                (cur.lastrowid, unique_template_id)
+                (task_id, unique_template_id)
             )
             conn.commit()
             return True
@@ -328,7 +330,7 @@ class sqlite_storage:
                     SELECT identifier, name, task_name, task_desc, task_category, task_deadline, guild_id
                     FROM task_templates WHERE name LIKE ? AND guild_id = ?
                     """,
-                    (f"%{template_id}%",)
+                    (f"%{template_id}%", guild_id)
                 )
             data = cur.fetchone()
             if not data:
@@ -816,8 +818,8 @@ class sqlite_storage:
 
             uid = user_id if user_id else guild_id
             query = """
-            INSERT INTO todo_items (uid, name, description, completed, added_by, deadline, guild_id, category)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO todo_items (name, description, completed, added_by, deadline, guild_id, category)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """
             cur.execute(query, (uid, name, description, False, added_by, deadline, guild_id, category))
             conn.commit()
@@ -841,14 +843,13 @@ class sqlite_storage:
             assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"
             cur = conn.cursor()
 
-            uid = user_id if user_id else guild_id
             query = """
             UPDATE todo_items
             SET completed = ?
-            WHERE uid = ?
+            WHERE guild_id = ?
             """
 
-            arguments = (True, uid)
+            arguments = (True, guild_id)
             if identifier is not None:
                 if str(identifier).isnumeric():
                     query += "AND id = ?"
@@ -862,9 +863,9 @@ class sqlite_storage:
             query = """
             UPDATE todo_items
             SET completed_on = CURRENT_TIMESTAMP
-            WHERE uid = ?
+            WHERE guild_id = ?
             """
-            cur.execute(query, (uid,))
+            cur.execute(query, (guild_id,))
             conn.commit()
             return True
         except sqlite3.Error as err:
@@ -882,13 +883,12 @@ class sqlite_storage:
             assert type(identifier) is str or type(identifier) is int, "Identifier must be a string or an integer"
             cur = conn.cursor()
 
-            uid = user_id if user_id else guild_id
             query = """
             UPDATE todo_items
             SET completed = ?
-            WHERE uid = ? 
+            WHERE guild_id = ? 
             """
-            arguments = (False, uid)
+            arguments = (False, guild_id)
             if str(identifier).isnumeric():
                 query += "AND id = ?"
             else:
@@ -939,7 +939,7 @@ class sqlite_storage:
         query = f"""
         SELECT name, description, completed, id, completed_on, added_by, deadline, guild_id, category
         FROM todo_items
-        {"WHERE uid = ?" if uid != "*" else ""}
+        {"WHERE guild_id = ?" if uid != "*" else ""}
         """
 
         WHERE_OR_AND_TEXT = "and" if uid != "*" else "where"
@@ -1508,8 +1508,8 @@ class dataMan:
         :param user_id:
         :param task_id:
         :param guild_id:
-        :return: False if failed
-        :return: True if Succeeded
+        :return: False if it failed
+        :return: True if it Succeeded
         :return: -1 if already contributing
         :return: -2 if late contrib is not allowed and tried to contrib
         :return: -3 in a different server as the task

@@ -136,13 +136,18 @@ async def on_error(event: lightbulb.CommandErrorEvent) -> None:
         await event.context.respond(f"You have {event.exception.retry_after:.2f} seconds left before you can run this command again.")
         return
 
+    elif isinstance(event.exception, hikari.errors.NotFoundError):
+        logging.warning("An unintended keep-alive timeout for a command occured!")
+        return
+
     # THE BELOW ARE UNHANDLED, UNEXPECTED ERRORS.
     elif isinstance(event.exception, Exception):
         if event.context:
             await event.context.respond(
                 hikari.Embed(
                     title="Uh oh!",
-                    description="Sorry, it seems an unknown problem occured!"
+                    description="Sorry, it seems an unknown problem occured!\n"
+                                "Don't worry, the project maintainers have been alerted."
                 ),
                 flags=hikari.MessageFlag.EPHEMERAL
             )
@@ -150,7 +155,8 @@ async def on_error(event: lightbulb.CommandErrorEvent) -> None:
         logging.info("Error!", exc_info=event.exception)
         await alert_maintainer(event)
     else:
-        await event.context.respond("An error occurred while running this command :(\nPlease try again later once we solve the problem.", flags=hikari.MessageFlag.EPHEMERAL)
+        await event.context.respond("An error occurred while running this command :(\n"
+                                    "Don't worry, the project maintainers have been alerted.", flags=hikari.MessageFlag.EPHEMERAL)
         await alert_maintainer(event)
 
     print(f"An error occurred while running a command: {event.exception}")
