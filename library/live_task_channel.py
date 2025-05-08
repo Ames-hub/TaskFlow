@@ -1,13 +1,16 @@
-from library.parsing import parse_livelist_format
-from datetime import datetime, timedelta
-from library.storage import dataMan
-import lightbulb
 import logging
 import random
+from datetime import datetime, timedelta
+
 import hikari
+import lightbulb
+
+from library.parsing import parse_livelist_format
+from library.storage import dataMan
 
 CACHE_EXPIRATION_TIME = timedelta(seconds=15)
 plugin = lightbulb.Plugin(__name__)
+
 
 class livetasks:
     @staticmethod
@@ -27,7 +30,7 @@ class livetasks:
         return completed_tasks
 
     @staticmethod
-    async def update_to_target(guild_id, target_user_id=None, target_channel_id:int=None):
+    async def update_to_target(guild_id, target_user_id=None, target_channel_id: int = None):
         """
         A Function to update the live task list to a target channel or user.
         """
@@ -39,11 +42,11 @@ class livetasks:
 
         guild_id = int(guild_id)
 
-        incomplete_tasks = dataMan().get_todo_items(guild_id=guild_id, filter_for='incompleted')
+        incomplete_tasks = dataMan().get_todo_items(guild_id=guild_id, filter_for="incompleted")
         completed_tasks = livetasks.filter_out_old_completed_tasks(
             task_list=dataMan().get_todo_items(
                 guild_id=guild_id,
-                filter_for='completed',
+                filter_for="completed",
             )
         )
 
@@ -66,13 +69,19 @@ class livetasks:
             try:
                 await plugin.bot.rest.create_message(embed=embed, channel=target_channel_id)
             except hikari.errors.NotFoundError:
-                logging.info(f"Target channel for guild {guild_id} not found. Disabling live task list.")
+                logging.info(
+                    f"Target channel for guild {guild_id} not found. Disabling live task list."
+                )
                 return False
 
     @staticmethod
     async def update_for_guild(guild_id):
-        incomplete_tasks = dataMan().get_todo_items(guild_id=int(guild_id), filter_for='incompleted')
-        unfiltered_completed_tasks = dataMan().get_todo_items(guild_id=int(guild_id), filter_for='completed')
+        incomplete_tasks = dataMan().get_todo_items(
+            guild_id=int(guild_id), filter_for="incompleted"
+        )
+        unfiltered_completed_tasks = dataMan().get_todo_items(
+            guild_id=int(guild_id), filter_for="completed"
+        )
         task_channel = dataMan().get_taskchannel(int(guild_id))
 
         if task_channel is None:
@@ -90,14 +99,16 @@ class livetasks:
                     embed=(
                         hikari.Embed(
                             title="Uh oh!",
-                            description="Failed to generate embed for live task list!"
+                            description="Failed to generate embed for live task list!",
                         ),
                     ),
-                    channel=task_channel
+                    channel=task_channel,
                 )
                 return False
             except hikari.errors.NotFoundError:
-                logging.info(f"Task channel for guild {guild_id} not found. Disabling live task list.")
+                logging.info(
+                    f"Task channel for guild {guild_id} not found. Disabling live task list."
+                )
                 dataMan().clear_taskchannel(guild_id)
                 return False
 
@@ -114,11 +125,13 @@ class livetasks:
     @staticmethod
     def gen_livetasklist_embed(completed_tasks, incomplete_tasks):
         if len(completed_tasks) + len(incomplete_tasks) == 0:
-            return [hikari.Embed(  # <- Return a list even when empty
-                title="Live Task List",
-                description="Unfortunately, there are no tasks incomplete or complete to display.",
-                color=0x00ff00
-            )]
+            return [
+                hikari.Embed(  # <- Return a list even when empty
+                    title="Live Task List",
+                    description="Unfortunately, there are no tasks incomplete or complete to display.",
+                    color=0x00FF00,
+                )
+            ]
 
         try:
             guild_id = completed_tasks[0][7]
@@ -128,14 +141,14 @@ class livetasks:
             except IndexError:
                 return False
 
-        if plugin.bot.d['livelist_styles'].get(str(guild_id)) is None:
+        if plugin.bot.d["livelist_styles"].get(str(guild_id)) is None:
             style = dataMan().get_livechannel_style(guild_id)
-            plugin.bot.d['livelist_styles'][str(guild_id)] = [style, datetime.now().timestamp()]
+            plugin.bot.d["livelist_styles"][str(guild_id)] = [style, datetime.now().timestamp()]
         else:
-            data = plugin.bot.d['livelist_styles'].get(str(guild_id))
+            data = plugin.bot.d["livelist_styles"].get(str(guild_id))
             if data[1] + 5 < datetime.now().timestamp():
                 style = dataMan().get_livechannel_style(guild_id)
-                plugin.bot.d['livelist_styles'][str(guild_id)] = [style, datetime.now().timestamp()]
+                plugin.bot.d["livelist_styles"][str(guild_id)] = [style, datetime.now().timestamp()]
             else:
                 style = data[0]
 
@@ -144,12 +157,14 @@ class livetasks:
         # New Embed Creation for when too much text
         def create_new_embed():
             new_embed = hikari.Embed(
-                title="Live Task List",
-                description=f"{style} style",
-                color=0x00ff00
+                title="Live Task List", description=f"{style} style", color=0x00FF00
             ).add_field(
                 name="Information",
-                value=f"{custom_desc}\n\n" if custom_desc is not None else "This is a live list of incomplete and newly completed tasks.\nThe details of {len(incomplete_tasks)} incomplete task(s) is attached below.\n\n"
+                value=(
+                    f"{custom_desc}\n\n"
+                    if custom_desc is not None
+                    else f"This is a live list of incomplete and newly completed tasks.\nThe details of {len(incomplete_tasks)} incomplete task(s) is attached below.\n\n"
+                ),
             )
             return new_embed
 
@@ -181,7 +196,9 @@ class livetasks:
             nonlocal batch_id  # keep using it
 
             # 1. Generate the text FIRST
-            preview_embed = livetasks.add_task_field(task, current_embed, style, batch_id, dry_run=True)
+            preview_embed = livetasks.add_task_field(
+                task, current_embed, style, batch_id, dry_run=True
+            )
 
             # 2. Calculate size if added
             future_size = embed_total_length(current_embed) + len(preview_embed)
@@ -191,7 +208,7 @@ class livetasks:
                 current_embed = create_new_embed()
                 embeds.append(current_embed)
                 batch_id = random.randint(1000000000, 9999999999)
-                plugin.bot.d[f'batch-{batch_id}'] = {'current_page': 1}
+                plugin.bot.d[f"batch-{batch_id}"] = {"current_page": 1}
                 current_embed.add_field(name="Details Page 1", value="", inline=False)
 
             # 4. Actually add a task for real now
@@ -229,13 +246,11 @@ class livetasks:
             if embed_total_length(current_embed) + len(failed_text) > 6000:
                 current_embed = create_new_embed()
                 embeds.append(current_embed)
-            current_embed.add_field(
-                name="Tasks could not compile",
-                value=failed_text
-            )
+            current_embed.add_field(name="Tasks could not compile", value=failed_text)
             logging.warning(
                 f"Tried to compile some tasks for guild {guild_id} but {failed_compile_count} tasks couldn't compile. Please debug.\n"
-                f"Problematic ID(s)/v: {failed_compile_ids}")
+                f"Problematic ID(s)/v: {failed_compile_ids}"
+            )
 
         # Clean up: remove any totally empty fields
         for embed in embeds:
@@ -262,31 +277,34 @@ class livetasks:
         guild_id = task[7]
         category = task[8]
 
-        if style in ['classic']:
+        if style in ["classic"]:
             completed_text = f"Completed: {'❌' if not completed else '✅'}"
-        elif style in ['pinned', 'compact', 'minimal', 'pinned-minimal']:
+        elif style in ["pinned", "compact", "minimal", "pinned-minimal"]:
             completed_text = f"{'❌' if not completed else '✅'}"
         else:
             raise ValueError("Invalid style")
 
         # Check cache status
-        cache_result = plugin.bot.d['show_x_cache'].get(int(guild_id))
+        cache_result = plugin.bot.d["show_x_cache"].get(int(guild_id))
         if cache_result:
-            cached_status = cache_result['status']
-            cached_time = cache_result['timenow']
-            if isinstance(cached_status, bool) and (datetime.now() - cached_time) < CACHE_EXPIRATION_TIME:
+            cached_status = cache_result["status"]
+            cached_time = cache_result["timenow"]
+            if (
+                isinstance(cached_status, bool)
+                and (datetime.now() - cached_time) < CACHE_EXPIRATION_TIME
+            ):
                 show_x = cached_status
             else:
                 show_x = bool(dataMan().get_show_task_completion(guild_id))
-                plugin.bot.d['show_x_cache'][int(guild_id)] = {
-                    'status': show_x,
-                    'timenow': datetime.now()
+                plugin.bot.d["show_x_cache"][int(guild_id)] = {
+                    "status": show_x,
+                    "timenow": datetime.now(),
                 }
         else:
             show_x = bool(dataMan().get_show_task_completion(guild_id))
-            plugin.bot.d['show_x_cache'][int(guild_id)] = {
-                'status': show_x,
-                'timenow': datetime.now()
+            plugin.bot.d["show_x_cache"][int(guild_id)] = {
+                "status": show_x,
+                "timenow": datetime.now(),
             }
 
         if show_x is False and not completed:
@@ -314,33 +332,37 @@ class livetasks:
 
         # Build the text segment we want to add
 
-        q_or_s = '"' if len(task_desc) > 0 else ''
+        q_or_s = '"' if len(task_desc) > 0 else ""
         segment = ""
 
         # Add category heading if not already present
         if category:
-            segment += f"**__{category}__**\n" if style in ['pinned', 'compact', 'minimal', 'pinned-minimal'] else f"-- **__{category}__** --\n\n"
+            segment += (
+                f"**__{category}__**\n"
+                if style in ["pinned", "compact", "minimal", "pinned-minimal"]
+                else f"-- **__{category}__** --\n\n"
+            )
 
         if custom_live_text is None:
-            if style == 'classic':
+            if style == "classic":
                 segment += f"{task_name}\n(ID: {identifier})\n{task_desc}\n{completed_text}\nAdded by: <@{added_by}>\n{len(contributors)} helping\n"
                 if assigned_user:
                     segment += f"Assigned to <@{assigned_user}>\n"
                 if deadline_txt:
                     segment += f"{deadline_txt}\n"
-            elif style == 'minimal':
+            elif style == "minimal":
                 segment += f"({identifier}) {' ' if show_x else ''}{completed_text} {task_name}\n"
                 if deadline_txt:
                     segment += f"{deadline_txt}\n"
-            elif style == 'pinned':
+            elif style == "pinned":
                 segment += f"- ({identifier}) {task_name} {' ' if show_x else ''}{completed_text}\n{q_or_s}{task_desc}{q_or_s} {len(contributors)} people helping.\nAdded by <@{added_by}>\n"
                 if assigned_user:
                     segment += f"Assigned to <@{assigned_user}>\n"
                 if deadline_txt:
                     segment += f"{deadline_txt}\n"
-            elif style == 'pinned-minimal':
+            elif style == "pinned-minimal":
                 segment += f"- ({identifier}) {' ' if show_x else ''}{completed_text} {task_name}\n"
-            elif style == 'compact':
+            elif style == "compact":
                 segment += f"({identifier}) {task_name} {completed_text} {' ' if show_x else ''}{q_or_s}{task_desc}{q_or_s} {len(contributors)} helping. <@{added_by}>\n"
                 if deadline_txt:
                     segment += f"{deadline_txt}\n"
@@ -355,16 +377,16 @@ class livetasks:
 
         key = f"batch-{batch_id}"
         if plugin.bot.d.get(key) is None:
-            plugin.bot.d[key] = {'current_page': 1}
+            plugin.bot.d[key] = {"current_page": 1}
             embed.add_field(name="Details Page 1", value="", inline=False)
 
-        page_no = plugin.bot.d[key]['current_page']
+        page_no = plugin.bot.d[key]["current_page"]
         field = embed.fields[page_no]
 
         # If adding this segment overflows, move to the next page
         if len(field.value) + len(segment) > 1024:
             page_no += 1
-            plugin.bot.d[key]['current_page'] = page_no
+            plugin.bot.d[key]["current_page"] = page_no
             embed.add_field(name=f"Details Page {page_no}", value="", inline=False)
 
         if dry_run:
@@ -373,13 +395,13 @@ class livetasks:
         # Ensure we have our pagination state
         key = f"batch-{batch_id}"
         if plugin.bot.d.get(key) is None:
-            plugin.bot.d[key] = {'current_page': 1}
+            plugin.bot.d[key] = {"current_page": 1}
             embed.add_field(name="Details Page 1", value="", inline=False)
 
         # Now split the segment into <=1024-char chunks
         max_len = 1024
-        chunks = [segment[i:i + max_len] for i in range(0, len(segment), max_len)]
-        page_no = plugin.bot.d[key]['current_page']
+        chunks = [segment[i : i + max_len] for i in range(0, len(segment), max_len)]
+        page_no = plugin.bot.d[key]["current_page"]
 
         for chunk in chunks:
             # grab the current field (might be freshly empty)
@@ -388,7 +410,7 @@ class livetasks:
             # if even this chunk overflows the current field, make a new page
             if len(field.value) + len(chunk) > max_len:
                 page_no += 1
-                plugin.bot.d[key]['current_page'] = page_no
+                plugin.bot.d[key]["current_page"] = page_no
                 embed.add_field(name=f"Details Page {page_no}", value="", inline=False)
                 field = embed.fields[page_no]
 
@@ -398,7 +420,10 @@ class livetasks:
 
         return embed
 
+
 def load(bot: lightbulb.BotApp) -> None:
     bot.add_plugin(plugin)
+
+
 def unload(bot):
     bot.remove_plugin(plugin)
