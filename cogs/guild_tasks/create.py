@@ -116,6 +116,7 @@ async def create_cmd(ctx: lightbulb.SlashContext):
             description=f"**Name:** {task_name} | ID: {task_id}\n**Description:** {task_desc}\n"
                         f"**Deadline:** {deadline_obj}\n" if deadline_obj else ""
                         f"**Category:** {category}" if category else ""
+                        f"**Recurring every {recurring} days!**" if recurring != -1 else ""
         )
     )
     if category_exists is False and category is not None:

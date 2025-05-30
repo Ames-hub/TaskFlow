@@ -20,7 +20,17 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logging.basicConfig(
+    level=logging.WARNING,
+    filename=f'logs/{datetime.datetime.now().strftime("%Y-%m-%d")}.log',
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logging.basicConfig(
     level=logging.ERROR,
+    filename=f'logs/{datetime.datetime.now().strftime("%Y-%m-%d")}.log',
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logging.basicConfig(
+    level=logging.DEBUG,
     filename=f'logs/{datetime.datetime.now().strftime("%Y-%m-%d")}.log',
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )

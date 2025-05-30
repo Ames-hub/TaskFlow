@@ -135,7 +135,6 @@ async def on_error(event: lightbulb.CommandErrorEvent) -> None:
     elif isinstance(event.exception, lightbulb.errors.CommandIsOnCooldown):
         await event.context.respond(f"You have {event.exception.retry_after:.2f} seconds left before you can run this command again.")
         return
-
     elif isinstance(event.exception, hikari.errors.NotFoundError):
         logging.warning("An unintended keep-alive timeout for a command occured!")
         return

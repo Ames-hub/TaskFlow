@@ -36,12 +36,18 @@ async def task() -> None:
         nearing_txt = ""
         overdue_txt = ""
 
+        if DEBUG:
+            logging.debug(f"DEADLINE MANAGER: CHECKING {guild_id} tasks for deadlines.")
+
         for task in group_tasks[guild_id]:
             name = task[0]
             completed = bool(task[2])
             uuid = task[3]
             if completed:
                 continue
+
+            if DEBUG:
+                logging.debug(f"DEADLINE MANAGER: CHECKING TASK '{name}' TASK ID {uuid} FOR GUILD {guild_id}")
 
             if botapp.d['dl_notif_cooldown'].get(uuid) is not None:
                 # Make sure to not continue unless it has been 2 hours since the last notification

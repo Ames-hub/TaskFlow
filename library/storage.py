@@ -17,7 +17,7 @@ os.makedirs("data", exist_ok=True)
 
 def modernize_db():
     """
-    This function is used to modernise the database to the current version. It will check if the tables exist, and
+    This function is used to modernize the database to the current version. It will check if the tables exist, and
     if they don't, it will create them. If the tables do exist, it will check if the columns are up to date, and if
     they aren't, it will update them.
 
@@ -42,6 +42,14 @@ def modernize_db():
             'usage_id': 'INTEGER PRIMARY KEY AUTOINCREMENT',
             'template_id': 'INT NOT NULL',
             'task_id': 'INT NOT NULL',
+        },
+        'recurring_items': {
+            'id': 'INTEGER PRIMARY KEY AUTOINCREMENT',
+            'template_id': 'INT NOT NULL REFERENCES task_templates(identifier)',
+            'last_recur': 'DATE DEFAULT CURRENT_TIMESTAMP',
+            'interval': 'INT NOT NULL DEFAULT 1',
+            'guild_id': 'INT NOT NULL',
+            'blame_id': 'INT NOT NULL',
         },
         'livechannel_styles': {  # Used to know which guild uses which style
             'guild_id': 'INT PRIMARY KEY',
@@ -137,6 +145,78 @@ def modernize_db():
 modernize_db()
 
 class sqlite_storage:
+    @staticmethod
+    def update_last_recur(recur_id):
+        datenow = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        conn = sqlite3.connect(guild_filepath)
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                UPDATE recurring_items
+                SET last_recur = ?
+                WHERE id = ?
+                """,
+                (datenow, recur_id)
+            )
+            conn.commit()
+        except sqlite3.Error as err:
+            logging.error(f"An error occurred while updating the last recur: {err}")
+            conn.rollback()
+            return False
+        finally:
+            conn.close()
+        return True
+
+    @staticmethod
+    def add_recurring_item(guild_id, interval, template_id, user_blame_id):
+        conn = sqlite3.connect(guild_filepath)
+        cur = conn.cursor()
+        try:
+            cur.execute(
+                "INSERT INTO recurring_items (guild_id, interval, template_id, blame_id) VALUES (?, ?, ?, ?)",
+                (guild_id, interval, template_id, user_blame_id)
+            )
+            conn.commit()
+        except sqlite3.Error as err:
+            logging.error(f"An error occurred while inserting the task {template_id} into the database: {err}")
+            conn.rollback()
+            return False
+        finally:
+            cur.close()
+        return True
+
+    @staticmethod
+    def get_recur_list(guild_id=None):
+        conn = sqlite3.connect(guild_filepath)
+        cur = conn.cursor()
+        if guild_id is None:
+            cur.execute("SELECT id, template_id, last_recur, interval, guild_id, blame_id FROM recurring_items")
+        else:
+            cur.execute(
+                """
+                SELECT id, template_id, last_recur, interval, guild_id, blame_id
+                FROM recurring_items WHERE guild_id = ?
+                """,
+                (guild_id,)
+            )
+
+        data = cur.fetchall()
+        # Organize data
+        organized_data = {}
+        for row in data:
+            organized_data[row[0]] = {
+                'id': row[0],
+                'template_id': row[1],
+                'last_recur': row[2],
+                'interval': row[3],
+                'guild_id': row[4],
+                'blame_id': row[5],
+            }
+
+        return organized_data
+
     @staticmethod
     def create_bugreport_ticket(reporter_id, stated_bug, stated_reproduction, additional_info=None, return_ticket=False):
         conn = sqlite3.connect(guild_filepath)
@@ -267,11 +347,11 @@ class sqlite_storage:
         Like {success: bool, template_id: int}
 
         :param guild_id:
-        :param template_name: name of the template.
-        :param task_name: name of the task.
-        :param task_desc: description of the task.
-        :param task_category: category of the task.
-        :param task_deadline: deadline of the task.
+        :param template_name: Name of the template.
+        :param task_name: Name of the task.
+        :param task_desc: Description of the task.
+        :param task_category: Category of the task.
+        :param task_deadline: Deadline of the task.
         :return:
         """
         conn = sqlite3.connect(guild_filepath)
@@ -798,6 +878,7 @@ class sqlite_storage:
         finally:
             conn.close()
 
+    # noinspection PyUnreachableCode
     @staticmethod
     def add_todo_item(
             name,
@@ -1108,6 +1189,7 @@ class sqlite_storage:
             logging.error(f"Error getting contributors for task {task_id}", err)
             return []
         finally:
+            # noinspection PyInconsistentReturns
             conn.close()
 
     @staticmethod
@@ -1146,7 +1228,7 @@ class sqlite_storage:
         finally:
             conn.close()
 
-        # Organise the data into a dictionary
+        # Organize the data into a dictionary
         data = {}
         for task in task_data:
             data[task[3]] = {
@@ -1186,9 +1268,38 @@ class sqlite_storage:
 class dataMan:
     """
     Essentially a class that processes data after it's been retrieved and ensures the data sent to the funcs is correct.
+    Yes, this class is an excercise in futility because the actual function could just do it. But, welp. It has been like
+    This since the start, so that's what we're doing!
     """
     def __init__(self):
         self.storage = sqlite_storage
+
+    def update_last_recur(self, recur_id):
+        recur_id = int(recur_id)
+        return self.storage.update_last_recur(recur_id)
+
+    def get_recur_list(self, guild_id:int=None):
+        """
+        Gets the recurring tasks from the database.
+        :param guild_id: The guild ID to get the recurring tasks for.
+        :return:
+        """
+        guild_id = int(guild_id) if guild_id else None
+        return self.storage.get_recur_list(guild_id)
+
+    def add_recurring_item(self, user_blame_id=int, guild_id:int=None, interval:int=1, template_id:int=None):
+        """
+        Adds a recurring item to the database.
+        :return:
+        """
+        guild_id = int(guild_id)
+        interval = int(interval)
+        if str(template_id).isdigit():
+            template_id = int(template_id)
+        else:
+            # Gets the template ID from the name
+            raise NotImplementedError  # Todo: Make this function able to find ID from name
+        return self.storage.add_recurring_item(guild_id, interval, template_id, user_blame_id)
 
     def list_bug_reports(self, unresolved_only=False, ticket_id:int=None):
         unresolved_only = bool(unresolved_only)
@@ -1465,7 +1576,7 @@ class dataMan:
         """
         Checks if a category exists.
         :param category_name:
-        :return: bool
+        :return: Bool
         """
         assert type(category_name) is str, "Category name must be a string"
         return self.storage.get_category_exists(category_name)

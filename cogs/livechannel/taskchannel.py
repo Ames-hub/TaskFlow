@@ -45,11 +45,13 @@ async def command(ctx: lightbulb.SlashContext):
     try:
         await livetasks.update_for_guild(ctx.guild_id)
     except hikari.errors.ForbiddenError:
-        await ctx.edit_last_response(
-            "I do not have permission to send messages in the task channel, so I rolled back changes."
-        )
         # Set it back to None
         dataMan().clear_taskchannel(int(ctx.guild_id))
+
+        # Alert user
+        await ctx.author.send(
+            "I do not have permission to send messages in the task channel, so I rolled back changes."
+        )
 
 def load(bot: lightbulb.BotApp) -> None:
     bot.add_plugin(plugin)
