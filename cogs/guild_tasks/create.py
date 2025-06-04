@@ -90,7 +90,12 @@ async def create_cmd(ctx: lightbulb.SlashContext):
 
     deadline_obj = parse_deadline(deadline_date, deadline_hmp)
     if isinstance(deadline_obj, str):
-        await ctx.respond(deadline_obj)
+        await ctx.respond(
+            hikari.Embed(
+                title="Task deadline error!",
+                description=deadline_obj  # Deadline obj is an error message on fail
+            )
+        )
         return
 
     data = dataMan()

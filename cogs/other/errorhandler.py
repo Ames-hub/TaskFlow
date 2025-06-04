@@ -71,6 +71,19 @@ async def alert_maintainer(event):
                             err_directory = directory
                             break
 
+    option_list = []
+    for item in event.context.options.items():
+        opt_name = item[0]
+        opt_value = item[1]
+
+        option_list.append(f"{opt_name} = {opt_value}")
+
+    pos_options_count = len(event.context.command.options)
+    options_count = len(option_list)
+
+    if len(option_list) == 0:
+        option_list.append("No options selected")
+
     await dmc.send(
         hikari.Embed(
             title=f"Error!  :(",
@@ -90,9 +103,17 @@ async def alert_maintainer(event):
             value=f"The user encountered the error \n\"{event.exception}\" at the posted timestamp. A full traceback is attached.\n\n"
                   f"Invoker: {event.context.author.id} ({event.context.author.username})\n"
                   f"In a Guild?: {in_guild}\n"
+                  f"Guild ID: {event.context.guild_id}\n"
                   f"Is this a DM?: {not in_guild}\n"
                   # Modify those numbers without also setting the primary_maintainer_id in .env to somebody else, and I will cry :3
                   f"Is this bot an official instance?: {botapp.get_me().id in [1262021444615933962, 1090899298650169385]}\n"
+        )
+        .add_field(
+            name="OPTIONS",
+            value=f"Command has options?: {'True' if pos_options_count > 0 else 'False'}\n"
+                  f"User used {options_count}/{pos_options_count} possible options.\n"
+                  f"Options used are as listed below.\n"
+                  f"{"\n".join(option_list)}",
         ),
         attachment=attachment
     )

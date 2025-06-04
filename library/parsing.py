@@ -22,7 +22,7 @@ def compile_livelist_placeholders(task):
         }
     except KeyError as err:
         print(f"Error in func compile_livelist_placeholders. Expected key {err} to exist that did not.\nTask obj: {task}")
-        return
+        return {}
     return livelist_placeholders
 
 def parse_livelist_format(format_text:str, task_id:int=None, task_item:dict=None):
@@ -57,7 +57,7 @@ def parse_deadline(deadline_date: str = None, deadline_hmp: str = None):
     Returns a datetime object based on the strings if it is
     :param deadline_date:
     :param deadline_hmp:
-    :return: datetime object
+    :return: Datetime object
     :return: string detailing error on a bad parsing
     """
     deadline_hmp_obj = None
@@ -91,7 +91,14 @@ def parse_deadline(deadline_date: str = None, deadline_hmp: str = None):
             return f"Please enter a valid day between 01 and 31. You entered, {str(date_set)[:2]}"
         elif str(date_set)[2:4] not in ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]:
             return f"Please enter a valid month between 01 and 12. You entered, {str(date_set)[2:4]}"
-        deadline_date_obj = datetime.strptime(deadline_date, "%d/%m/%Y")
+        try:
+            deadline_date_obj = datetime.strptime(deadline_date, "%d/%m/%Y")
+        except ValueError:
+            # Try to parse for MM/DD/YYYY
+            try:
+                deadline_date_obj = datetime.strptime(deadline_date, "%m/%d/%Y")
+            except ValueError:
+                return "The date does not match DD/MM/YYYY or MM/DD/YYYY Format, please try again"
 
     if deadline_hmp_obj and deadline_date_obj:
         deadline_obj = deadline_date_obj.replace(hour=deadline_hmp_obj.hour, minute=deadline_hmp_obj.minute, second=deadline_hmp_obj.second)
