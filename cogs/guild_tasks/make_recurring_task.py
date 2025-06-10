@@ -58,28 +58,30 @@ async def create_cmd(ctx: lightbulb.SlashContext):
         )
         return
 
-    recur_success = data.add_recurring_item(
+    recur_id = data.add_recurring_item(
         guild_id=ctx.guild_id,
         interval=interval,
         template_id=template_name,
-        user_blame_id=ctx.author.id
+        user_blame_id=ctx.author.id,
+        get_recur_id=True
     )
     if create_now:
-        task_make_success = data.create_task_from_template(
+        task_id = data.create_task_from_template(
             guild_id=ctx.guild_id,
             template_id=template_name,
-            task_creator_id=ctx.author.id
+            task_creator_id=ctx.author.id,
+            return_ticket=True
         )
         await livetasks.update_for_guild(ctx.guild_id)
-    else:
-        task_make_success = -1
 
-    if recur_success:
+        dataMan().update_last_recur(recur_id=recur_id, task_id=task_id)
+
+    if recur_id is not False:  # Returns as bool False on fail.
         embed = (
             hikari.Embed(
                 title="Recurring Task created!",
                 description=f"Your recurring task has been created from the template you specified{"."
-                if task_make_success else " but it won't be created until the next interval."}"
+                if create_now else " but it won't be created until the next interval."}"
             )
         )
     else:

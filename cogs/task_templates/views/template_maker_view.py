@@ -35,7 +35,7 @@ class main_view:
 
             # noinspection PyUnusedLocal
             @miru.button(label="Create Template")
-            async def report_btn(self, ctx: miru.ViewContext, select: miru.Button) -> None:
+            async def create_template_btn(self, ctx: miru.ViewContext, select: miru.Button) -> None:
                 class MyModal(miru.Modal, title="Template Creation"):
                     template_name = miru.TextInput(
                         label="Template Name",
@@ -99,14 +99,27 @@ class main_view:
                         deadline_obj = None
                         if task_deadline_time != "":
                             try:
-                                task_deadline_date = task_deadline_time.split(" ")[0]
-                                task_deadline_hour = task_deadline_time.split(" ")[1]
+                                timesplit = task_deadline_time.split(" ")
+                                task_deadline_date = timesplit[0]
+                                # If they entered time as "12:00 PM"
+                                if len(timesplit) == 3:
+                                    task_deadline_hour = f"{timesplit[1]} {timesplit[2]}"
+                                else:
+                                    # If they entered time as "12:00PM"
+                                    task_deadline_hour = timesplit[1]
                             except IndexError:
                                 await ctx.edit_response(
                                     embed=hikari.Embed(
                                         title="Couldn't understand Deadline!",
-                                        description="Please make sure you're using the correct format!",
+                                        description="Please make sure you're using the correct format, \"DD/MM/YYYY HH:MM AM/PM\"",
                                         color=0xff0000,
+                                    )
+                                    .add_field(
+                                        name="Check these!",
+                                        value="Did you enter the Deadline day as 1/Jan/2025, or 1/1/2025? It must include the 0, and be the months number! So, 01/01/2025\n"
+                                              "Did you enter the time like \"12:00PM\"? If so, you should try adding a space! so, \"12:00 PM\"\n"
+                                              "Did you enter the time like \"1:00 PM\"? If so, you need to add the 0. So, \"01:00 PM\"\n"
+                                              "Sorry this is finicky! If you wish to improve it, please do!"
                                     )
                                 )
                                 return
@@ -115,7 +128,7 @@ class main_view:
                                 deadline_date=task_deadline_date,
                                 deadline_hmp=task_deadline_hour
                             )
-                            if deadline_obj is str:  # This function returns a string detailing the error on fail.
+                            if type(deadline_obj) is str:  # This function returns a string detailing the error on fail.
                                 await ctx.edit_response(
                                     embed=hikari.Embed(
                                         title="Couldn't understand Deadline!",

@@ -1,6 +1,6 @@
-<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.7.5 Chrome/126.0.6478.183 Electron/31.3.0 Safari/537.36" version="24.7.5">
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/27.0.2 Chrome/134.0.6998.205 Electron/35.3.0 Safari/537.36" version="27.0.2">
   <diagram name="Page-1" id="8FrDcvNgyaQXy28fj4Ws">
-    <mxGraphModel dx="1434" dy="836" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2300" pageHeight="1900" math="0" shadow="0">
+    <mxGraphModel dx="1240" dy="731" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2300" pageHeight="1900" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -221,9 +221,6 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="RFqWDmBNpIgHTDwS8YA--2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="HZ9nBPcBSSSsEg8i0Y5z-32" target="RFqWDmBNpIgHTDwS8YA--1" edge="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
         <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-32" value="Integrated News Server" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" parent="1" vertex="1">
           <mxGeometry x="130" y="125" width="120" height="60" as="geometry" />
         </mxCell>
@@ -247,9 +244,6 @@
         </mxCell>
         <mxCell id="HZ9nBPcBSSSsEg8i0Y5z-51" value="Toggle Completion Marker" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" parent="1" vertex="1">
           <mxGeometry x="820" y="735" width="120" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="RFqWDmBNpIgHTDwS8YA--1" value="View News History" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="130" y="235" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="RFqWDmBNpIgHTDwS8YA--37" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="RFqWDmBNpIgHTDwS8YA--3" target="RFqWDmBNpIgHTDwS8YA--36" edge="1">
           <mxGeometry relative="1" as="geometry" />
@@ -433,7 +427,7 @@
         <mxCell id="FocgppxJEofwwOu1AvBv-10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="NMTUODGjlIO52O_gNEFz-12" target="FocgppxJEofwwOu1AvBv-9" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="NMTUODGjlIO52O_gNEFz-12" value="Recurring tasks Possible" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+        <mxCell id="NMTUODGjlIO52O_gNEFz-12" value="Recurring tasks Possible" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" parent="1" vertex="1">
           <mxGeometry x="830" y="1580" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="NMTUODGjlIO52O_gNEFz-38" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="NMTUODGjlIO52O_gNEFz-15" target="NMTUODGjlIO52O_gNEFz-37" edge="1">
@@ -660,19 +654,19 @@
         <mxCell id="FocgppxJEofwwOu1AvBv-16" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="FocgppxJEofwwOu1AvBv-9" target="FocgppxJEofwwOu1AvBv-15" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="FocgppxJEofwwOu1AvBv-9" value="Recurring tasks creation" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+        <mxCell id="FocgppxJEofwwOu1AvBv-9" value="Recurring tasks creation" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" parent="1" vertex="1">
           <mxGeometry x="1010" y="1580" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="FocgppxJEofwwOu1AvBv-14" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="FocgppxJEofwwOu1AvBv-11" target="FocgppxJEofwwOu1AvBv-13" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="FocgppxJEofwwOu1AvBv-11" value="Recurring tasks Deletion" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+        <mxCell id="FocgppxJEofwwOu1AvBv-11" value="Recurring tasks Deletion" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" parent="1" vertex="1">
           <mxGeometry x="1190" y="1580" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="FocgppxJEofwwOu1AvBv-13" value="Recurring tasks Modification" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="1370" y="1580" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="FocgppxJEofwwOu1AvBv-15" value="Recurring tasks viewing" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+        <mxCell id="FocgppxJEofwwOu1AvBv-15" value="Recurring tasks viewing" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;" parent="1" vertex="1">
           <mxGeometry x="1010" y="1470" width="120" height="60" as="geometry" />
         </mxCell>
       </root>

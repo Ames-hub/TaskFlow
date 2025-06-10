@@ -32,7 +32,7 @@ async def view_cmd(ctx: lightbulb.SlashContext):
             ),
             flags=hikari.MessageFlag.EPHEMERAL
         )
-        return False
+        return
 
     data = view.generate_task_embed(int(ctx.author.id))
     task_counter = data['task_c']

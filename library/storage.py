@@ -17,7 +17,7 @@ os.makedirs("data", exist_ok=True)
 
 def modernize_db():
     """
-    This function is used to modernize the database to the current version. It will check if the tables exist, and
+    This function is used to modernise the database to the current version. It will check if the tables exist, and
     if they don't, it will create them. If the tables do exist, it will check if the columns are up to date, and if
     they aren't, it will update them.
 
@@ -40,56 +40,60 @@ def modernize_db():
         },
         'task_template_usage': {  # Used to know which tasks use which template
             'usage_id': 'INTEGER PRIMARY KEY AUTOINCREMENT',
-            'template_id': 'INT NOT NULL',
-            'task_id': 'INT NOT NULL',
+            'template_id': 'INTEGER NOT NULL',
+            'task_id': 'INTEGER NOT NULL',
         },
-        'recurring_items': {
+        'recurring_items': {  # The item of the recurring task itself
             'id': 'INTEGER PRIMARY KEY AUTOINCREMENT',
             'template_id': 'INT NOT NULL REFERENCES task_templates(identifier)',
             'last_recur': 'DATE DEFAULT CURRENT_TIMESTAMP',
-            'interval': 'INT NOT NULL DEFAULT 1',
-            'guild_id': 'INT NOT NULL',
-            'blame_id': 'INT NOT NULL',
+            'interval': 'INTEGER NOT NULL DEFAULT 1',
+            'guild_id': 'INTEGER NOT NULL',
+            'blame_id': 'INTEGER NOT NULL',
+        },
+        'recurring_tasks_instances': {  # The tasks created for recurring tasks by their items
+            'task_id': 'INTEGER NOT NULL PRIMARY KEY',
+            'recur_id': 'INTEGER NOT NULL',
         },
         'livechannel_styles': {  # Used to know which guild uses which style
-            'guild_id': 'INT PRIMARY KEY',
+            'guild_id': 'INTEGER PRIMARY KEY',
             'style': 'TEXT DEFAULT "classic"',
         },
         'guild_settings': {
-            'uid': 'INT PRIMARY KEY',
-            'task_channel': 'INT DEFAULT NULL',
+            'uid': 'INTEGER PRIMARY KEY',
+            'task_channel': 'INTEGER DEFAULT NULL',
             'allow_late_contrib': 'BOOLEAN DEFAULT FALSE',
             'show_task_completion': 'BOOLEAN DEFAULT TRUE',
         },
         'user_contribution_log': {  # Saves who is helping opposed to who is in charge
-            'contributed_task_uid': 'INT NOT NULL REFERENCES todo_items(uid)',
-            'contributor_uuid': 'INT NOT NULL',
+            'contributed_task_uid': 'INTEGER NOT NULL',
+            'contributor_uuid': 'INTEGER NOT NULL',
             'contribution_date': 'DATE DEFAULT CURRENT_TIMESTAMP',
-            'task_for_guild_id': 'INT NOT NULL',
+            'task_for_guild_id': 'INTEGER NOT NULL',
         },
         'guild_livelist_formats': {  # Saves the custom live list format
             'guild_id': 'TEXT NOT NULL PRIMARY KEY',
             'text_format': 'TEXT'
         },
         'tasks_assigned_to_users': {  # Saves the users assigned as an I/C to a task
-            'task_id': 'INT NOT NULL PRIMARY KEY',
-            'user_id': 'INT NOT NULL',
+            'task_id': 'INTEGER NOT NULL PRIMARY KEY',
+            'user_id': 'INTEGER NOT NULL',
         },
         'guild_livelist_descs': {  # A Feature request that allows people to modify the description of the live list
-            'guild_id': 'INT NOT NULL PRIMARY KEY',
+            'guild_id': 'INTEGER NOT NULL PRIMARY KEY',
             'description': 'TEXT'
         },
         'guild_taskmaster_roles': {
-            'guild_id': "INT NOT NULL PRIMARY KEY",
+            'guild_id': "INTEGER NOT NULL PRIMARY KEY",
             'role_id': "INT"
         },
         'guild_configperms': {  # Saves who can configure the bot per the guild permissions
-            'guild_id': 'INT NOT NULL PRIMARY KEY',
+            'guild_id': 'INTEGER NOT NULL PRIMARY KEY',
             'permission': 'TEXT DEFAULT NULL'
         },
         'task_templates': {
             'identifier': 'INTEGER PRIMARY KEY AUTOINCREMENT',
-            'guild_id': 'INT NOT NULL',
+            'guild_id': 'INTEGER NOT NULL',
             'name': 'TEXT NOT NULL',
             'task_name': 'TEXT DEFAULT NULL',
             'task_desc': 'TEXT DEFAULT NULL',
@@ -99,7 +103,7 @@ def modernize_db():
         'bug_report_cases': {
             'ticket_id': 'INTEGER PRIMARY KEY AUTOINCREMENT',
             'resolved': 'BOOLEAN DEFAULT FALSE',
-            'reporter_id': 'INT NOT NULL',
+            'reporter_id': 'INTEGER NOT NULL',
             'stated_bug': 'TEXT NOT NULL',
             'stated_reproduction': 'TEXT NOT NULL',
             'additional_info': 'TEXT',
@@ -146,7 +150,7 @@ modernize_db()
 
 class sqlite_storage:
     @staticmethod
-    def update_last_recur(recur_id):
+    def update_last_recur(recur_id, new_task_id):
         datenow = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         conn = sqlite3.connect(guild_filepath)
@@ -160,9 +164,18 @@ class sqlite_storage:
                 """,
                 (datenow, recur_id)
             )
+
+            cur.execute(
+                """
+                INSERT INTO recurring_tasks_instances (task_id, recur_id) 
+                VALUES (?, ?)
+                """,
+                (new_task_id, recur_id)
+            )
+
             conn.commit()
         except sqlite3.Error as err:
-            logging.error(f"An error occurred while updating the last recur: {err}")
+            logging.error(f"An error occurred while updating the last recur: {err}", exc_info=err)
             conn.rollback()
             return False
         finally:
@@ -170,7 +183,7 @@ class sqlite_storage:
         return True
 
     @staticmethod
-    def add_recurring_item(guild_id, interval, template_id, user_blame_id):
+    def add_recurring_item(guild_id, interval, template_id, user_blame_id, get_recur_id=False):
         conn = sqlite3.connect(guild_filepath)
         cur = conn.cursor()
         try:
@@ -179,13 +192,17 @@ class sqlite_storage:
                 (guild_id, interval, template_id, user_blame_id)
             )
             conn.commit()
+            if not get_recur_id:
+                return True
+            else:
+                # returns the autoincremented "ID" in the recurring_items table
+                return cur.lastrowid
         except sqlite3.Error as err:
             logging.error(f"An error occurred while inserting the task {template_id} into the database: {err}")
             conn.rollback()
             return False
         finally:
             cur.close()
-        return True
 
     @staticmethod
     def get_recur_list(guild_id=None):
@@ -295,7 +312,7 @@ class sqlite_storage:
             conn.close()
 
     @staticmethod
-    def create_task_from_template(template_id, guild_id, task_creator_id:int):
+    def create_task_from_template(template_id, guild_id, task_creator_id:int, return_ticket=False):
         template_data = dataMan().get_task_template(template_id, guild_id)
         if template_data is False:
             return False
@@ -330,6 +347,8 @@ class sqlite_storage:
                 (task_id, unique_template_id)
             )
             conn.commit()
+            if return_ticket:
+                return task_id
             return True
         except sqlite3.Error as err:
             conn.rollback()
@@ -916,7 +935,6 @@ class sqlite_storage:
             return False
         finally:
             conn.close()
-            return False
 
     @staticmethod
     def mark_todo_finished(identifier, user_id=None, guild_id=None):
@@ -1263,20 +1281,199 @@ class sqlite_storage:
         finally:
             conn.close()
 
+class error:
+    class CannotFind(Exception):
+        """
+        A General "Cannot find" Error to indicate to systems that something cannot be found.
+        """
+        def __init__(self, message):
+            self.message = message
+
+        def __str__(self):
+            return self.message
 
 # noinspection PyNoneFunctionAssignment,PyTypeChecker
 class dataMan:
     """
-    Essentially a class that processes data after it's been retrieved and ensures the data sent to the funcs is correct.
+    Essentially, a class that processes data after it's been retrieved and ensures the data sent to the funcs is correct.
     Yes, this class is an excercise in futility because the actual function could just do it. But, welp. It has been like
     This since the start, so that's what we're doing!
     """
     def __init__(self):
         self.storage = sqlite_storage
 
-    def update_last_recur(self, recur_id):
+    @staticmethod
+    def list_recurring_items(guild_id):
+        conn = sqlite3.connect(guild_filepath)
+        try:
+            cur = conn.cursor()
+            query = """
+            SELECT id, template_id, last_recur, interval, guild_id, blame_id FROM recurring_items WHERE guild_id = ?
+            """
+            cur.execute(query, (guild_id,))
+            data = cur.fetchall()
+            parsed_data = {}
+            for item in data:
+                parsed_data[item[0]] = {
+                    "id": item[0],
+                    "template_id": item[1],
+                    "last_recur": item[2],
+                    "interval": item[3],
+                    "guild_id": item[4],
+                    "blame_id": item[5]
+                }
+            return parsed_data
+        except sqlite3.Error as err:
+            conn.rollback()
+            logging.error(f"Error getting recurring items for guild {guild_id}", err)
+            return []
+        finally:
+            conn.close()
+
+    @staticmethod
+    def get_recur_guild_id(recur_id):
+        conn = sqlite3.connect(guild_filepath)
+        try:
+            cur = conn.cursor()
+            query = """
+            SELECT guild_id FROM recurring_items WHERE id = ?
+            """
+            cur.execute(query, (recur_id,))
+            data = cur.fetchone()
+            if data is not None:
+                return data[0]
+            else:
+                raise error.CannotFind("Cannot find recurring item")
+        except sqlite3.Error as err:
+            conn.rollback()
+            logging.error(f"Error getting guild owns recurring task {recur_id}", err)
+            return None
+        finally:
+            conn.close()
+
+    @staticmethod
+    def delete_recurring_task(identifier):
+        conn = sqlite3.connect(guild_filepath)
+        cur = conn.cursor()
+
+        try:
+            query = """
+            SELECT recur_id FROM recurring_tasks_instances WHERE task_id = ?
+            """
+            cur.execute(query, (identifier,))
+            data = cur.fetchone()
+            if data is not None:
+                recur_id = int(data[0])  # Extract from the tuple
+            else:
+                # Must assume that it's not a task ID and instead a recur ID.
+                recur_id = identifier
+        except sqlite3.Error as err:
+            conn.rollback()
+            logging.error(f"Error getting data for deleting a recurring task where TASK ID is {identifier}", err)
+            return False
+
+        # Gets all the task IDs for instances of recur ID
+        try:
+            query = """
+            SELECT task_id FROM recurring_tasks_instances WHERE recur_id = ?
+            """
+            cur.execute(query, (recur_id,))
+            data = cur.fetchall()
+            # Extracts from tuple into a list
+            task_id_list = [data[0] for data in data]
+        except sqlite3.Error as err:
+            conn.rollback()
+            logging.error(f"Error getting data for deleting assosciated recur tasks with recur ID {recur_id}", err)
+            return False
+
+        # Delete from todo_items using the collected task IDs
+        try:
+            query = f"""
+            DELETE FROM todo_items WHERE id IN ({','.join(['?'] * len(task_id_list))})
+            """
+            cur.execute(query, task_id_list)
+        except sqlite3.Error as err:
+            conn.rollback()
+            logging.error(f"Error deleting tasks with IDs {task_id_list} from todo_items for recur ID {recur_id}: {err}")
+
+        try:
+            query = """
+            DELETE FROM recurring_tasks_instances WHERE recur_id = ? 
+            """
+            cur.execute(query, (recur_id,))
+            conn.commit()
+        except sqlite3.Error as err:
+            conn.rollback()
+            logging.error(f"Error deleting recurring task instances by Recur ID where Recur ID is {recur_id}", err)
+            # IF we can't do it, it's okay. It's not ABSOLUTELY necessary for us to do so
+
+        try:
+            query = """
+            DELETE FROM recurring_items WHERE id = ?
+            """
+            cur.execute(query, (recur_id,))
+            conn.commit()
+            return True
+        except sqlite3.Error as err:
+            conn.rollback()
+            logging.error(f"Error deleting recurring task item where Recur ID is {recur_id}", err)
+            return False
+
+    @staticmethod
+    def get_recur_details_by_taskid(task_id):
+        task_id = int(task_id)
+        conn = sqlite3.connect(guild_filepath)
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT recur_id FROM recurring_tasks_instances where task_id = ?
+                """,
+                (task_id,)
+            )
+            recur_id = cur.fetchone()
+        except sqlite3.Error as err:
+            logging.error(f"An error occurred while updating the last recur: {err}", exc_info=err)
+            conn.rollback()
+            return False
+
+        try:
+            recur_id = int(recur_id[0])
+        except TypeError:
+            # If it encounters a type error, the task does not exist.
+            return False
+
+        try:
+            # Get the recurring item from the recur ID
+            cur.execute(
+                """
+                SELECT id, template_id, last_recur, interval, guild_id, blame_id FROM recurring_items WHERE id = ?
+                """,
+                (recur_id,)
+            )
+            data = cur.fetchone()
+            if data:
+                return {
+                    'id': data[0],
+                    'template_id': data[1],
+                    'task_id': data[2],
+                    'interval': data[3],
+                    'guild_id': data[4],
+                    'blame_id': data[5],
+                }
+            else:
+                return None
+        except sqlite3.Error as err:
+            logging.error(f"An error occurred while updating the last recur: {err}", exc_info=err)
+            conn.rollback()
+            return False
+        finally:
+            conn.close()
+
+    def update_last_recur(self, recur_id, task_id):
         recur_id = int(recur_id)
-        return self.storage.update_last_recur(recur_id)
+        task_id = int(task_id)
+        return self.storage.update_last_recur(recur_id, task_id)
 
     def get_recur_list(self, guild_id:int=None):
         """
@@ -1287,7 +1484,7 @@ class dataMan:
         guild_id = int(guild_id) if guild_id else None
         return self.storage.get_recur_list(guild_id)
 
-    def add_recurring_item(self, user_blame_id=int, guild_id:int=None, interval:int=1, template_id:int=None):
+    def add_recurring_item(self, user_blame_id=int, guild_id:int=None, interval:int=1, template_id:int=None, get_recur_id:bool=False):
         """
         Adds a recurring item to the database.
         :return:
@@ -1299,7 +1496,7 @@ class dataMan:
         else:
             # Gets the template ID from the name
             raise NotImplementedError  # Todo: Make this function able to find ID from name
-        return self.storage.add_recurring_item(guild_id, interval, template_id, user_blame_id)
+        return self.storage.add_recurring_item(guild_id, interval, template_id, user_blame_id, get_recur_id)
 
     def list_bug_reports(self, unresolved_only=False, ticket_id:int=None):
         unresolved_only = bool(unresolved_only)
@@ -1321,7 +1518,7 @@ class dataMan:
         ticket_id = int(ticket_id)
         return self.storage.mark_bugreport_resolved(ticket_id)
 
-    def create_task_from_template(self, template_id:int, guild_id:int, task_creator_id:int):
+    def create_task_from_template(self, template_id:int, guild_id:int, task_creator_id:int, return_ticket=False):
         if str(template_id).isdigit():
             template_id = int(template_id)
         else:
@@ -1334,7 +1531,7 @@ class dataMan:
         if template is None:  # Template not found
             return None
 
-        return self.storage.create_task_from_template(template_id, guild_id, task_creator_id)
+        return self.storage.create_task_from_template(template_id, guild_id, task_creator_id, return_ticket)
 
     def create_task_template(self, template_name, task_name, task_desc, task_category, task_deadline:datetime|None, guild_id):
         """
@@ -1356,7 +1553,7 @@ class dataMan:
 
         if task_deadline is not None:
             if not isinstance(task_deadline, datetime):
-                raise ValueError("Task deadline must be a datetime object if provided")
+                raise ValueError(f"Task deadline must be a datetime object type if provided. Got {type(task_deadline)} ({task_deadline})")
 
         return self.storage.create_task_template(
             template_name=template_name,
@@ -1621,7 +1818,7 @@ class dataMan:
         :param user_id:
         :param task_id:
         :param guild_id:
-        :return: False if it failed
+        :return: False if it failed,
         :return: True if it Succeeded
         :return: -1 if already contributing
         :return: -2 if late contrib is not allowed and tried to contrib
