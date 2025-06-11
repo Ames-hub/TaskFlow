@@ -45,7 +45,7 @@ def modernize_db():
         },
         'recurring_items': {  # The item of the recurring task itself
             'id': 'INTEGER PRIMARY KEY AUTOINCREMENT',
-            'template_id': 'INT NOT NULL REFERENCES task_templates(identifier)',
+            'template_id': 'INT NOT NULL',
             'last_recur': 'DATE DEFAULT CURRENT_TIMESTAMP',
             'interval': 'INTEGER NOT NULL DEFAULT 1',
             'guild_id': 'INTEGER NOT NULL',
@@ -454,20 +454,63 @@ class sqlite_storage:
     # noinspection PyTypeChecker
     @staticmethod
     def delete_task_template(identifier:int) -> bool:
+        """
+        Deletes task template and its child tasks, and usage references.
+        """
         conn = sqlite3.connect(guild_filepath)
+        cur = conn.cursor()
         try:
-            cur = conn.cursor()
             cur.execute(f'''
                 DELETE FROM task_templates WHERE identifier = ? -- Due to sensitivity, only allow task ID integer
             ''', (identifier,))
             conn.commit()
-            return True
         except sqlite3.OperationalError as e:
             logging.error(f"An error occurred while creating a task template: {e}")
             conn.rollback()
+            conn.close()
             return False
+
+        try:
+            cur.execute("""
+                SELECT task_id FROM task_template_usage WHERE template_id = ?
+                """,
+                (identifier,)
+            )
+            data = cur.fetchall()
+            task_id_list = [row[0] for row in data]
+        except sqlite3.OperationalError as err:
+            logging.error(f"An error occurred while getting the task templates: {err}", exc_info=True)
+            conn.rollback()
+            return False
+
+        try:
+            cur.execute(f"""
+                DELETE FROM todo_items WHERE id IN ({','.join(['?'] * len(task_id_list))})
+                """,
+                task_id_list
+            )
+            conn.commit()
+        except sqlite3.OperationalError as err:
+            logging.error(f"An error occurred while deleting a task template: {err}", err)
+            conn.rollback()
+            conn.close()
+            return False
+
+        try:
+            cur.execute(
+                f"""
+                DELETE FROM task_template_usage WHERE task_id IN ({','.join(['?'] * len(task_id_list))})
+                """,
+                task_id_list
+            )
+        except sqlite3.OperationalError as err:
+            logging.error(f"An error occurred while deleting a task template: {err}", err)
+            conn.rollback()
+            conn.close()
         finally:
             conn.close()
+
+        return True
 
     @staticmethod
     def set_guild_configperm(guild_id, permission):
@@ -730,6 +773,7 @@ class sqlite_storage:
         # Update the task
         conn = sqlite3.connect(guild_filepath)
         try:
+            # noinspection PyUnresolvedReferences
             cur = conn.cursor()
             query = """
             UPDATE todo_items 
@@ -1394,7 +1438,7 @@ class dataMan:
             cur.execute(query, task_id_list)
         except sqlite3.Error as err:
             conn.rollback()
-            logging.error(f"Error deleting tasks with IDs {task_id_list} from todo_items for recur ID {recur_id}: {err}")
+            logging.error(f"Error deleting tasks with IDs {task_id_list} from todo_items for recur ID {recur_id}: {err}", err)
 
         try:
             query = """

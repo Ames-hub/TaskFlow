@@ -88,4 +88,4 @@ botapp.d['servercount_memory'] = {
     'last_updated': None,
 }
 
-botapp.run(shard_count=5 if DEBUG is False else 1)
+botapp.run(shard_count=15 if DEBUG is False else 1)
