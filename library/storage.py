@@ -434,7 +434,7 @@ class sqlite_storage:
                 )
             data = cur.fetchone()
             if not data:
-                return None
+                return {}
             return {
                 'id': data[0],
                 'name': data[1],
