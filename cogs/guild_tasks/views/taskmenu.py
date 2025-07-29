@@ -20,8 +20,17 @@ class views:
         for task in self.task_data:
             task = self.task_data[task]
             completed_text = '❌' if not task["completed"] else '✅'
-            q_or_s = "'" if len(task['description']) > 0 else ""
-            task_list += f"({str(task['id'])}) {task['name']} {q_or_s}{task['description']}{q_or_s} {completed_text}\n"
+            description = task['description']
+            if len(description) > 100:
+                description = description[:57] + "..."
+            task_name = task['name']
+            if len(task_name) > 60:
+                task_name = task_name[:57] + "..."
+            q_or_s = "'" if len(description) > 0 else ""
+            task_list += f"({str(task['id'])}) {task_name} {q_or_s}{description}{q_or_s} {completed_text}\n"
+
+        if len(task_list) > 1024:
+            task_list = task_list[:985] + "... (This list is too long to display)"
 
         return (
             hikari.Embed(
