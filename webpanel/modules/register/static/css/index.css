@@ -1,0 +1,50 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.register-container {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    width: 300px;
+    text-align: center;
+    height: calc(30% + 20px);
+    min-height: 250px;
+}
+
+.register-container input {
+    width: 90%;
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+}
+
+.register-container button {
+    padding: 0.5rem 1rem;
+    background-color: #3333cc;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.register-container button:hover {
+    background-color: #0000aa;
+}
+
+#splash_welcome {
+    position: relative;
+    margin: 0;
+    top: -15px;
+}
+
+#login_btn {
+    position: relative;
+    color: #3333cc;
+    text-decoration: none;
+    top: 20px;
+}

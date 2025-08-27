@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bot Control Panel</title>
+  <link rel="stylesheet" href="/static/home/css/index.css">
+  <link rel="stylesheet" href="/static/home/css/sidebar.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <h1>Bot Panel</h1>
+    <nav class="nav">
+      <a href="/" class="active">Dashboard</a>
+      <a href="/ctrl/commands">Commands</a>
+      <a href="/bot/logs">Bot Logs</a>
+      <a href="/bot/feedback">Feedback</a>
+      <a href="/bot/errors">Bug Reports</a>
+      <a href="/ctrl/settings">Settings</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="header">
+      <h2>Dashboard</h2>
+      <button id="refresh_btn" onclick="alert('WIP')">Refresh</button>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Status</h3>
+        <p>Bot is currently online and responding to commands.</p>
+        <a href="/status">Availability Panel</a>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bug Report · Details</title>
+  <link rel="stylesheet" href="/static/home/css/sidebar.css">
+  <link rel="stylesheet" href="/static/errors/css/errorpage.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <h1>Bot Panel</h1>
+    <nav class="nav">
+      <a href="/">Dashboard</a>
+      <a href="/ctrl/commands">Commands</a>
+      <a href="/bot/logs">Bot Logs</a>
+      <a href="/bot/feedback">Feedback</a>
+      <a href="/bot/errors" class="active">Bug Reports</a>
+      <a href="/ctrl/settings">Settings</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <a href="/bot/errors" class="back-link">&larr; Back to Bug Reports</a>
+
+    <header class="header">
+      <div class="title" style="display:flex; gap:10px; align-items:center">
+        <div class="logo">BR</div>
+        <div>
+          <h1>Bug Details</h1>
+          <div class="sub" style="color:var(--muted)">Full information for developers</div>
+        </div>
+      </div>
+    </header>
+
+    <section class="section">
+      <h2>{{ bug.title }}</h2>
+      <div class="field">
+        <label>ID</label>
+        <span>{{ bug.id }}</span>
+      </div>
+      <div class="field">
+        <label>Status</label>
+        <span>{{ bug.status }}</span>
+      </div>
+      <div class="field">
+        <label>Severity</label>
+        <span class="sev-{{ bug.severity|lower }}">{{ bug.severity }}</span>
+      </div>
+      <div class="field">
+        <label>Reported By</label>
+        <span>{{ bug.reported_by }}</span>
+      </div>
+      <div class="field">
+        <label>Date Reported</label>
+        <span>{{ bug.date_reported }}</span>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Steps to Reproduce</h2>
+      <pre>{{ bug.reproduction }}</pre>
+    </section>
+
+    <section class="section">
+      <h2>Additional Notes</h2>
+      <pre>{{ bug.additional_info }}</pre>
+    </section>
+
+    <section class="section">
+      <h2>Actions</h2>
+      <button id="toggleResolveBtn" class="action-btn">
+        {{ 'Unresolve' if bug.status == 'Closed' else 'Resolve' }}
+      </button>
+    </section>
+  </main>
+  <script>
+    const bugId = parseInt("{{ bug.id }}");
+    let isResolved = "{{ bug.status }}" === "Closed";  // true if Closed, false otherwise
+  </script>
+  <script src="/static/errors/js/resolve.js"></script>
+</body>
+</html>

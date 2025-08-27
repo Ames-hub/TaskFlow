@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Bot Control Panel</title>
+    <link rel="stylesheet" href="/static/logviewer/css/loglist.css">
+    <link rel="stylesheet" href="/static/home/css/sidebar.css">
+</head>
+<body>
+<aside class="sidebar">
+    <h1>Bot Panel</h1>
+    <nav class="nav">
+        <a href="/">Dashboard</a>
+        <a href="/ctrl/commands">Commands</a>
+        <a href="/bot/logs" class="active">Bot Logs</a>
+        <a href="/bot/feedback">Feedback</a>
+        <a href="/bot/errors">Bug Reports</a>
+        <a href="/ctrl/settings">Settings</a>
+    </nav>
+</aside>
+
+<main class="main">
+    <!-- Search Bar -->
+    <div class="log-search-container">
+        <input type="text" id="searchInput" placeholder="Search logs for text...">
+        <button id="searchButton">Search</button>
+    </div>
+
+    <!-- Logs -->
+    <div class="log-links">
+        <a href="/bot/logs/log1.txt" class="log-card">Log File 1</a>
+        <a href="/bot/logs/log2.txt" class="log-card">Log File 2</a>
+        <a href="/bot/logs/log3.txt" class="log-card">Log File 3</a>
+    </div>
+</main>
+
+<script src="/static/logviewer/js/get_list.js"></script>
+</body>
+</html>

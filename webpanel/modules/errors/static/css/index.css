@@ -1,0 +1,109 @@
+:root{
+    --bg: #0b0c10;
+    --panel: #111319;
+    --muted: #99a1b3;
+    --text: #e8ecf3;
+    --border: #1b1f2a;
+    --brand: #5a8cff;
+    --ok: #13c26b;
+    --warn: #ffb020;
+    --error: #ff5470;
+    --info: #2cb4ff;
+    --shadow: 0 10px 30px rgba(0,0,0,.35);
+    --radius: 16px;
+}
+body {
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;    
+}
+.main {
+    flex: 1;
+    padding: 2rem;
+    padding: 32px 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    overflow-x: hidden;
+}
+.header{
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:18px;
+    align-items:center
+}
+.logo{
+    width:40px;
+    height:40px;
+    border-radius:12px;
+    background:linear-gradient(135deg,var(--brand),#8aa6ff);
+    color:white;
+    display:grid;
+    place-items:center;
+    font-weight:800;
+}
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:16px;
+    margin:18px 0 24px
+}
+.card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:16px;
+    color: white;
+}
+.controls{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:14px;
+    margin-bottom:12px
+}
+.controls form{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px 16px;
+    align-items:center
+}
+.chip{
+    display:inline-flex;
+    gap:6px;
+    align-items:center;
+    border:1px solid var(--border);
+    padding:6px 10px;
+    border-radius:999px;
+    font-size:13px;
+    background:transparent;
+    color:var(--text)
+}
+.table-wrap{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    overflow:hidden
+}
+table{width:100%; border-collapse:collapse}
+thead th{background:var(--panel); color:var(--muted); font-size:12px; text-align:left; padding:12px 14px; border-bottom:1px solid var(--border)}
+tbody td{padding:14px; border-bottom:1px solid var(--border)}
+.badge{padding:4px 8px; border-radius:999px; font-weight:700; font-size:12px;}
+.sev-critical{color:var(--error)}
+.sev-high{color:var(--warn)}
+.sev-medium{color:var(--info)}
+.sev-low{color:var(--ok)}
+.status-open{color:var(--warn)}
+.status-inprogress{color:var(--brand)}
+.status-closed{color:var(--ok)}
+.hidden{display:none}
+
+table td a { color: inherit; text-decoration: none; display: block; width: 100%; height: 100%; }
+table td a:hover { text-decoration: underline; }
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: system-ui, sans-serif;
+}

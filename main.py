@@ -1,5 +1,7 @@
 import datetime
 import logging
+import asyncio
+import uvicorn
 import dotenv
 import os
 
@@ -88,4 +90,25 @@ botapp.d['servercount_memory'] = {
     'last_updated': None,
 }
 
-botapp.run(shard_count=15 if DEBUG is False else 1)
+
+async def main():
+    config = uvicorn.Config(
+        "webpanel.webpanel:fastapp",
+        host="0.0.0.0" if not DEBUG else "127.0.0.1",
+        port=8015,
+        loop="asyncio",
+        lifespan="on",
+        reload=False
+    )
+    server = uvicorn.Server(config)
+
+    await asyncio.gather(
+        server.serve(),
+        botapp.start(shard_count=10 if not DEBUG else 1)
+    )
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("Ending process.")

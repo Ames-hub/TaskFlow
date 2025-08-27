@@ -107,7 +107,20 @@ def modernize_db():
             'stated_bug': 'TEXT NOT NULL',
             'stated_reproduction': 'TEXT NOT NULL',
             'additional_info': 'TEXT',
-        }
+            'received_date': "DATETIME DEFAULT (DATETIME('now', 'localtime'))",
+            'resolved_date': 'DATETIME DEFAULT NULL',
+        },
+        'authbook': {
+            'username': 'TEXT PRIMARY KEY',
+            'password': 'TEXT NOT NULL',
+            'arrested': 'BOOLEAN NOT NULL DEFAULT FALSE',
+        },
+        'user_sessions': {
+            'username': 'TEXT',
+            'token': 'TEXT NOT NULL PRIMARY KEY',
+            'created_at': 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP',
+            'expires_at': 'DATETIME NOT NULL',
+        },
     }
 
     for table_name, columns in table_dict.items():
@@ -132,7 +145,12 @@ def modernize_db():
 
                 # If the column doesn't exist, add it
                 if not column_exist:
-                    cur.execute(f'ALTER TABLE {table_name} ADD COLUMN {column_name} {column_properties};')
+                    try:
+                        cur.execute(f'ALTER TABLE {table_name} ADD COLUMN {column_name} {column_properties};')
+                    except sqlite3.OperationalError as err:
+                        print(f"Error: {err} -- {table_name} -- {column_name} -- {column_properties}")
+                        print(f"Error: {err} -- {columns_info}")
+                        raise err
 
         # If the table doesn't exist, create it with columns
         else:
@@ -274,12 +292,29 @@ class sqlite_storage:
             conn.close()
 
     @staticmethod
+    def mark_bugreport_unresolved(ticket_id):
+        conn = sqlite3.connect(guild_filepath)
+        try:
+            cur = conn.cursor()
+            cur.execute(f'''
+                UPDATE bug_report_cases SET resolved = FALSE WHERE ticket_id = ?
+            ''', (ticket_id,))
+            conn.commit()
+            return True
+        except sqlite3.OperationalError as err:
+            logging.error(f"An error occurred while trying to mark a bug report as not resolved: {err}", err)
+            conn.rollback()
+            return False
+        finally:
+            conn.close()
+
+    @staticmethod
     def list_bug_reports(unresolved_only=True, ticket_id:int=None):
         conn = sqlite3.connect(guild_filepath)
         try:
             cur = conn.cursor()
 
-            query = "SELECT ticket_id, reporter_id, resolved, stated_bug, stated_reproduction, additional_info FROM bug_report_cases"
+            query = "SELECT ticket_id, reporter_id, resolved, stated_bug, stated_reproduction, additional_info, received_date, resolved_date FROM bug_report_cases"
             if unresolved_only:
                 query += " WHERE resolved = FALSE"
 
@@ -301,7 +336,9 @@ class sqlite_storage:
                     'resolved': row[2],
                     'stated_bug': row[3],
                     'stated_reproduction': row[4],
-                    'additional_info': row[5]
+                    'additional_info': row[5],
+                    'received_date': row[6],
+                    'resolved_date': row[7],
                 })
 
             return parsed_data
@@ -1290,7 +1327,7 @@ class sqlite_storage:
         finally:
             conn.close()
 
-        # Organize the data into a dictionary
+        # Organise the data into a dictionary
         data = {}
         for task in task_data:
             data[task[3]] = {
@@ -1562,6 +1599,10 @@ class dataMan:
         ticket_id = int(ticket_id)
         return self.storage.mark_bugreport_resolved(ticket_id)
 
+    def mark_bugreport_unresolved(self, ticket_id):
+        ticket_id = int(ticket_id)
+        return self.storage.mark_bugreport_unresolved(ticket_id)
+
     def create_task_from_template(self, template_id:int, guild_id:int, task_creator_id:int, return_ticket=False):
         if str(template_id).isdigit():
             template_id = int(template_id)
@@ -1595,9 +1636,8 @@ class dataMan:
         if task_desc is not None:
             task_desc = str(task_desc).strip()
 
-        if task_deadline is not None:
-            if not isinstance(task_deadline, datetime):
-                raise ValueError(f"Task deadline must be a datetime object type if provided. Got {type(task_deadline)} ({task_deadline})")
+        if not isinstance(task_deadline, datetime):
+            raise ValueError(f"Task deadline must be a datetime object type if provided. Got {type(task_deadline)} ({task_deadline})")
 
         return self.storage.create_task_template(
             template_name=template_name,

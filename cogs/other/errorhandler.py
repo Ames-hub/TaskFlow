@@ -41,35 +41,39 @@ async def alert_maintainer(event):
             directory = tb_line[tb_line.find("\"") + 1:tb_line.rfind("\"")]
             if "cogs" in directory:
                 is_command = True
-                with open(directory, 'r') as f:
-                    lines = f.readlines()
-                    for cmdfile_line in lines:
-                        # EG: @lightbulb.command(name='Test', description='Test Cmd')
-                        if "@lightbulb.command(" in cmdfile_line:
-                            # Handles both upper and lower case name and description
-                            if "name='" in cmdfile_line:
-                                command_name = cmdfile_line[cmdfile_line.find("name='") + 6:cmdfile_line.find("', description=")]
-                                name_end = cmdfile_line.find("', description=")
-                            else:
-                                command_name = cmdfile_line[cmdfile_line.find("name=\"") + 6:cmdfile_line.find("\", description=")]
-                                name_end = cmdfile_line.find("\", description=")
-
-                            if "description='" in cmdfile_line:
-                                # For edge cases like
-                                # @lightbulb.command(name='make_task', description="Create a task from a template", pass_options=True)
-                                # Handle if there's another argument
-                                if "'," in cmdfile_line[:name_end]:
-                                    command_desc = cmdfile_line[cmdfile_line.find("description='") + 13:cmdfile_line.find("',")]
+                try:
+                    with open(directory, 'r') as f:
+                        lines = f.readlines()
+                        for cmdfile_line in lines:
+                            # EG: @lightbulb.command(name='Test', description='Test Cmd')
+                            if "@lightbulb.command(" in cmdfile_line:
+                                # Handles both upper and lower case name and description
+                                if "name='" in cmdfile_line:
+                                    command_name = cmdfile_line[cmdfile_line.find("name='") + 6:cmdfile_line.find("', description=")]
+                                    name_end = cmdfile_line.find("', description=")
                                 else:
-                                    command_desc = cmdfile_line[cmdfile_line.find("description='") + 13:cmdfile_line.find("')")]
-                            else:
-                                if "\"," in cmdfile_line[:name_end]:
-                                    command_desc = cmdfile_line[cmdfile_line.find("description=\"") + 13:cmdfile_line.find("\",")]
-                                else:
-                                    command_desc = cmdfile_line[cmdfile_line.find("description=\"") + 13:cmdfile_line.find("\")")]
+                                    command_name = cmdfile_line[cmdfile_line.find("name=\"") + 6:cmdfile_line.find("\", description=")]
+                                    name_end = cmdfile_line.find("\", description=")
 
-                            err_directory = directory
-                            break
+                                if "description='" in cmdfile_line:
+                                    # For edge cases like
+                                    # @lightbulb.command(name='make_task', description="Create a task from a template", pass_options=True)
+                                    # Handle if there's another argument
+                                    if "'," in cmdfile_line[:name_end]:
+                                        command_desc = cmdfile_line[cmdfile_line.find("description='") + 13:cmdfile_line.find("',")]
+                                    else:
+                                        command_desc = cmdfile_line[cmdfile_line.find("description='") + 13:cmdfile_line.find("')")]
+                                else:
+                                    if "\"," in cmdfile_line[:name_end]:
+                                        command_desc = cmdfile_line[cmdfile_line.find("description=\"") + 13:cmdfile_line.find("\",")]
+                                    else:
+                                        command_desc = cmdfile_line[cmdfile_line.find("description=\"") + 13:cmdfile_line.find("\")")]
+
+                                err_directory = directory
+                                break
+                except FileNotFoundError:
+                    err_directory = "File not found"
+                    break
 
     option_list = []
     for item in event.context.options.items():
