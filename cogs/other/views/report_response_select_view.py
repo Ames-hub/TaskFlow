@@ -136,13 +136,6 @@ class main_view:
                     )
 
                     return
-                elif report_result == "CUSTOM":
-                    await ctx.edit_response(
-                        hikari.Embed(
-                            title="Custom response",
-                            description="We've sent you a DM. Respond with ONLY how you'd like the bot to respond."
-                        )
-                    )
                 elif report_result == "RECEIVED":
                     mark_resolved = False
                     report_result = ("Thank you for reporting the bug!\n"

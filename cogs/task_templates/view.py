@@ -29,6 +29,14 @@ async def get_template(ctx: lightbulb.SlashContext, identifier):
 
     template_data = dataMan().get_task_template(identifier=identifier, guild_id=ctx.guild_id)
 
+    if not template_data:
+        await ctx.respond(
+            embed=hikari.Embed(
+                title="Template Not Found!",
+                description="The template you are trying to view does not exist."
+            ),
+        )
+        return
     if len(template_data['task_desc']) != 0:
         description_txt = f"**Task Description:** {template_data['task_desc']}\n"
     else:

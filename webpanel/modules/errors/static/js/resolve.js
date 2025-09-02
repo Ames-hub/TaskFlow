@@ -5,13 +5,22 @@ toggleBtn.classList.add(isResolved ? 'action-unresolve' : 'action-resolve');
 toggleBtn.textContent = isResolved ? 'Unresolve' : 'Resolve';
 
 toggleBtn.addEventListener('click', async () => {
-  const url = isResolved ? '/api/errors/unresolve' : '/api/errors/resolve';
   try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bug_id: bugId}) // wrap in quotes
-    });
+    let response;
+    if (isResolved === true) {
+        response = await fetch("/api/errors/unresolve", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bug_id: bugId })
+        });
+    }
+    else {
+        response = await fetch("/api/errors/resolve", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ "bug_id": bugId, "response": "Your issue has been resolved." })
+        });
+    }
 
     if (response.ok) {
       // Toggle state
