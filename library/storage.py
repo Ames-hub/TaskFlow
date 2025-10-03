@@ -13,6 +13,22 @@ guild_filepath = "data/guilds.sqlite"
 
 os.makedirs("data", exist_ok=True)
 
+async def count_all_servers_and_members():
+    guild_list = await plugin.bot.rest.fetch_my_guilds()
+
+    servers_member_count = {}
+    guild_count = len(guild_list)
+    member_count = 0
+    for guild in guild_list:
+        servers_member_count[int(guild.id)] = guild.approximate_member_count
+        member_count += servers_member_count[int(guild)]
+        set_member_count(int(guild.id), int(member_count))
+
+    return {
+        'server_count': guild_count,
+        'member_count': member_count,
+    }
+
 def get_member_total_count():
     with sqlite3.connect(guild_filepath) as conn:
         cursor = conn.cursor()

@@ -111,7 +111,7 @@ async def main():
 
     await asyncio.gather(
         server.serve(),
-        botapp.start(shard_count=10 if not DEBUG else 1)
+        botapp.start(shard_count=25 if not DEBUG else 1)
     )
 
 if __name__ == "__main__":
