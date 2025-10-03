@@ -8,6 +8,14 @@ import hikari
 
 plugin = lightbulb.Plugin(__name__)
 
+priority_map = {
+    "Urgent": 5,
+    "High": 4,
+    "Medium": 3,
+    "Normal": 2,
+    "Low": 1
+}
+
 @group.child
 @lightbulb.app_command_permissions(dm_enabled=False)
 @lightbulb.option(
@@ -29,6 +37,14 @@ plugin = lightbulb.Plugin(__name__)
     description='What category does this item belong to?',
     required=False,
     default=None,
+    type=hikari.OptionType.STRING
+)
+@lightbulb.option(
+    name='priority',
+    description='How important is this task?',
+    required=False,
+    default="Normal",
+    choices=["Urgent","High","Medium","Normal","Low"],
     type=hikari.OptionType.STRING
 )
 @lightbulb.option(
@@ -55,6 +71,7 @@ async def create_cmd(ctx: lightbulb.SlashContext):
     deadline_hmp = ctx.options.deadline_hmp
     deadline_date = ctx.options.deadline_date
     category = ctx.options.category
+    priority = ctx.options.priority
 
     if await perms().can_interact_tasks(user_id=ctx.author.id, guild_id=ctx.guild_id) is False:
         await ctx.respond(
@@ -88,6 +105,8 @@ async def create_cmd(ctx: lightbulb.SlashContext):
         )
         return
 
+    priority = priority_map[priority]
+
     deadline_obj = parse_deadline(deadline_date, deadline_hmp)
     if isinstance(deadline_obj, str):
         await ctx.respond(
@@ -112,25 +131,34 @@ async def create_cmd(ctx: lightbulb.SlashContext):
         added_by=ctx.author.id,
         deadline=deadline_obj,
         category=category,
-        return_task_id=True
+        return_task_id=True,
+        priority=priority
     )
 
-    embed = (
-        hikari.Embed(
-            title=f"New task added! ({task_id})",
-            description=f"**Name:** {task_name} | ID: {task_id}\n**Description:** {task_desc}\n"
-                        f"**Deadline:** {deadline_obj}\n" if deadline_obj else ""
-                        f"**Category:** {category}" if category else ""
+    if task_id is not False:
+        embed = (
+            hikari.Embed(
+                title=f"New task added! ({task_id})",
+                description=f"**Name:** {task_name} | ID: {task_id}\n**Description:** {task_desc}\n"
+                            f"**Deadline:** {deadline_obj}\n" if deadline_obj else ""
+                            f"**Category:** {category}" if category else ""
+            )
         )
-    )
-    if category_exists is False and category is not None:
-        embed.add_field(
-            name="Category added!",
-            value=f"The category '{category}' has been added to your list of categories."
+        if category_exists is False and category is not None:
+            embed.add_field(
+                name="Category added!",
+                value=f"The category '{category}' has been added to your list of categories."
+            )
+        await livetasks.update_for_guild(ctx.guild_id)
+    else:
+        embed = (
+            hikari.Embed(
+                title=f"Task failed to add!",
+                description="Something went wrong, please try again later."
+            )
         )
 
     await ctx.respond(embed)
-    await livetasks.update_for_guild(ctx.guild_id)
 
 def load(bot: lightbulb.BotApp) -> None:
     bot.add_plugin(plugin)

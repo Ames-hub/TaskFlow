@@ -1,6 +1,6 @@
+from library.storage import dataMan, get_member_count, set_member_count
 from library.parsing import parse_livelist_format
 from datetime import datetime, timedelta
-from library.storage import dataMan
 import lightbulb
 import logging
 import random
@@ -8,7 +8,6 @@ import hikari
 
 CACHE_EXPIRATION_TIME = timedelta(seconds=15)
 plugin = lightbulb.Plugin(__name__)
-
 
 class livetasks:
     @staticmethod
@@ -84,6 +83,12 @@ class livetasks:
 
         if task_channel is None:
             return False
+
+        # This is done here just so that guilds that didn't have a member count before get one now.
+        member_count = get_member_count(guild_id)
+        if member_count == 0:
+            member_count = len(await plugin.bot.rest.fetch_members(int(guild_id)))
+            set_member_count(guild_id=guild_id, count=member_count)
 
         # Filters out completed tasks that have been completed for more than 7 days
         # This is to prevent the list from getting too long.
@@ -274,6 +279,7 @@ class livetasks:
         deadline = task[6]
         guild_id = task[7]
         category = task[8]
+        priority = task[9]
 
         if style in ["classic"]:
             completed_text = f"Completed: {'❌' if not completed else '✅'}"
@@ -309,7 +315,7 @@ class livetasks:
             completed_text = ""
 
         if task_desc == "...":
-            task_desc = ""
+            task_desc = None
 
         contributors = dataMan().get_contributors(task_id=identifier)
         assigned_user = dataMan().get_task_incharge(task_id=identifier)
@@ -330,30 +336,43 @@ class livetasks:
 
         # Build the text segment we want to add
 
-        q_or_s = '"' if len(task_desc) > 0 else ""
+        q_or_s = '"' if task_desc is not None else ""
         segment = ""
+
+        key = f"batch-{batch_id}"
+        if plugin.bot.d.get(key) is None:
+            plugin.bot.d[key] = {"current_page": 1}
+            embed.add_field(name="Details Page 1", value="", inline=False)
+
+        page_no = plugin.bot.d[key]["current_page"]
+
+        field = embed.fields[page_no]
 
         # Add category heading if not already present
         if category:
-            segment += (
-                f"**__{category}__**\n"
-                if style in ["pinned", "compact", "minimal", "pinned-minimal"]
-                else f"-- **__{category}__** --\n\n"
-            )
+            if f"**__{category}__**" not in field.value:
+                segment += (
+                    f"**__{category}__**\n"
+                    if style in ["pinned", "compact", "minimal", "pinned-minimal"]
+                    else f"-- **__{category}__** --\n\n"
+                )
 
         if custom_live_text is None:
             if style == "classic":
-                segment += f"{task_name}\n(ID: {identifier})\n{task_desc}\n{completed_text}\nAdded by: <@{added_by}>\n{len(contributors)} helping\n"
+                segment += f"{task_name} - ID: {identifier} | {priority} Priority\n"
+                segment += f"{task_desc if task_desc is not None else "No description provided"}\n{completed_text} | Added by: <@{added_by}> | {len(contributors)} helping\n"
                 if assigned_user:
                     segment += f"Assigned to <@{assigned_user}>\n"
                 if deadline_txt:
                     segment += f"{deadline_txt}\n"
+                segment += "\n"
             elif style == "minimal":
-                segment += f"({identifier}) {' ' if show_x else ''}{completed_text} {task_name}\n"
+                segment += f"({identifier}) {' ' if show_x else ''}{completed_text} {task_name} | {priority} Priority\n"
                 if deadline_txt:
                     segment += f"{deadline_txt}\n"
+                segment += "\n"
             elif style == "pinned":
-                segment += f"- ({identifier}) {task_name} {' ' if show_x else ''}{completed_text}\n{q_or_s}{task_desc}{q_or_s} {len(contributors)} people helping.\nAdded by <@{added_by}>\n"
+                segment += f"- ({identifier}) {priority} Priority. {task_name} {' ' if show_x else ''}{completed_text} {q_or_s}{task_desc}{q_or_s} {len(contributors)} people helping.\nAdded by <@{added_by}>\n"
                 if assigned_user:
                     segment += f"Assigned to <@{assigned_user}>\n"
                 if deadline_txt:
@@ -361,7 +380,7 @@ class livetasks:
             elif style == "pinned-minimal":
                 segment += f"- ({identifier}) {' ' if show_x else ''}{completed_text} {task_name}\n"
             elif style == "compact":
-                segment += f"({identifier}) {task_name} {completed_text} {' ' if show_x else ''}{q_or_s}{task_desc}{q_or_s} {len(contributors)} helping. <@{added_by}>\n"
+                segment += f"({identifier}) {priority} Priority. {task_name} {completed_text} {' ' if show_x else ''}{q_or_s}{task_desc}{q_or_s} {len(contributors)} helping. <@{added_by}>\n"
                 if deadline_txt:
                     segment += f"{deadline_txt}\n"
             else:
@@ -372,15 +391,6 @@ class livetasks:
                 segment += f"{deadline_txt}\n"
 
         # Now deal with embed and fields safely under 1024 characters
-
-        key = f"batch-{batch_id}"
-        if plugin.bot.d.get(key) is None:
-            plugin.bot.d[key] = {"current_page": 1}
-            embed.add_field(name="Details Page 1", value="", inline=False)
-
-        page_no = plugin.bot.d[key]["current_page"]
-        field = embed.fields[page_no]
-
         # If adding this segment overflows, move to the next page
         if len(field.value) + len(segment) > 1024:
             page_no += 1
@@ -418,10 +428,7 @@ class livetasks:
 
         return embed
 
-
 def load(bot: lightbulb.BotApp) -> None:
     bot.add_plugin(plugin)
-
-
 def unload(bot):
     bot.remove_plugin(plugin)

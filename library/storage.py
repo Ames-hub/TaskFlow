@@ -8,12 +8,68 @@ import os
 plugin = lightbulb.Plugin(__name__)
 
 DEBUG = os.environ.get("DEBUG", False)
-key_seperator = "."
-settings_path = "settings.json"
 user_file = "data/users.sqlite"
 guild_filepath = "data/guilds.sqlite"
 
 os.makedirs("data", exist_ok=True)
+
+def get_member_total_count():
+    with sqlite3.connect(guild_filepath) as conn:
+        cursor = conn.cursor()
+        try:
+            # Sum all member_count entries for the given guild_id
+            cursor.execute(
+                """
+                SELECT SUM(member_count) FROM guild_member_counts
+                """,
+            )
+
+            data = cursor.fetchone()[0]  # fetchone returns a tuple like (total,)
+            if data is None:
+                data = 0
+
+            return data
+        except sqlite3.OperationalError as err:
+            logging.error(f"Error getting the total member count.", exc_info=err)
+            return False
+
+def get_member_count(guild_id):
+    with sqlite3.connect(guild_filepath) as conn:
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                """
+                SELECT member_count FROM guild_member_counts WHERE guild_id = ?
+                """,
+                (guild_id,),
+            )
+
+            data = cursor.fetchone()
+            if not data:
+                data = 0
+
+            return data
+        except sqlite3.OperationalError as err:
+            logging.error(f"Error getting the member count for guild {guild_id}.", exc_info=err)
+            return False
+
+def set_member_count(guild_id, count):
+    with sqlite3.connect(guild_filepath) as conn:
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                """
+                INSERT INTO guild_member_counts (guild_id, member_count) VALUES (?, ?)
+                ON CONFLICT 
+                DO UPDATE SET member_count = EXCLUDED.member_count
+                """,
+                (guild_id, count),
+            )
+            conn.commit()
+            return True
+        except sqlite3.OperationalError as err:
+            logging.error(f"Error saving member count for guild {guild_id}.", exc_info=err)
+            return False
 
 def modernize_db():
     """
@@ -37,6 +93,7 @@ def modernize_db():
             'deadline': 'DATETIME DEFAULT NULL',
             'guild_id': 'INT DEFAULT NULL',
             'category': 'TEXT DEFAULT NULL',
+            'priority': 'INT DEFAULT 2',
         },
         'task_template_usage': {  # Used to know which tasks use which template
             'usage_id': 'INTEGER PRIMARY KEY AUTOINCREMENT',
@@ -121,6 +178,10 @@ def modernize_db():
             'created_at': 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP',
             'expires_at': 'DATETIME NOT NULL',
         },
+        "guild_member_counts": {
+            'guild_id': 'INTEGER NOT NULL PRIMARY KEY',
+            'member_count': 'INTEGER NOT NULL DEFAULT 1',
+        }
     }
 
     for table_name, columns in table_dict.items():
@@ -988,7 +1049,9 @@ class sqlite_storage:
             added_by: int = None,
             deadline: datetime = None,
             category=None,
-            return_task_id=False):
+            return_task_id=False,
+            priority:int=2
+            ):
         conn = sqlite3.connect(user_file if user_id is not None else guild_filepath)
         try:
             assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"
@@ -999,10 +1062,10 @@ class sqlite_storage:
             cur = conn.cursor()
 
             query = """
-            INSERT INTO todo_items (name, description, completed, added_by, deadline, guild_id, category)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO todo_items (name, description, completed, added_by, deadline, guild_id, category, priority)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """
-            cur.execute(query, (name, description, False, added_by, deadline, guild_id, category))
+            cur.execute(query, (name, description, False, added_by, deadline, guild_id, category, priority))
             conn.commit()
 
             if return_task_id:
@@ -1012,7 +1075,7 @@ class sqlite_storage:
             return True
         except sqlite3.Error as err:
             conn.rollback()
-            logging.error(f"An error occurred adding a to-do item: {err}")
+            logging.error(f"An error occurred adding a to-do item: {err}", exc_info=err)
             return False
         finally:
             conn.close()
@@ -1118,7 +1181,7 @@ class sqlite_storage:
 
         arguments = (uid,) if uid != "*" else ()
         query = f"""
-        SELECT name, description, completed, id, completed_on, added_by, deadline, guild_id, category
+        SELECT name, description, completed, id, completed_on, added_by, deadline, guild_id, category, priority
         FROM todo_items
         {"WHERE guild_id = ?" if uid != "*" else ""}
         """
@@ -1145,7 +1208,7 @@ class sqlite_storage:
             cur.execute(query, arguments)
             data = cur.fetchall()
         except sqlite3.OperationalError as err:
-            logging.error("Failed to create a to-do list task.", err)
+            logging.error("Failed to create a to-do list task.", exc_info=err)
             return False
         finally:
             conn.close()
@@ -1154,7 +1217,6 @@ class sqlite_storage:
         # Only filter by guild if a guild_id was actually provided
         if guild_id is not None:
             data = [task for task in data if task[7] == guild_id]
-
 
         return data  # Example data: [('Task 1', 'Description 1', False, 1, None, 123456789), ...]
 
@@ -1951,12 +2013,28 @@ class dataMan:
             guild_id=None,
             deadline:datetime=None,
             category=None,
-            return_task_id:bool=False):
+            return_task_id:bool=False,
+            priority:int=2
+            ):
         assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"
         assert type(name) is str and type(description) is str, "Name and description must be strings"
+
+        if priority > 5:
+            raise ValueError("Priority must be less than 5")
+        if priority < 0:
+            raise ValueError("Priority must be greater than 0")
+
         uid = int(user_id if user_id else guild_id)
         if user_id:
-            return self.storage.add_todo_item(name, description, user_id=uid, deadline=deadline, added_by=int(added_by), category=category)
+            return self.storage.add_todo_item(
+                name,
+                description,
+                user_id=uid,
+                deadline=deadline,
+                added_by=int(added_by),
+                category=category,
+                priority=priority,
+            )
         else:
             return self.storage.add_todo_item(
                 name,
@@ -1965,7 +2043,8 @@ class dataMan:
                 added_by=int(added_by),
                 deadline=deadline,
                 category=category,
-                return_task_id=return_task_id
+                return_task_id=return_task_id,
+                priority=priority,
             )
 
     def mark_todo_finished(self, name_or_id, user_id=None, guild_id=None):
@@ -1987,7 +2066,9 @@ class dataMan:
         else:
             return self.storage.undo_mark_todo_finished(name_or_id, guild_id=uid)
 
-    def get_todo_items(self, filter_for='incompleted', user_id=None, guild_id=None, identifier=None, only_keys=[]):
+    def get_todo_items(self, filter_for='incompleted', user_id=None, guild_id=None, identifier=None, only_keys=None):
+        if only_keys is None:
+            only_keys = []
         assert filter_for in ['incompleted', 'completed', '*'], "Filter must be either 'incompleted' or 'completed'"
         uid = int(user_id if user_id else guild_id) if user_id or guild_id else None
         if user_id:
@@ -1996,7 +2077,7 @@ class dataMan:
             data = self.storage.get_todo_items(filter_for, guild_id=uid, identifier=identifier)
 
         if len(only_keys) > 0:
-            acceptable_keys = ["name", "description", "completed", "id", "completed_on", "added_by", "deadline", "guild_id", "category"]
+            acceptable_keys = ["name", "description", "completed", "id", "completed_on", "added_by", "deadline", "guild_id", "category", "priority"]
             for d_key in only_keys:
                 if d_key not in acceptable_keys:
                     raise TypeError(f"This key type is not acceptable \"{d_key}\"")
@@ -2010,7 +2091,8 @@ class dataMan:
                 "added_by": 5,
                 "deadline": 6,
                 "guild_id": 7,
-                "category": 8
+                "category": 8,
+                "priority": 9,
             }
             dictionary = {}
 

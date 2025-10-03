@@ -12,9 +12,13 @@ if not os.path.exists('.env'):
     print("Thank you. What is your discord UUID?")
     uuid = input(">>> ")
 
+    text = f"""
+f"TOKEN={token}\n"
+f"PRIMARY_MAINTAINER_ID={uuid}"
+    """
+
     with open('.env', 'a') as f:
-        f.write(f"TOKEN={token}")
-        f.write(f"PRIMARY_MAINTAINER_ID={uuid}")
+        f.write(text)
 
     print("Process completed. Starting bot.")
 
@@ -83,6 +87,8 @@ botapp.d['DEBUG'] = DEBUG
 # A Cache for if we should show the incompletion marker on incomplete to do items.
 botapp.d['show_x_cache'] = {}
 
+botapp.d['PRIMARY_MAINTAINER_ID'] = int(os.getenv('PRIMARY_MAINTAINER_ID', 913574723475083274))
+
 botapp.d['guild_owner_ids_cache'] = {}
 
 botapp.d['servercount_memory'] = {
@@ -90,6 +96,7 @@ botapp.d['servercount_memory'] = {
     'last_updated': None,
 }
 
+botapp.d['member_counting'] = {}
 
 async def main():
     config = uvicorn.Config(

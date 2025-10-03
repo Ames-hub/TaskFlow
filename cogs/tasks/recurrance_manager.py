@@ -11,7 +11,7 @@ import os
 
 dotenv.load_dotenv('.env')
 plugin = lightbulb.Plugin(__name__)
-DEBUG = os.environ.get("DEBUG").lower() == "true"
+DEBUG = os.environ.get("DEBUG", 'false').lower() == "true"
 
 @tasks.task(
     h=6 if DEBUG is False else 0,

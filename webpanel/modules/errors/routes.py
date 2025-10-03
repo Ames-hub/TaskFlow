@@ -21,11 +21,11 @@ async def load_index(request: Request, token: str = Depends(require_valid_token)
     open_bug_reports = []
     closed_bug_reports = []
     for report in dataMan().list_bug_reports():
-        if report["resolved"] is False:
+        if bool(report["resolved"]) is False:
             open_bug_reports.append(report)
         else:
             # Only show reports that were closed less than 30 days ago.
-            if datetime.datetime.strptime(report["received_date"], "%d/%m/%Y") > datetime.datetime.now() - datetime.timedelta(days=30):
+            if datetime.datetime.strptime(report["received_date"], "%Y-%m-%d %H:%M:%S") > datetime.datetime.now() - datetime.timedelta(days=30):
                 closed_bug_reports.append(report)
         total_reports += 1
 
@@ -65,7 +65,7 @@ async def list_errors(request: Request, token: str = Depends(require_valid_token
         parsed_data.append({
             "id": error["ticket_id"],
             "title": error["stated_bug"],
-            "status": "open" if error["resolved"] is False else "closed",
+            "status": "open" if bool(error["resolved"]) is False else "closed",
             "severity": "low"
         })
 

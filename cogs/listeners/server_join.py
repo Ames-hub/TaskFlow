@@ -1,3 +1,4 @@
+from library.storage import set_member_count
 import lightbulb
 import hikari
 
@@ -38,6 +39,15 @@ async def server_join_listener(event: hikari.events.GuildJoinEvent):
             name="That's it!",
             value="If you have any questions, feel free to join the support server or DM the creator @friendlyfox.exe!\n"
         )
+    )
+
+    member_count = len(event.guild.get_members())
+    if member_count == 0 or member_count is None:
+        member_count = len(await plugin.bot.rest.fetch_members(event.guild_id))
+
+    set_member_count(
+        guild_id=int(event.guild.id),
+        count=member_count,
     )
 
     sys_chan_id = event.guild.system_channel_id

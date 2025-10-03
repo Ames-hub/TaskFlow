@@ -1,3 +1,4 @@
+from library.storage import get_member_total_count
 import lightbulb
 import datetime
 import hikari
@@ -11,14 +12,16 @@ plugin = lightbulb.Plugin(__name__)
 async def server_count(ctx: lightbulb.SlashContext):
     # A basic cache system to prevent spamming the API
     if ctx.bot.d['servercount_memory']['last_updated'] is not None:
-        if ctx.bot.d['servercount_memory']['last_updated'] - datetime.datetime.now() < datetime.timedelta(minutes=5):
+        if ctx.bot.d['servercount_memory']['last_updated'] - datetime.datetime.now() < datetime.timedelta(hours=1):
             count = ctx.bot.d['servercount_memory']['count']
         else:
-            count = len(await ctx.bot.rest.fetch_my_guilds())
+            my_guilds = await ctx.bot.rest.fetch_my_guilds()
+            count = len(my_guilds)
             ctx.bot.d['servercount_memory']['last_updated'] = datetime.datetime.now()
             ctx.bot.d['servercount_memory']['count'] = count
     else:
-        count = len(await ctx.bot.rest.fetch_my_guilds())
+        my_guilds = await ctx.bot.rest.fetch_my_guilds()
+        count = len(my_guilds)
         ctx.bot.d['servercount_memory']['last_updated'] = datetime.datetime.now()
         ctx.bot.d['servercount_memory']['count'] = count
 
@@ -27,6 +30,14 @@ async def server_count(ctx: lightbulb.SlashContext):
             title="Server Count",
             description=f"I'm in {count} servers!"
         )
+    )
+
+    total_members = ctx.bot.d.get("total_members_memory", -1)
+    if total_members == -1:
+        total_members = get_member_total_count()
+    embed.add_field(
+        name="Total Members",
+        value=f"{total_members}",
     )
 
     await ctx.respond(embed)
