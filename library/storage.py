@@ -50,26 +50,6 @@ def get_member_total_count():
             logging.error(f"Error getting the total member count.", exc_info=err)
             return False
 
-def get_member_count(guild_id):
-    with sqlite3.connect(guild_filepath) as conn:
-        cursor = conn.cursor()
-        try:
-            cursor.execute(
-                """
-                SELECT member_count FROM guild_member_counts WHERE guild_id = ?
-                """,
-                (guild_id,),
-            )
-
-            data = cursor.fetchone()
-            if not data:
-                data = 0
-
-            return data
-        except sqlite3.OperationalError as err:
-            logging.error(f"Error getting the member count for guild {guild_id}.", exc_info=err)
-            return False
-
 def set_member_count(guild_id, count):
     with sqlite3.connect(guild_filepath) as conn:
         cursor = conn.cursor()
@@ -195,10 +175,6 @@ def modernize_db():
             'created_at': 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP',
             'expires_at': 'DATETIME NOT NULL',
         },
-        "guild_member_counts": {
-            'guild_id': 'INTEGER NOT NULL PRIMARY KEY',
-            'member_count': 'INTEGER NOT NULL DEFAULT 1',
-        }
     }
 
     for table_name, columns in table_dict.items():

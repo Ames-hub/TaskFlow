@@ -1,5 +1,6 @@
 import lightbulb
 import requests
+import urllib3
 import hikari
 import dotenv
 import os
@@ -7,6 +8,8 @@ import os
 plugin = lightbulb.Plugin(__name__)
 dotenv.load_dotenv(".env")
 
+# We're using self-signed certs. Suppress the warnings.
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # noinspection PyMethodMayBeStatic
 class msgserver:
@@ -66,6 +69,15 @@ async def news_cmd(ctx: lightbulb.SlashContext):
                 )
             )
             return
+
+    # The below is telemetry. It is not personally identifiable, and is only used to track feature usage.
+    # I'm trying to figure out if anyone even uses this functionality.
+    telemetry_url = os.environ.get("USAGE_TELEMETRY_URL")
+    try:
+        # As we can see, it does not send any user data, just a simple GET request.
+        requests.get(telemetry_url, timeout=4, verify=False)
+    except requests.exceptions.RequestException as err:
+        pass  # We don't care if telemetry fails 
 
     await ctx.respond(
         hikari.Embed(

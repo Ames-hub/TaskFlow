@@ -1,6 +1,6 @@
-from library.storage import dataMan, get_member_count, set_member_count
 from library.parsing import parse_livelist_format
 from datetime import datetime, timedelta
+from library.storage import dataMan
 import lightbulb
 import logging
 import random
@@ -83,12 +83,6 @@ class livetasks:
 
         if task_channel is None:
             return False
-
-        # This is done here just so that guilds that didn't have a member count before get one now.
-        member_count = get_member_count(guild_id)
-        if member_count == 0:
-            member_count = len(await plugin.bot.rest.fetch_members(int(guild_id)))
-            set_member_count(guild_id=guild_id, count=member_count)
 
         # Filters out completed tasks that have been completed for more than 7 days
         # This is to prevent the list from getting too long.
