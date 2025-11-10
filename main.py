@@ -13,10 +13,11 @@ if not os.path.exists('.env'):
     uuid = input(">>> ")
 
     text = f"""
-f"TOKEN={token}\n"
-f"PRIMARY_MAINTAINER_ID={uuid}"
+TOKEN={token}\n
+PRIMARY_MAINTAINER_ID={uuid}
     """
 
+    # Write a .env file for next time.
     with open('.env', 'a') as f:
         f.write(text)
 
@@ -66,13 +67,6 @@ botapp.load_extensions_from("library/")
 botapp.d['max_name_length'] = 150
 botapp.d['max_desc_length'] = 2000
 
-# Creates a program-wide list to store message IDs from the bot to easily detect if we should
-# Inspect a message's reactions to determine its completion status (and a couple other things) # TODO: Determine if obsolete
-botapp.d['watched_messages'] = {}
-
-# A dict to track when we last edited a watched message. This is so if someone spams the reactions, it won't spam discord
-botapp.d['last_edited'] = {}  # TODO: Determine if obsolete
-
 botapp.d['reaction_cooldown'] = 0  # seconds
 botapp.d['dl_notif_cooldown'] = {}
 
@@ -87,8 +81,10 @@ botapp.d['DEBUG'] = DEBUG
 # A Cache for if we should show the incompletion marker on incomplete to do items.
 botapp.d['show_x_cache'] = {}
 
+# This is for setting who can do certain things
 botapp.d['PRIMARY_MAINTAINER_ID'] = int(os.getenv('PRIMARY_MAINTAINER_ID', 913574723475083274))
 
+# Used by the bot to cache stuff.
 botapp.d['guild_owner_ids_cache'] = {}
 
 botapp.d['servercount_memory'] = {

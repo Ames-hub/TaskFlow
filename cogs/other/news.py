@@ -5,21 +5,17 @@ import dotenv
 import os
 
 plugin = lightbulb.Plugin(__name__)
-
-bulletins_dir = "data/bulletins"
 dotenv.load_dotenv(".env")
 
 
 # noinspection PyMethodMayBeStatic
 class msgserver:
     def get_host(self):
-        host = os.environ.get("NEWS_SERVER_HOST")
-        ip, port = host.split(":")
-        return {"ip": ip, "port": port}
+        host = os.environ.get("NEWS_SERVER_LINK")
+        return host
 
     def get_bulletin(self):
-        conndata = self.get_host()
-        url = f"http://{conndata['ip']}:{conndata['port']}/get_latest"
+        url = self.get_host()
 
         try:
             response = requests.get(url)
@@ -55,8 +51,8 @@ async def news_cmd(ctx: lightbulb.SlashContext):
                 bulletin = f.read()
             await ctx.respond(
                 hikari.Embed(
-                    title="Couldn't connect!",
-                    description="We couldn't connect to the news server, so we'll give you a stored news report:\n"
+                    title="Fallback Local News!",
+                    description="We couldn't connect to the news server, so we'll give you a stored news report:\n\n"
                                 f"{bulletin}\n\nTo see the latest information, join the [support server](https://discord.gg/HkKAsgvCzt)!"
                 )
             )

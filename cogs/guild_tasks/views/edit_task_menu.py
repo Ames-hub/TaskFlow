@@ -1,6 +1,7 @@
+from library.storage import dataMan, sqlite_storage
 from library.live_task_channel import livetasks
 from library.botapp import miru_client, botapp
-from library.storage import dataMan
+from library import tferror
 import hikari
 import miru
 
@@ -144,6 +145,11 @@ class main_view:
         """
         Make sure to use keys_only=['id', 'name']).values() for tasks_data
         """
+
+        # Checks that tasks do in fact exist to be edited.
+        count = sqlite_storage.count_tasks(guild_id=viewself.guild_id)
+        if count <= 0:
+            raise tferror.no_tasks()
 
         # noinspection PyUnusedLocal
         class Menu_Init(miru.View):

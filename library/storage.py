@@ -1,4 +1,5 @@
 from datetime import datetime
+from library import tferror
 import lightbulb
 import logging
 import sqlite3
@@ -244,6 +245,25 @@ def modernize_db():
 modernize_db()
 
 class sqlite_storage:
+    @staticmethod
+    def count_tasks(guild_id):
+        conn = sqlite3.connect(guild_filepath)
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT COUNT(*) FROM todo_items WHERE guild_id = ?
+                """,
+                (guild_id,)
+            )
+            data = cur.fetchone()
+            return data[0]
+        except sqlite3.Error as err:
+            logging.error(f"An error occurred while counting tasks for guild {guild_id}: {err}", exc_info=err)
+            return False
+        finally:
+            conn.close()
+
     @staticmethod
     def update_last_recur(recur_id, new_task_id):
         datenow = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -873,6 +893,8 @@ class sqlite_storage:
             conn.rollback()
             logging.error("An error occurred Getting a task from the list to update a task!", err)
             return False
+        except TypeError as err: # Does not exist
+            raise tferror.task_not_found(task_id)
         finally:
             conn.close()
 
