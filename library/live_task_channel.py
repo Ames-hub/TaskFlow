@@ -116,6 +116,8 @@ class livetasks:
             logging.info(f"Task channel for guild {guild_id} not found. Disabling live task list.")
             dataMan().clear_taskchannel(guild_id)
             return False
+        except hikari.errors.ForbiddenError:
+            return False
 
         return True
 
@@ -322,7 +324,7 @@ class livetasks:
                 if deadline < datetime.now():
                     deadline_txt += f"⚠️ Deadline expired <t:{int(deadline.timestamp())}:R>!\n"
                 else:
-                    deadline_txt += f"Deadline: {deadline.strftime('%d/%m/%Y %I:%M %p')}\n"
+                    deadline_txt += f"Deadline: <t:{int(deadline.timestamp())}>\n"
                     deadline_txt += f"Time left: <t:{int(deadline.timestamp())}:R>\n\n"
             except Exception as err:
                 logging.error(f"Deadline formatting error for task {identifier}: {err}")

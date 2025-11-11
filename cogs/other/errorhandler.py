@@ -82,7 +82,7 @@ async def alert_maintainer(event):
 
         option_list.append(f"{opt_name} = {opt_value}")
 
-    pos_options_count = len(event.context.command.options)
+    pos_options_count = len(event.context.command.options.keys())
     options_count = len(option_list)
 
     if len(option_list) == 0:
@@ -163,6 +163,15 @@ async def on_error(event: lightbulb.CommandErrorEvent) -> None:
     elif isinstance(event.exception, hikari.errors.NotFoundError):
         logging.warning("An unintended keep-alive timeout for a command occured!")
         return
+    elif isinstance(event.exception, hikari.errors.ForbiddenError):
+        await event.context.respond(
+            hikari.Embed(
+                title="Uh oh!",
+                description="I don't have permission to do that!\n"
+                            "Please check my permissions and try again."
+            ),
+            flags=hikari.MessageFlag.EPHEMERAL
+        )
 
     # THE BELOW ARE UNHANDLED, UNEXPECTED ERRORS.
     elif isinstance(event.exception, Exception):

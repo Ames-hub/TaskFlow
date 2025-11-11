@@ -50,8 +50,8 @@ async def task() -> None:
                 logging.debug(f"DEADLINE MANAGER: CHECKING TASK '{name}' TASK ID {uuid} FOR GUILD {guild_id}")
 
             if botapp.d['dl_notif_cooldown'].get(uuid) is not None:
-                # Make sure to not continue unless it has been 2 hours since the last notification
-                if datetime.now() - botapp.d['dl_notif_cooldown'][uuid] < timedelta(hours=2):
+                # Make sure to not continue unless it has been 8 hours since the last notification
+                if datetime.now() - botapp.d['dl_notif_cooldown'][uuid] < timedelta(hours=8):
                     continue
 
             deadline: str = task[6]

@@ -149,7 +149,13 @@ async def create_cmd(ctx: lightbulb.SlashContext):
                 name="Category added!",
                 value=f"The category '{category}' has been added to your list of categories."
             )
-        await livetasks.update_for_guild(ctx.guild_id)
+        livelist_updated = await livetasks.update_for_guild(ctx.guild_id)
+        if livelist_updated is False:
+            embed.add_field(
+                name="Live task list update failed!",
+                value="The live task list channel could not be updated. Please check that I have permission to "
+                      "view and send messages in the channel, and that the channel still exists."
+            )
     else:
         embed = (
             hikari.Embed(
