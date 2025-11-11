@@ -25,6 +25,16 @@ class main_view:
                       "2. When you see the screen, fill out the fields to the best of your ability. Please be specific and detailed ^^\n\n"
                       "3. Once you're done, click the submit button!"
             )
+            .add_field(
+                name="What happens next?",
+                value="Once you submit the bug report, it will be sent to the project maintainers.\n"
+                      "They will review the bug report and work on fixing the issue as soon as possible!\n\n"
+                      "There is a small chance they may reach out to you for more information if needed.\n"
+                      "By submitting a bug report, you agree to allow the maintainers to contact you for more "
+                      "information if needed.\n\n"
+                      "When the bug is fixed, you will be sent a DM! By submitting a bug report, "
+                      "You are allowing the bot to DM you regarding the bug report."
+            )
         )
 
     def init_view(self):
