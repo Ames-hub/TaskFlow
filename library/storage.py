@@ -1,10 +1,12 @@
 from datetime import datetime
 from library import tferror
+import traceback
 import lightbulb
 import logging
 import sqlite3
 import hikari
 import os
+import re
 
 plugin = lightbulb.Plugin(__name__)
 
@@ -14,58 +16,54 @@ guild_filepath = "data/guilds.sqlite"
 
 os.makedirs("data", exist_ok=True)
 
-async def count_all_servers_and_members():
-    guild_list = await plugin.bot.rest.fetch_my_guilds()
-
-    servers_member_count = {}
-    guild_count = len(guild_list)
-    member_count = 0
-    for guild in guild_list:
-        servers_member_count[int(guild.id)] = guild.approximate_member_count
-        member_count += servers_member_count[int(guild)]
-        set_member_count(int(guild.id), int(member_count))
-
-    return {
-        'server_count': guild_count,
-        'member_count': member_count,
-    }
-
-def get_member_total_count():
+def get_traceback(bug_id):
     with sqlite3.connect(guild_filepath) as conn:
-        cursor = conn.cursor()
         try:
-            # Sum all member_count entries for the given guild_id
-            cursor.execute(
+            cur = conn.cursor()
+            cur.execute(
                 """
-                SELECT SUM(member_count) FROM guild_member_counts
+                SELECT traceback, exc_type FROM bug_tracebacks WHERE ticket_id = ?
                 """,
+                (bug_id,)
             )
-
-            data = cursor.fetchone()[0]  # fetchone returns a tuple like (total,)
-            if data is None:
-                data = 0
-
-            return data
-        except sqlite3.OperationalError as err:
-            logging.error(f"Error getting the total member count.", exc_info=err)
+            row = cur.fetchone()
+            if row:
+                return {
+                    "traceback": str(row[0]).splitlines(),
+                    "exc_type": str(row[1]),
+                }
+            else:
+                return None
+        except Exception as e:
+            logging.error(f"Error while getting bug traceback: {e}", exc_info=e)
             return False
 
-def set_member_count(guild_id, count):
+def save_traceback(ticket_id, exception):
+    # unwrap Lightbulb cmd invocation error thing
+    actual_exc = exception
+    while hasattr(actual_exc, "__cause__") and actual_exc.__cause__:
+        actual_exc = actual_exc.__cause__
+
+    exc_type = type(actual_exc).__name__
+    exc_traceback = traceback.format_exception(
+        type(actual_exc), actual_exc, actual_exc.__traceback__
+    )
+    exc_traceback_str = "".join(exc_traceback)
+
     with sqlite3.connect(guild_filepath) as conn:
-        cursor = conn.cursor()
         try:
-            cursor.execute(
+            cur = conn.cursor()
+            cur.execute(
                 """
-                INSERT INTO guild_member_counts (guild_id, member_count) VALUES (?, ?)
-                ON CONFLICT 
-                DO UPDATE SET member_count = EXCLUDED.member_count
+                INSERT INTO bug_tracebacks (ticket_id, traceback, exc_type)
+                VALUES (?, ?, ?)
                 """,
-                (guild_id, count),
+                (ticket_id, exc_traceback_str, exc_type)
             )
             conn.commit()
             return True
-        except sqlite3.OperationalError as err:
-            logging.error(f"Error saving member count for guild {guild_id}.", exc_info=err)
+        except Exception as e:
+            logging.error(f"Error while saving traceback: {e}", exc_info=e)
             return False
 
 def modernize_db():
@@ -161,8 +159,16 @@ def modernize_db():
             'stated_bug': 'TEXT NOT NULL',
             'stated_reproduction': 'TEXT NOT NULL',
             'additional_info': 'TEXT',
+            'problem_section': 'TEXT NOT NULL default "Not specified"',
             'received_date': "DATETIME DEFAULT (DATETIME('now', 'localtime'))",
             'resolved_date': 'DATETIME DEFAULT NULL',
+            'severity': 'TEXT DEFAULT "medium"',
+            'expected_result': 'TEXT DEFAULT NULL DEFAULT "Not specified"',
+        },
+        'bug_tracebacks': {
+            'ticket_id': 'INTEGER NOT NULL REFERENCES bug_reports(bugid) PRIMARY KEY',
+            'traceback': 'TEXT NOT NULL',  # Tracebacks for bugs that were auto-reported.
+            'exc_type': 'TEXT NOT NULL'
         },
         'authbook': {
             'username': 'TEXT PRIMARY KEY',
@@ -219,6 +225,26 @@ def modernize_db():
                 exit(1)
 
 modernize_db()
+
+def classify_severity(description: str) -> str:
+    desc = description.lower()
+    # Remove all symbols
+    desc = re.sub(r"[^\w\s]", "", desc)
+
+    severity_keywords = {
+        "critical": ["crash", "died", "not responding", "no response", "freeze", "data loss", "cant use", "completely broken"],
+        "high": ["doesnt work", "stops working", "fails", "error", "exception", "not functioning", "not working", "timeout"],
+        "medium": ["slow", "lag", "delay", "inconsistent", "wrong output", "incorrect", "unexpected"],
+        "low": ["typo", "formatting", "minor", "cosmetic", "alignment", "small bug"],
+    }
+
+    for severity, keywords in severity_keywords.items():
+        for word in keywords:
+            if word in desc:
+                return severity
+
+    # If no keywords matched, default to medium
+    return "medium"
 
 class sqlite_storage:
     @staticmethod
@@ -326,15 +352,18 @@ class sqlite_storage:
         return organized_data
 
     @staticmethod
-    def create_bugreport_ticket(reporter_id, stated_bug, stated_reproduction, additional_info=None, return_ticket=False):
+    def create_bug_report_ticket(reporter_id, stated_bug, stated_reproduction, problem_section, expected_result, additional_info=None, return_ticket=False):
         conn = sqlite3.connect(guild_filepath)
+
+        severity = classify_severity(stated_bug)
+
         try:
             cur = conn.cursor()
             cur.execute(f'''
-                INSERT INTO bug_report_cases (reporter_id, stated_bug, stated_reproduction, additional_info)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO bug_report_cases (reporter_id, stated_bug, stated_reproduction, problem_section, expected_result, additional_info, severity)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
                 ''',
-            (int(reporter_id), stated_bug, stated_reproduction, additional_info)
+                (int(reporter_id), stated_bug, stated_reproduction, problem_section, expected_result, additional_info, severity)
             )
             conn.commit()
             if return_ticket:
@@ -383,43 +412,50 @@ class sqlite_storage:
 
     @staticmethod
     def list_bug_reports(unresolved_only=True, ticket_id:int=None):
+        query = """
+            SELECT ticket_id, reporter_id, resolved, stated_bug, stated_reproduction, additional_info,
+            received_date, resolved_date, severity, problem_section, expected_result
+            FROM bug_report_cases
+        """
+        if unresolved_only:
+            query += " WHERE resolved = FALSE"
+
+        if ticket_id is not None:
+            if unresolved_only is False:
+                query += " WHERE ticket_id = ?"
+            else:
+                query += " AND ticket_id = ?"
+
+        args = (ticket_id,) if ticket_id is not None else ()
+
         conn = sqlite3.connect(guild_filepath)
         try:
             cur = conn.cursor()
-
-            query = "SELECT ticket_id, reporter_id, resolved, stated_bug, stated_reproduction, additional_info, received_date, resolved_date FROM bug_report_cases"
-            if unresolved_only:
-                query += " WHERE resolved = FALSE"
-
-            if ticket_id is not None:
-                if unresolved_only is False:
-                    query += " WHERE ticket_id = ?"
-                else:
-                    query += " AND ticket_id = ?"
-
-            args = (ticket_id,) if ticket_id is not None else ()
-
             cur.execute(query, args)
             data = cur.fetchall()
-            parsed_data = []
-            for row in data:
-                parsed_data.append({
-                    'ticket_id': row[0],
-                    'reporter_id': row[1],
-                    'resolved': row[2],
-                    'stated_bug': row[3],
-                    'stated_reproduction': row[4],
-                    'additional_info': row[5],
-                    'received_date': row[6],
-                    'resolved_date': row[7],
-                })
-
-            return parsed_data
         except sqlite3.OperationalError as err:
             logging.error(f"An error occurred while trying to get the list of bug reports: {err}", err)
             return None
         finally:
             conn.close()
+
+        parsed_data = []
+        for row in data:
+            parsed_data.append({
+                'ticket_id': row[0],
+                'reporter_id': row[1],
+                'resolved': row[2],
+                'stated_bug': row[3],
+                'stated_reproduction': row[4],
+                'additional_info': row[5],
+                'received_date': row[6],
+                'resolved_date': row[7],
+                'severity': row[8],
+                'problem_section': row[9],
+                'expected_result': row[10],
+            })
+
+        return parsed_data
 
     @staticmethod
     def create_task_from_template(template_id, guild_id, task_creator_id:int, return_ticket=False):
@@ -1661,21 +1697,23 @@ class dataMan:
             ticket_id = int(ticket_id)
         return self.storage.list_bug_reports(unresolved_only, ticket_id)
 
-    def create_bugreport_ticket(self, reporter_id, stated_bug:str, stated_reproduction:str, additional_info:str=None, return_ticket=False):
+    def create_bug_report_ticket(self, reporter_id, stated_bug:str, stated_reproduction:str, problem_section: str, expected_result: str, additional_info:str=None, return_ticket=False):
         reporter_id = int(reporter_id)
-        return self.storage.create_bugreport_ticket(
+        return self.storage.create_bug_report_ticket(
             reporter_id=reporter_id,
             return_ticket=return_ticket,
             stated_bug=stated_bug,
             stated_reproduction=stated_reproduction,
-            additional_info=additional_info
+            additional_info=additional_info,
+            problem_section=problem_section,
+            expected_result=expected_result
         )
 
-    def mark_bugreport_resolved(self, ticket_id):
+    def mark_bug_report_resolved(self, ticket_id):
         ticket_id = int(ticket_id)
         return self.storage.mark_bugreport_resolved(ticket_id)
 
-    def mark_bugreport_unresolved(self, ticket_id):
+    def mark_bug_report_unresolved(self, ticket_id):
         ticket_id = int(ticket_id)
         return self.storage.mark_bugreport_unresolved(ticket_id)
 

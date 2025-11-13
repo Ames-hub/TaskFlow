@@ -82,6 +82,14 @@ class main_view:
                         style=hikari.TextInputStyle.PARAGRAPH,
                     )
 
+                    problem_zone = miru.TextInput(
+                        label="Problem Section",
+                        placeholder="Where did you find the bug? e.g. The card pull command?",
+                        required=True,
+                        max_length=600,
+                        style=hikari.TextInputStyle.SHORT,
+                    )
+
                     reproduce = miru.TextInput(
                         label="How do I reproduce it?",
                         placeholder="Write exactly what you did which made the bug happen please!",
@@ -90,11 +98,19 @@ class main_view:
                         style=hikari.TextInputStyle.PARAGRAPH
                     )
 
+                    expected = miru.TextInput(
+                        label="Expected result",
+                        placeholder="What did you expect to happen?",
+                        required=True,
+                        max_length=600,
+                        style=hikari.TextInputStyle.PARAGRAPH,
+                    )
+
                     additional = miru.TextInput(
                         label="Additional Info",
                         placeholder="Any additional info you'd like to add?",
                         required=False,
-                        max_length=1000,
+                        max_length=600,
                         style=hikari.TextInputStyle.PARAGRAPH,
                     )
 
@@ -107,10 +123,12 @@ class main_view:
                             additional = None
 
                         # Remembers that THIS user reported a bug so we can tell them how it went
-                        ticket_id = dataMan().create_bugreport_ticket(
+                        ticket_id = dataMan().create_bug_report_ticket(
                             reporter_id=ctx.author.id,
                             stated_bug=self.bug.value,
                             stated_reproduction=self.reproduce.value,
+                            problem_section=self.problem_zone.value,
+                            expected_result=self.expected.value,
                             additional_info=additional,
                             return_ticket=True
                         )
@@ -122,6 +140,7 @@ class main_view:
                             )
                             .add_field(name="Bug", value=self.bug.value)
                             .add_field(name="How to reproduce", value=self.reproduce.value)
+                            .add_field(name="Problem Section", value=self.problem_zone.value)
                         )
                         if additional is not None:
                             embed.add_field(name="Additional Info", value=additional)

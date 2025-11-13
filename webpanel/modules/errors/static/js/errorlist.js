@@ -25,7 +25,22 @@ async function loadBugs() {
 
 function renderBugs(bugs) {
     tbody.innerHTML = "";
-    bugs.forEach(bug => {
+
+    // separate bugs by status
+    const openOrInProgress = bugs.filter(b => b.status.toLowerCase() !== "closed");
+    let closed = bugs.filter(b => b.status.toLowerCase() === "closed");
+
+    // sort closed newest → oldest, then keep only 10
+    closed.sort((a, b) => new Date(b.date_reported) - new Date(a.date_reported));
+    closed = closed.slice(0, 10);
+
+    // sort open/inprogress however you like; here by id descending for recency
+    openOrInProgress.sort((a, b) => new Date(b.date_reported) - new Date(a.date_reported));
+
+    // stitch them back together: open/inprogress first, then the 10 most recent closed
+    const ordered = [...openOrInProgress, ...closed];
+
+    ordered.forEach(bug => {
         const tr = document.createElement("tr");
         tr.dataset.status = bug.status.toLowerCase();
         tr.dataset.severity = bug.severity.toLowerCase();
@@ -42,6 +57,7 @@ function renderBugs(bugs) {
         `;
         tbody.appendChild(tr);
     });
+
     applyFilters();
 }
 

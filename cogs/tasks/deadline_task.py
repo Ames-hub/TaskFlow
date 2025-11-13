@@ -13,8 +13,18 @@ dotenv.load_dotenv('.env')
 plugin = lightbulb.Plugin(__name__)
 DEBUG = os.environ.get("DEBUG", "false").lower() == "true"
 
-@tasks.task(s=15 if DEBUG is False else 3, wait_before_execution=False, auto_start=True)
+@tasks.task(s=15 if DEBUG is False else 5, wait_before_execution=True, auto_start=True)
 async def task() -> None:
+    # Don't run this task until the bot has been up for at least 4 hours.
+    # Prevents spam on restarts.   
+    
+    if DEBUG:
+        logging.info("DEBUG mode, deadline manager task is skipping 4-hour cooldown check.")
+    else:
+        if int(datetime.now().timestamp()) - int(botapp.d['INIT_TIME']) < 14400:
+            return
+
+    
     task_list = dataMan().get_todo_items(filter_for='incompleted')
     # Group the tasks by guild
     group_tasks = {}

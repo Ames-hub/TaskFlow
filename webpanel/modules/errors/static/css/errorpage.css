@@ -153,3 +153,20 @@ pre {
   background: linear-gradient(135deg, #ff5470, #e03e55);
   border: 1px solid #e03e55;
 }
+
+#adminResponse {
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: #1c1f29;
+  color: var(--text);
+  font-size: 14px;
+}
+
+#DeleteBtn {
+  background: linear-gradient(135deg, #ff5470, #e03e55);
+  border: 1px solid #e03e55;
+  margin-left: 16px;
+}

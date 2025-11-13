@@ -34,14 +34,36 @@
     </header>
 
     <section class="section">
-      <h2>{{ bug.title }}</h2>
+        {% if bug.traceback %}
+        <h2>Traceback - {{ bug.exc_type }}</h2>
+      <pre>
+        {% if bug.traceback is string -%}
+        {{ bug.traceback }}
+        {%- else -%}
+        {{ bug.traceback | join('\n') }}
+        {%- endif %}
+      </pre>
+        {% else %}
+        <h2>No Traceback Available</h2>
+        <p>This bug report does not include a traceback.</p>
+        {% endif %}
+    </section>
+
+    <section class="section">
+      <h2>Summary of bug report ID {{ bug.id }}</h2>
+      <div class="field">
+        <label>Stated Bug</label>
+        <span>{{ bug.title }}</span>
+      </div>
       <div class="field">
         <label>ID</label>
         <span>{{ bug.id }}</span>
       </div>
       <div class="field">
         <label>Status</label>
-        <span>{{ bug.status }}</span>
+        <span id="bugStatus" class="status-{{ 'closed' if bug.status == 'closed' else 'open' }}">
+          {{ bug.status }}
+        </span>
       </div>
       <div class="field">
         <label>Severity</label>
@@ -58,6 +80,14 @@
     </section>
 
     <section class="section">
+      <div class="field">
+        <label>Location</label>
+        <span>{{ bug.problem_section }}</span>
+      </div>
+      <div class="field">
+        <label>Expected Result</label>
+        <span>{{ bug.expected_result }}</span>
+      </div>
       <h2>Steps to Reproduce</h2>
       <pre>{{ bug.reproduction }}</pre>
     </section>
@@ -70,14 +100,19 @@
     <section class="section">
       <h2>Actions</h2>
       <button id="toggleResolveBtn" class="action-btn">
-        {{ 'Unresolve' if bug.status == 'Closed' else 'Resolve' }}
+        {{ 'Unresolve' if bug.status == 'closed' else 'Resolve' }}
       </button>
+      <button id="SendMsgBtn" class="action-btn">Msg W/O Resolving</button>
+      <button id="ToggleResolveNoMsgBtn" class="action-btn">Resolve w/o message</button>
+      <button id="DeleteBtn" class="action-btn action-delete">Ignore</button>
+      <input type="text" id="adminResponse" placeholder="Add a message"/>
     </section>
   </main>
   <script>
     const bugId = parseInt("{{ bug.id }}");
-    let isResolved = "{{ bug.status }}" === "Closed";  // true if Closed, false otherwise
+    let isResolved = "{{ bug.status }}" === "closed";  // true if Closed, false otherwise
   </script>
   <script src="/static/errors/js/resolve.js"></script>
+  <script src="/static/errors/js/ignore.js"></script>
 </body>
 </html>

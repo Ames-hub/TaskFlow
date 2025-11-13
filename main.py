@@ -65,7 +65,7 @@ botapp.load_extensions_from("library/")
 
 # MAIN VARIABLES
 botapp.d['max_name_length'] = 150
-botapp.d['max_desc_length'] = 2000
+botapp.d['max_desc_length'] = 1850  # 150 + 1850 = 2000 characters (Discord limit)
 
 botapp.d['reaction_cooldown'] = 0  # seconds
 botapp.d['dl_notif_cooldown'] = {}
@@ -83,6 +83,9 @@ botapp.d['show_x_cache'] = {}
 
 # This is for setting who can do certain things
 botapp.d['PRIMARY_MAINTAINER_ID'] = int(os.getenv('PRIMARY_MAINTAINER_ID', 913574723475083274))
+
+# Used to track bot uptime and ensure certain tasks don't run too early.
+botapp.d['INIT_TIME'] = int(datetime.datetime.now().timestamp())
 
 # Used by the bot to cache stuff.
 botapp.d['guild_owner_ids_cache'] = {}

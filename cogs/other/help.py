@@ -9,10 +9,11 @@ plugin = lightbulb.Plugin(__name__)
 @lightbulb.command(name='help', description="View basic data about the bot's usage!")
 @lightbulb.implements(lightbulb.SlashCommand)
 async def help_cmd(ctx: lightbulb.SlashContext):
+    1/0
     embed = (
         hikari.Embed(
             title="Bot Usage",
-            description="Hello! Thank you for adding me to your server. If you wish to learn how to use me, please read the rest of this message!",
+            description="Hello! Thank you for choosing me for your server.",
             colour=0x0000FF
         )
         .add_field(

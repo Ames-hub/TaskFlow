@@ -118,7 +118,7 @@ class main_view:
                     report_result = ("Thank you for reporting the bug!\n"
                                      "We've decided to not fix this bug and leave it as-is or improve it as a feature.")
                 elif report_result == "HIDE":
-                    dataMan().mark_bugreport_resolved(ticket_id)
+                    dataMan().mark_bug_report_resolved(ticket_id)
 
                     self.stop()
                     from cogs.other.views.bug_manage_view import main_view as bug_manage_view
@@ -179,7 +179,7 @@ class main_view:
                     )
                     # Mark the ticket as resolved
                     if mark_resolved:
-                        dataMan().mark_bugreport_resolved(ticket_id)
+                        dataMan().mark_bug_report_resolved(ticket_id)
 
                     self.stop()
                     from cogs.other.views.bug_manage_view import main_view as bug_manage_view

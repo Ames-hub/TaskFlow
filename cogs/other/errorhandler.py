@@ -1,21 +1,18 @@
-from library.storage import dataMan
+from library.storage import dataMan, save_traceback
 from library.botapp import botapp
-from library.perms import perms
 import lightbulb
 import traceback
 import datetime
 import logging
-import dotenv
 import hikari
 import io
 import os
 
 plugin = lightbulb.Plugin(__name__)
 
-async def alert_maintainer(event):
-    dotenv.load_dotenv('.env')
-    maintainer_id = int(os.environ.get("PRIMARY_MAINTAINER_ID"))
-    dmc = await event.bot.rest.create_dm_channel(maintainer_id)  # The bot maintainer's ID.
+async def report_bug(event):
+    maintainer_id = int(botapp.d['PRIMARY_MAINTAINER_ID'])
+    dmc = await botapp.rest.create_dm_channel(maintainer_id)  # The bot maintainer's ID.
 
     tb = traceback.format_exception(type(event.exception), event.exception, event.exception.__traceback__)
 
@@ -82,11 +79,24 @@ async def alert_maintainer(event):
 
         option_list.append(f"{opt_name} = {opt_value}")
 
-    pos_options_count = len(event.context.command.options.keys())
+    pos_options_count = len(event.context.command.options)
     options_count = len(option_list)
 
     if len(option_list) == 0:
         option_list.append("No options selected")
+
+    # Log a bug report without sending the DM
+    ticket_id = dataMan().create_bug_report_ticket(
+        reporter_id=event.context.author.id,
+        stated_bug=f"I encountered an error in the {command_name.replace("_", " ")} command!",
+        stated_reproduction=f"Run the command with options {event.context.options.items()}",
+        problem_section=f"'{command_name}' Bot command",
+        expected_result="N/A: Automated Report.",
+        additional_info="This bug report was sent automatically when you tried to use the bot, but encountered an error!",
+        return_ticket=True
+    )
+
+    report = dataMan().list_bug_reports(ticket_id=ticket_id)[0]
 
     await dmc.send(
         hikari.Embed(
@@ -109,8 +119,7 @@ async def alert_maintainer(event):
                   f"In a Guild?: {in_guild}\n"
                   f"Guild ID: {event.context.guild_id}\n"
                   f"Is this a DM?: {not in_guild}\n"
-                  # Modify those numbers without also setting the primary_maintainer_id in .env to somebody else, and I will cry :3
-                  f"Is this bot an official instance?: {botapp.get_me().id in [1262021444615933962, 1090899298650169385]}\n"
+                  f"Is this bot an official instance?: {botapp.get_me().id in [1387493386575020164, 1090899298650169385]}\n"
         )
         .add_field(
             name="OPTIONS",
@@ -118,17 +127,15 @@ async def alert_maintainer(event):
                   f"User used {options_count}/{pos_options_count} possible options.\n"
                   f"Options used are as listed below.\n"
                   f"{"\n".join(option_list)}",
-        ),
+        )
+        .add_field(name="Bug", value=report['stated_bug'])
+        .add_field(name="Problem Section", value=report['problem_section'])
+        .add_field(name="Expected result", value=report['expected_result'])
+        .add_field(name="How to reproduce", value=report['stated_reproduction']),
         attachment=attachment
     )
 
-    # Log a bug report without sending the DM
-    dataMan().create_bugreport_ticket(
-        reporter_id=event.context.author.id,
-        stated_bug=f"I encountered an error in the {command_name.replace("_", " ")} command!",
-        stated_reproduction=f"Run the command with options {event.context.options.items()}",
-        additional_info="This bug report was sent automatically!"
-    )
+    return ticket_id
 
 # For some reason, using plugin.listener doesn't work
 @botapp.listen(lightbulb.CommandErrorEvent)
@@ -137,8 +144,14 @@ async def on_error(event: lightbulb.CommandErrorEvent) -> None:
         logging.info("Error handler firing for unhandled exception.")
 
     if isinstance(event.exception, lightbulb.MissingRequiredPermission):
+        embed = (
+            hikari.Embed(
+                title="Insufficient permissions",
+                description="You do not have permission to use this command!",
+            )
+        )
         await event.context.respond(
-            perms.embeds.insufficient_perms(event.context),
+            embed,
             flags=hikari.MessageFlag.EPHEMERAL
         )
         return
@@ -158,42 +171,54 @@ async def on_error(event: lightbulb.CommandErrorEvent) -> None:
         await event.context.respond("You are not the owner of this bot.", flags=hikari.MessageFlag.EPHEMERAL)
         return
     elif isinstance(event.exception, lightbulb.errors.CommandIsOnCooldown):
-        await event.context.respond(f"You have {event.exception.retry_after:.2f} seconds left before you can run this command again.")
+        wait_time = int(event.exception.retry_after)  # In seconds
+        if wait_time <= 120:  # Under 2 minutes
+            time_unit = "second(s)"
+            # No change to wait_time (remains in seconds).
+        elif wait_time <= 3599:  # Under an hour
+            time_unit = "minute(s)"
+            wait_time = wait_time // 60  # Convert seconds to minutes.
+        elif wait_time <= 86399:  # Less than a day (under 24 hours)
+            time_unit = "hour(s)"
+            wait_time = wait_time // 3600  # Convert seconds to hours.
+        else:  # Greater than or equal to 1 day
+            time_unit = "day(s)"
+            wait_time = wait_time // 86400  # Convert seconds to days.
+
+        embed = (
+            hikari.Embed(
+                title="Command is on cooldown",
+                description=f"You have {wait_time} {time_unit} left before you can run this command again."
+            )
+        )
+        await event.context.respond(embed)
         return
     elif isinstance(event.exception, hikari.errors.NotFoundError):
         logging.warning("An unintended keep-alive timeout for a command occured!")
         return
-    elif isinstance(event.exception, hikari.errors.ForbiddenError):
+    else:
+        print(f"An error occurred while running a command: {event.exception}")
+        logging.error(f"A ({type(event.exception)}) error occurred while {event.context.author.id} was running a command: {event.exception}", exc_info=event.exception)
+
         await event.context.respond(
-            hikari.Embed(
-                title="Uh oh!",
-                description="I don't have permission to do that!\n"
-                            "Please check my permissions and try again."
-            ),
-            flags=hikari.MessageFlag.EPHEMERAL
+            embed=hikari.Embed(
+                title="Error!",
+                description="An error occurred while running this command.",
+                colour=0xff0000,
+            )
+            .add_field(
+                name="Auto-Reporting",
+                value="A Bug report has been automatically filed and sent to the maintainer.",
+            )
         )
 
-    # THE BELOW ARE UNHANDLED, UNEXPECTED ERRORS.
-    elif isinstance(event.exception, Exception):
-        if event.context:
-            await event.context.respond(
-                hikari.Embed(
-                    title="Uh oh!",
-                    description="Sorry, it seems an unknown problem occured!\n"
-                                "Don't worry, the project maintainers have been alerted."
-                ),
-                flags=hikari.MessageFlag.EPHEMERAL
-            )
+        try:
+            bug_id = await report_bug(event)
+            save_traceback(bug_id, event.exception)
+        except Exception as err:
+            logging.error(f"Failed to alert maintainer and report bug: {err}", exc_info=err)
 
-        logging.info("Error!", exc_info=event.exception)
-        await alert_maintainer(event)
-    else:
-        await event.context.respond("An error occurred while running this command :(\n"
-                                    "Don't worry, the project maintainers have been alerted.", flags=hikari.MessageFlag.EPHEMERAL)
-        await alert_maintainer(event)
-
-    print(f"An error occurred while running a command: {event.exception}")
-    logging.error(f"An error occurred while running a command: {event.exception}", exc_info=event.exception)
+        raise event.exception
     
 def load(bot: lightbulb.BotApp) -> None:
     bot.add_plugin(lightbulb.Plugin(__name__))
