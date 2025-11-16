@@ -10,7 +10,7 @@ plugin = lightbulb.Plugin(__name__)
 @group.child
 @lightbulb.app_command_permissions(dm_enabled=False)
 @lightbulb.option(
-    name='channel',
+    name='setchannel',
     description="What channel do you want us to create the task list in?",
     type=hikari.OptionType.CHANNEL,
     required=True
@@ -40,7 +40,7 @@ async def command(ctx: lightbulb.SlashContext):
     if success:
         await ctx.respond(f"Task channel set to <#{task_channel.id}>")
     else:
-        await ctx.respond("Failed to set task channel. Please try again later.")
+        await ctx.respond("Failed to set task channel. Please try again later.", flags=hikari.MessageFlag.EPHEMERAL)
 
     try:
         await livetasks.update_for_guild(ctx.guild_id)

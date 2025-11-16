@@ -2,6 +2,7 @@ from library.storage import dataMan, sqlite_storage
 from library.live_task_channel import livetasks
 from library.botapp import miru_client, botapp
 from library import tferror
+import datetime
 import hikari
 import miru
 
@@ -25,6 +26,12 @@ def init_edit_modal(task_id):
         new_category = miru.TextInput(
             label="Category",
             placeholder="To what category does this task now belong?",
+            required=False,
+            style=hikari.TextInputStyle.SHORT
+        )
+        new_deadline = miru.TextInput(
+            label="Deadline",
+            placeholder="What's the deadline? (YYYY-MM-DD HH:MM AM/PM)",
             required=False,
             style=hikari.TextInputStyle.SHORT
         )
@@ -58,11 +65,23 @@ def init_edit_modal(task_id):
                 await ctx.respond(embed)
                 return
 
+            try:
+                deadline = datetime.datetime.strptime(self.new_deadline.value, '%Y-%m-%d %I:%M %p') if self.new_deadline.value else None
+            except ValueError:
+                embed = hikari.Embed(
+                    title="Invalid deadline format!",
+                    description="Please use the format 'YYYY-MM-DD HH:MM AM/PM' for the deadline. For example, '2024-12-31 05:30 PM'.\n"
+                    "If you don't want to set a deadline, leave the field blank."
+                )
+                await ctx.respond(embed)
+                return
+
             dataMan().set_new_task_data(
                 task_id=task_id,
                 task_name=task_name,
                 task_desc=task_desc,
-                task_category=self.new_category.value
+                task_category=self.new_category.value,
+                task_deadline=deadline
             )
 
             await ctx.respond(

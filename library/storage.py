@@ -795,6 +795,7 @@ class sqlite_storage:
             cur = conn.cursor()
             query = """
             INSERT INTO tasks_assigned_to_users (user_id, task_id) VALUES (?, ?)
+            ON CONFLICT(task_id) DO UPDATE SET user_id = excluded.user_id
             """
             cur.execute(query, (user_id, task_id))
             conn.commit()
@@ -893,14 +894,14 @@ class sqlite_storage:
             conn.close()
 
     @staticmethod
-    def set_new_task_data(task_id, task_name=None, task_desc=None, task_category=None):
+    def set_new_task_data(task_id, task_name=None, task_desc=None, task_category=None, task_deadline=None):
         # Gets the task
         conn = sqlite3.connect(guild_filepath)
         try:
             cur = conn.cursor()
-            query = "SELECT name, description, category FROM todo_items WHERE id = ? LIMIT 1"
+            query = "SELECT name, description, category, deadline FROM todo_items WHERE id = ? LIMIT 1"
             cur.execute(query, (int(task_id),))
-            old_name, old_description, old_category = cur.fetchone()
+            old_name, old_description, old_category, old_deadline = cur.fetchone()
         except sqlite3.Error as err:
             conn.rollback()
             logging.error("An error occurred Getting a task from the list to update a task!", err)
@@ -911,12 +912,14 @@ class sqlite_storage:
             conn.close()
 
         # Use old values if new ones are not provided
-        if task_name is None:
+        if not task_name:
             task_name = old_name
-        if task_desc is None:
+        if not task_desc:
             task_desc = old_description
-        if task_category is None:
+        if not task_category:
             task_category = old_category
+        if not task_deadline:
+            task_deadline = old_deadline
 
         # Update the task
         conn = sqlite3.connect(guild_filepath)
@@ -925,10 +928,10 @@ class sqlite_storage:
             cur = conn.cursor()
             query = """
             UPDATE todo_items 
-            SET name = ?, description = ?, category = ?
+            SET name = ?, description = ?, category = ?, deadline = ?
             WHERE id = ?
             """
-            cur.execute(query, (task_name, task_desc, task_category, int(task_id)))
+            cur.execute(query, (task_name, task_desc, task_category, task_deadline, int(task_id)))
             conn.commit()  # Commit the changes to the database
             return True
         except sqlite3.Error as err:
@@ -1845,6 +1848,8 @@ class dataMan:
 
     def assign_user_to_task(self, user_id:int, task_id:int, guild_id):
         user_id = int(user_id)
+        task_id = int(task_id)
+        guild_id = int(guild_id)
         if type(task_id) is not int and str(task_id).isnumeric() is False:
             raise TypeError("The task ID needs to be a number!")
 
@@ -1895,13 +1900,14 @@ class dataMan:
 
         return self.storage.toggle_show_task_completion(status, guild_id)
 
-    def set_new_task_data(self, task_id, task_name=None, task_desc=None, task_category=None):
+    def set_new_task_data(self, task_id, task_name=None, task_desc=None, task_category=None, task_deadline:datetime|None=None):
         """
         The task's old data will be rewritten with what is not None.
         :param task_id:
         :param task_name:
         :param task_desc:
         :param task_category:
+        :param task_deadline:
         :return:
         """
         assert type(task_name) is str
@@ -1910,7 +1916,8 @@ class dataMan:
             task_id,
             task_name,
             task_desc,
-            task_category
+            task_category,
+            task_deadline=task_deadline
         )
 
     def get_task_exists(self, task_id):
@@ -2158,7 +2165,21 @@ class dataMan:
 
             return dictionary
         else:
-            return data
+            parsed_data = {}
+            for task in data:
+                parsed_data[task[3]] = {
+                    "name": task[0],
+                    "description": task[1],
+                    "completed": bool(task[2]),
+                    "uid": task[3],
+                    "completed_on": task[4],
+                    "added_by": task[5],
+                    "deadline": task[6],
+                    "guild_id": task[7],
+                    "category": task[8],
+                    "priority": task[9],
+                }
+            return parsed_data
 
     def set_taskchannel(self, guild_id:int, channel_id:int):
         """

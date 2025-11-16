@@ -95,6 +95,23 @@ botapp.d['servercount_memory'] = {
     'last_updated': None,
 }
 
+botapp.d['priority_map'] = {
+    'alnum': {
+        'Urgent': 5,
+        'High': 4,
+        'Medium': 3,
+        'Normal': 2,
+        'Low': 1
+    },
+    'numeric': {
+        5: 'Urgent',
+        4: 'High',
+        3: 'Medium',
+        2: 'Normal',
+        1: 'Low'
+    }
+}
+
 botapp.d['member_counting'] = {}
 
 async def main():

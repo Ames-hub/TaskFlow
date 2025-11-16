@@ -2,7 +2,7 @@ import lightbulb
 
 plugin = lightbulb.Plugin(__name__)
 
-name = "live"
+name = "livelist"
 desc = "To do with the live channel"
 @plugin.command
 @lightbulb.command(name, desc)

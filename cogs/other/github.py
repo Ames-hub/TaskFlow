@@ -1,4 +1,5 @@
 import lightbulb
+import hikari
 
 plugin = lightbulb.Plugin(__name__)
 
@@ -14,7 +15,15 @@ async def github_linking(ctx: lightbulb.SlashContext):
         "https://github.com/Ames-hub/TaskFlow\n"
         "https://github.com/Ames-hub"
     )
-    await ctx.respond(msg)
+    embed = (
+        hikari.Embed(
+            title="GitHub Repository",
+            description=msg,
+            color=hikari.Color(0x7289DA)
+        )
+    )
+
+    await ctx.respond(embed)
 
 def load(bot: lightbulb.BotApp) -> None:
     bot.add_plugin(plugin)

@@ -1,7 +1,8 @@
 from library.live_task_channel import livetasks
-from library.perms import perms
-from cogs.guild_tasks.group import group
+from cogs.task_incharge.group import group
 from library.storage import dataMan
+from library.perms import perms
+from library import tferror
 import lightbulb
 import hikari
 
@@ -30,6 +31,8 @@ plugin = lightbulb.Plugin(__name__)
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def assign_cmd(ctx: lightbulb.SlashContext, task_id:int, user:hikari.User):
     dm = dataMan()
+    task_incharge = user  # Rename for backend clarity
+    del user
 
     # Todo: make needing a permission to assign or unassign a task to someone toggleable.
     allowed = await perms.is_privileged(
@@ -46,8 +49,8 @@ async def assign_cmd(ctx: lightbulb.SlashContext, task_id:int, user:hikari.User)
         filter_for="*"
     )
 
-    if user is None:
-        user = ctx.author
+    if task_incharge is None:
+        task_incharge = ctx.author
 
     if len(tasks_list) > 1:
         await ctx.respond(
@@ -66,15 +69,48 @@ async def assign_cmd(ctx: lightbulb.SlashContext, task_id:int, user:hikari.User)
         )
         return
 
-    success = dm.assign_user_to_task(user_id=user.id, task_id=task_id, guild_id=ctx.guild_id)
+    incharge_id = int(task_incharge.id)
+
+    success = dataMan().assign_user_to_task(
+        user_id=incharge_id,
+        task_id=task_id,
+        guild_id=int(ctx.guild_id)
+    )
+    dataMan().mark_user_as_contributing(
+        user_id=incharge_id,
+        task_id=task_id,
+        guild_id=int(ctx.guild_id)
+    )
+
     if success:
         await ctx.respond(
             hikari.Embed(
                 title="Assigned",
-                description=f"<@{user.id}> is now the designated in-charge for the task."
+                description=f"<@{task_incharge.id}> is now the designated in-charge for the task."
             )
         )
-        await livetasks.update_for_guild(ctx.guild_id)
+        
+        try:
+            await livetasks.update_for_guild(ctx.guild_id)
+        except tferror.livelist.no_channel:
+            pass  # We don't care if we can't update the live list here.
+
+        guild = await ctx.bot.rest.fetch_guild(ctx.guild_id)
+        task_name = tasks_list[task_id]['name']
+        embed = (
+            hikari.Embed(
+                title="Role assignment!",
+                description=f"You have been assigned as the in-charge for the task '{task_name}' (Task ID {task_id}) by {ctx.author.mention}."
+                f"\n\nThis happened in the server '{guild.name}'.",
+                color=0x00FF00
+            )
+            .add_field(
+                name="What's this mean?",
+                value="Being in-charge means you are primarily responsible for this task. "
+                "You will be able to control who's helping, and have access to coordination tools."
+            )
+        )
+        await task_incharge.send(embed)
     elif success == -1:
         await ctx.respond(
             hikari.Embed(

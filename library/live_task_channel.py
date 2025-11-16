@@ -1,6 +1,7 @@
 from library.parsing import parse_livelist_format
 from datetime import datetime, timedelta
 from library.storage import dataMan
+from library import tferror
 import lightbulb
 import logging
 import random
@@ -82,7 +83,7 @@ class livetasks:
         task_channel = dataMan().get_taskchannel(int(guild_id))
 
         if task_channel is None:
-            return False
+            raise tferror.livelist.no_channel()
 
         # Filters out completed tasks that have been completed for more than 7 days
         # This is to prevent the list from getting too long.
@@ -275,7 +276,7 @@ class livetasks:
         deadline = task[6]
         guild_id = task[7]
         category = task[8]
-        priority = task[9]
+        priority = plugin.bot.d['priority_map']['numeric'][task[9]]  # Convert to text
 
         if style in ["classic"]:
             completed_text = f"Completed: {'❌' if not completed else '✅'}"
@@ -325,7 +326,7 @@ class livetasks:
                     deadline_txt += f"⚠️ Deadline expired <t:{int(deadline.timestamp())}:R>!\n"
                 else:
                     deadline_txt += f"Deadline: <t:{int(deadline.timestamp())}>\n"
-                    deadline_txt += f"Time left: <t:{int(deadline.timestamp())}:R>\n\n"
+                    deadline_txt += f"Which is <t:{int(deadline.timestamp())}:R>\n\n"
             except Exception as err:
                 logging.error(f"Deadline formatting error for task {identifier}: {err}")
                 return False

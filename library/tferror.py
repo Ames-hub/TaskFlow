@@ -15,6 +15,13 @@ class no_tasks(Exception):
     def __str__(self):
         return self.message
 
+class livelist:
+    class no_channel(Exception):
+        def __init__(self):
+            self.message = "No live task channel is set for this guild."
+        def __str__(self):
+            return self.message
+
 def load(bot: lightbulb.BotApp) -> None:
     bot.add_plugin(plugin)
 def unload(bot):

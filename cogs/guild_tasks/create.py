@@ -3,21 +3,22 @@ from library.parsing import parse_deadline
 from cogs.guild_tasks.group import group
 from library.storage import dataMan
 from library.perms import perms
+from library import tferror
 import lightbulb
 import hikari
+import random
 
 plugin = lightbulb.Plugin(__name__)
 
-priority_map = {
-    "Urgent": 5,
-    "High": 4,
-    "Medium": 3,
-    "Normal": 2,
-    "Low": 1
-}
-
 @group.child
 @lightbulb.app_command_permissions(dm_enabled=False)
+@lightbulb.option(
+    name='incharge',
+    description="Who's in charge of this task?",
+    type=hikari.OptionType.USER,
+    required=False,
+    default=None
+)
 @lightbulb.option(
     name='deadline_hmp',
     description="Enter a specific time in the format: HH:MM AM/PM",
@@ -72,6 +73,7 @@ async def create_cmd(ctx: lightbulb.SlashContext):
     deadline_date = ctx.options.deadline_date
     category = ctx.options.category
     priority = ctx.options.priority
+    task_incharge:hikari.User = ctx.options.incharge
 
     if await perms().can_interact_tasks(user_id=ctx.author.id, guild_id=ctx.guild_id) is False:
         await ctx.respond(
@@ -105,7 +107,7 @@ async def create_cmd(ctx: lightbulb.SlashContext):
         )
         return
 
-    priority = priority_map[priority]
+    priority = plugin.bot.d['priority_map']['alnum'][priority]  # Convert to numeric
 
     deadline_obj = parse_deadline(deadline_date, deadline_hmp)
     if isinstance(deadline_obj, str):
@@ -135,6 +137,36 @@ async def create_cmd(ctx: lightbulb.SlashContext):
         priority=priority
     )
 
+    if task_incharge is not None:
+        incharge_id = int(task_incharge.id)
+
+        dataMan().assign_user_to_task(
+            user_id=incharge_id,
+            task_id=task_id,
+            guild_id=ctx.guild_id
+        )
+        dataMan().mark_user_as_contributing(
+            user_id=incharge_id,
+            task_id=task_id,
+            guild_id=ctx.guild_id
+        )
+
+        guild = await ctx.bot.rest.fetch_guild(ctx.guild_id)
+        embed = (
+            hikari.Embed(
+                title="Role assignment!",
+                description=f"You have been assigned as the in-charge for the new task '{task_name}' (Task ID {task_id}) by {ctx.author.mention}."
+                f"\n\nThis happened in the server '{guild.name}'.",
+                color=0x00FF00
+            )
+            .add_field(
+                name="What's this mean?",
+                value="Being in-charge means you are primarily responsible for this task. "
+                "You will be able to control who's helping, and have access to coordination tools."
+            )
+        )
+        await task_incharge.send(embed)
+
     if task_id is not False:
         embed = (
             hikari.Embed(
@@ -149,13 +181,21 @@ async def create_cmd(ctx: lightbulb.SlashContext):
                 name="Category added!",
                 value=f"The category '{category}' has been added to your list of categories."
             )
-        livelist_updated = await livetasks.update_for_guild(ctx.guild_id)
-        if livelist_updated is False:
-            embed.add_field(
-                name="Live task list update failed!",
-                value="The live task list channel could not be updated. Please check that I have permission to "
-                      "view and send messages in the channel, and that the channel still exists."
-            )
+        try:
+            livelist_updated = await livetasks.update_for_guild(ctx.guild_id)
+            if not livelist_updated:
+                embed.add_field(
+                    name="Live task list update failed!",
+                    value="The live task list channel could not be updated. Please check that I have permission to "
+                          "view and send messages in the channel, and that the channel still exists."
+                )
+        except tferror.livelist.no_channel:
+            if random.choice([True, False]):
+                embed.add_field(
+                    name="No live task channel set!",
+                    value="You haven't set a live task list channel for this server yet. "
+                          "Use the `/livelist setchannel` command to set one up!"
+                )
     else:
         embed = (
             hikari.Embed(
