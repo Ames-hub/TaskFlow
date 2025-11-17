@@ -9,7 +9,6 @@ plugin = lightbulb.Plugin(__name__)
 @lightbulb.command(name='help', description="View basic data about the bot's usage!")
 @lightbulb.implements(lightbulb.SlashCommand)
 async def help_cmd(ctx: lightbulb.SlashContext):
-    1/0
     embed = (
         hikari.Embed(
             title="Bot Usage",
