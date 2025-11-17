@@ -1,4 +1,4 @@
-from cogs.other.views.bug_manage_view import main_view as bug_manage_view
+from cogs.other.views.bugreports.bug_manage_view import main_view as bug_manage_view
 from library.botapp import miru_client
 from library.storage import dataMan
 import dotenv

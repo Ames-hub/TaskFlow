@@ -23,6 +23,7 @@ async def cmd(ctx: lightbulb.SlashContext):
             description="Your current authentication level is as described.",
         )
     )
+    
     if can_interact or is_admin:
         embed.add_field(
             name="Can interact with tasks",

@@ -53,7 +53,7 @@ from library.botapp import botapp
 
 # Loads the commands
 botapp.load_extensions_from("cogs/guild_permissions/")
-# botapp.load_extensions_from("cogs/task_incharge/")
+botapp.load_extensions_from("cogs/task_incharge/")
 botapp.load_extensions_from("cogs/task_templates/")
 botapp.load_extensions_from("cogs/guild_tasks/")
 botapp.load_extensions_from("cogs/livechannel/")
@@ -90,11 +90,6 @@ botapp.d['INIT_TIME'] = int(datetime.datetime.now().timestamp())
 # Used by the bot to cache stuff.
 botapp.d['guild_owner_ids_cache'] = {}
 
-botapp.d['servercount_memory'] = {
-    'count': None,
-    'last_updated': None,
-}
-
 botapp.d['priority_map'] = {
     'alnum': {
         'Urgent': 5,
@@ -111,8 +106,6 @@ botapp.d['priority_map'] = {
         1: 'Low'
     }
 }
-
-botapp.d['member_counting'] = {}
 
 async def main():
     config = uvicorn.Config(

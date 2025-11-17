@@ -34,7 +34,7 @@ async def assign_cmd(ctx: lightbulb.SlashContext, task_id:int, user:hikari.User)
     task_incharge = user  # Rename for backend clarity
     del user
 
-    # Todo: make needing a permission to assign or unassign a task to someone toggleable.
+    # TODO: make needing a permission to assign or unassign a task to someone toggleable.
     allowed = await perms.is_privileged(
         guild_id=ctx.guild_id,
         user_id=ctx.author.id,

@@ -1,4 +1,4 @@
-from cogs.other.views.bugreports.bug_report_view import main_view
+from cogs.other.views.suggestions.suggestion_view import main_view
 from library.botapp import miru_client
 import lightbulb
 import hikari
@@ -7,7 +7,7 @@ plugin = lightbulb.Plugin(__name__)
 
 @plugin.command
 @lightbulb.app_command_permissions(dm_enabled=True)
-@lightbulb.command(name='bug_report', description='Is something wrong with the bot? Please report it here!')
+@lightbulb.command(name='feature_request', description='Make a feature request!')
 @lightbulb.implements(lightbulb.SlashCommand)
 async def bug_report(ctx: lightbulb.SlashContext):
     view = main_view(int(ctx.author.id))

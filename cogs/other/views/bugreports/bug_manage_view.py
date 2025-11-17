@@ -1,4 +1,4 @@
-from cogs.other.views.report_response_select_view import main_view as report_result_viewmenu
+from cogs.other.views.bugreports.report_response_select_view import main_view as report_result_viewmenu
 from library.botapp import miru_client
 from library.storage import dataMan
 import dotenv

@@ -232,7 +232,7 @@ def classify_severity(description: str) -> str:
     desc = re.sub(r"[^\w\s]", "", desc)
 
     severity_keywords = {
-        "critical": ["crash", "died", "not responding", "no response", "freeze", "data loss", "cant use", "completely broken"],
+        "critical": ["crash", "died", "not responding", "no response", "freeze", "data loss", "cant use", "completely broken", "security"],
         "high": ["doesnt work", "stops working", "fails", "error", "exception", "not functioning", "not working", "timeout"],
         "medium": ["slow", "lag", "delay", "inconsistent", "wrong output", "incorrect", "unexpected"],
         "low": ["typo", "formatting", "minor", "cosmetic", "alignment", "small bug"],
