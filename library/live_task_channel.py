@@ -48,7 +48,7 @@ class livetasks:
             )
         )
 
-        embed = livetasks.gen_livetasklist_embed(completed_tasks, incomplete_tasks)
+        embed = livetasks.gen_livetasklist_embed(completed_tasks, incomplete_tasks, guild_id)
 
         if embed is False:
             return False
@@ -89,7 +89,7 @@ class livetasks:
         # This is to prevent the list from getting too long.
         completed_tasks = livetasks.filter_out_old_completed_tasks(unfiltered_completed_tasks)
 
-        embed = livetasks.gen_livetasklist_embed(completed_tasks, incomplete_tasks)
+        embed = livetasks.gen_livetasklist_embed(completed_tasks, incomplete_tasks, guild_id)
 
         if embed is False:
             try:
@@ -123,7 +123,7 @@ class livetasks:
         return True
 
     @staticmethod
-    def gen_livetasklist_embed(completed_tasks, incomplete_tasks):
+    def gen_livetasklist_embed(completed_tasks, incomplete_tasks, guild_id):
         if len(completed_tasks) + len(incomplete_tasks) == 0:
             return [
                 hikari.Embed(  # <- Return a list even when empty
@@ -133,13 +133,7 @@ class livetasks:
                 )
             ]
 
-        try:
-            guild_id = completed_tasks[0][7]
-        except IndexError:
-            try:
-                guild_id = incomplete_tasks[0][7]
-            except IndexError:
-                return False
+        guild_id = int(guild_id)
 
         if plugin.bot.d["livelist_styles"].get(str(guild_id)) is None:
             style = dataMan().get_livechannel_style(guild_id)
@@ -170,10 +164,6 @@ class livetasks:
 
         embeds = [create_new_embed()]
         current_embed = embeds[-1]
-
-        # Sort tasks
-        incomplete_tasks.sort(key=lambda task: task[8] is not None and task[8] != "")
-        completed_tasks.sort(key=lambda task: task[8] is not None and task[8] != "")
 
         batch_id = random.randint(1000000000, 9999999999)
 
@@ -226,7 +216,8 @@ class livetasks:
         # Add incomplete tasks
         category_sorted_tasks = {}
         for task in incomplete_tasks:
-            category = task[8] or ""
+            task = incomplete_tasks[task]
+            category = task['category'] or ""
             if category not in category_sorted_tasks:
                 category_sorted_tasks[category] = []
             category_sorted_tasks[category].append(task)
@@ -267,16 +258,16 @@ class livetasks:
         return embeds
 
     @staticmethod
-    def add_task_field(task: tuple, embed, style, batch_id: int, dry_run=False):
-        task_name = task[0]
-        task_desc = task[1]
-        completed = bool(task[2])
-        identifier = task[3]
-        added_by = task[5]
-        deadline = task[6]
-        guild_id = task[7]
-        category = task[8]
-        priority = plugin.bot.d['priority_map']['numeric'][task[9]]  # Convert to text
+    def add_task_field(task: dict, embed: hikari.Embed, style, batch_id: int, dry_run=False):
+        task_name = task['name']
+        task_desc = task['description']
+        completed = bool(task['completed'])
+        identifier = task['uid']
+        added_by = task['added_by']
+        deadline = task['deadline']
+        guild_id = task['guild_id']
+        category = task['category']
+        priority = plugin.bot.d['priority_map']['numeric'][task['priority']]  # Convert to text
 
         if style in ["classic"]:
             completed_text = f"Completed: {'❌' if not completed else '✅'}"
@@ -285,7 +276,7 @@ class livetasks:
         else:
             raise ValueError("Invalid style")
 
-        # Check cache status
+        # Check cache status so we aren't spamming the DB for the Show X thing
         cache_result = plugin.bot.d["show_x_cache"].get(int(guild_id))
         if cache_result:
             cached_status = cache_result["status"]
