@@ -15,9 +15,10 @@ class livetasks:
     def filter_out_old_completed_tasks(task_list):
         completed_tasks = []
         for task in task_list:
-            completed = task[2]
+            task = task_list[task]
+            completed = task['completed']
             if completed:
-                completed_at = task[4]  # eg, 2024-07-15 18:52:16. Type str
+                completed_at = task['completed_on']  # eg, 2024-07-15 18:52:16. Type str
                 # Converts to datetime obj
                 completed_at = datetime.strptime(completed_at, "%Y-%m-%d %H:%M:%S")
                 # If the task was completed more than some days ago, it will be filtered out

@@ -1754,7 +1754,8 @@ class dataMan:
             task_desc = str(task_desc).strip()
 
         if not isinstance(task_deadline, datetime):
-            raise ValueError(f"Task deadline must be a datetime object type if provided. Got {type(task_deadline)} ({task_deadline})")
+            if task_deadline:  # Check its not None or False or smth
+                raise ValueError(f"Task deadline must be a datetime object type if provided. Got {type(task_deadline)} ({task_deadline})")
 
         return self.storage.create_task_template(
             template_name=template_name,

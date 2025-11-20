@@ -9,15 +9,11 @@ plugin = lightbulb.Plugin(__name__)
 @lightbulb.implements(lightbulb.SlashCommand)
 async def roadmap(ctx: lightbulb.SlashContext):
     msg = (
-        "The current roadmap as of 16/07/2024 is as follows:\n"
-        "1. Add 'assigning task' functionality.\n"
-        "2. Add 'deadline' Alerts and ability to set deadlines/timers on tasks. (DONE)\n"
-        "3. Fix the little [] that appears in the live task list after a task has been completed/uncompleted. "
-        "I could fix it now, but its 4 am as I write this. So no. Until further notice, its a feature. Not a bug.\n"
-        "4. Add ability to edit tasks. (DONE)\n"
-        "5. Add ability to delete tasks instead of just moving them to an 'archive' of sorts. (DONE)\n"
-        "6. Implementing a personal tasks list. Not just for the server.\n"
-        "\nIf you have any features you'd like to see, run /github, go to the link and open a pull request! ^^"
+        "The current roadmap as of 18/Nov/2025 is as follows:\n"
+        "1. Continue to work on bug fixes"
+        "2. Add team coordination features for task in-charges"
+        "3. Find QoL Improvements that can be made"
+        "\nIf you have any features you'd like to see, please use /feature_request"
     )
     await ctx.respond(msg)
 
