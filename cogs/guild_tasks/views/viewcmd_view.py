@@ -1,3 +1,4 @@
+from library.live_task_channel import livetasks
 from library.storage import dataMan
 from library.perms import perms
 import hikari
@@ -7,14 +8,6 @@ import io
 class view_cmd_view:
     def __init__(self, task_id, guild_id):
         self.task_id = task_id
-        if str(task_id).isnumeric() is False: # Not an ID, but a name.
-            # Find the name
-            tasks = dataMan().get_todo_items(filter_for="*", identifier=task_id, guild_id=guild_id)
-            if len(tasks) > 1:
-                raise IndexError("Too many tasks to search by name!")
-            else:
-                self.task_id = tasks[0][3]
-
         self.guild_id = guild_id
         self.task_list = self.update_task_list()
 
@@ -51,12 +44,13 @@ class view_cmd_view:
         attachment = None
         task_counter = 0
         for task in task_list:  # There should be only 1 task.
-            name = task[0]
-            description = task[1]
-            completed = task[2]
-            task_id = task[3]
-            added_by = task[5]
-            category = task[8]
+            task = task_list[task]
+            name = task['name']
+            description = task['description']
+            completed = task['completed']
+            task_id = task.get('uid', None) if task.get('uid', None) is not None else task.get('id', None)  # TODO: Make this more elegant.
+            added_by = task['added_by']
+            category = task['category']
 
             completed_text = "Completed: " + ('❌' if not completed else '✅')
 
@@ -93,8 +87,6 @@ class view_cmd_view:
             in_charge = dataMan().get_task_incharge(task_id)
             if in_charge:
                 desc_value += f"\nAssigned User: <@{in_charge}>"
-
-            
 
             task_counter += 1
             embed.add_field(
@@ -153,6 +145,8 @@ class view_cmd_view:
                         attachment=embed['attached']
                     )
 
+                await livetasks.update_for_guild(ctx.guild_id)
+
             @miru.button(label="Toggle Done", style=hikari.ButtonStyle.SUCCESS, disabled=buttons_disabled)
             async def tgl_done_button(self, ctx: miru.ViewContext, button: miru.Button) -> None:
                 completed = dm.get_is_task_completed(task_id_or_name=task_id)
@@ -171,6 +165,8 @@ class view_cmd_view:
                         embed=embed['embed'],
                         attachment=embed['attached']
                     )
+
+                await livetasks.update_for_guild(ctx.guild_id)
 
             # Define a new Button that when pressed will stop the view
             # and invalidate all the buttons in this view

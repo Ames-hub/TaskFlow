@@ -107,6 +107,9 @@ botapp.d['priority_map'] = {
     }
 }
 
+# A dict used by live_task_channel.py to make sure that a guild doesn't get its list updated more than once per 5 seconds.
+botapp.d['livelist_cooldown'] = {}
+
 async def main():
     config = uvicorn.Config(
         "webpanel.webpanel:fastapp",

@@ -9,10 +9,12 @@ plugin = lightbulb.Plugin(__name__)
 @group.child
 @lightbulb.app_command_permissions(dm_enabled=False)
 @lightbulb.option(
-    name='name_or_id',
-    description='What is the name or ID for the task you want to view?',
+    name='task_id',
+    description='What is ID for the task you want to view?',
     required=True,
-    default=None
+    default=None,
+    type=hikari.OptionType.INTEGER,
+    min_value=1
 )
 @lightbulb.add_checks(
     lightbulb.guild_only
@@ -20,7 +22,7 @@ plugin = lightbulb.Plugin(__name__)
 @lightbulb.command(name='view', description="View a tasks details.")
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def view_cmd(ctx: lightbulb.SlashContext):
-    task_identifier = ctx.options['name_or_id']
+    task_identifier = ctx.options['task_id']
 
     try:
         view = view_cmd_view(task_id=task_identifier, guild_id=int(ctx.guild_id))
