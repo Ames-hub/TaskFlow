@@ -1,6 +1,7 @@
 from library.live_task_channel import livetasks
 from cogs.livechannel.group import group
 from library.storage import dataMan
+from library import tferror
 import lightbulb
 import hikari
 
@@ -19,12 +20,22 @@ async def command(ctx: lightbulb.SlashContext):
         await livetasks.update_for_guild(ctx.guild_id, bypass_cooldown=True)
         success = True
     except hikari.errors.ForbiddenError:
-        await ctx.edit_last_response(
-            "I do not have permission to send messages in the task channel, so I rolled back changes."
+        await ctx.respond(
+            hikari.Embed(
+                title="Bad permissions!",
+                description="I do not have permission to send messages in the task channel!",
+                color=0xFF0000
+            )
         )
-        # Set it back to None
-        dataMan().clear_taskchannel(int(ctx.guild_id))
         return
+    except tferror.livelist.no_channel:
+        await ctx.respond(
+            hikari.Embed(
+                title="No channel set!",
+                description="To do this, we need a set live list channel, but that isn't set for this server! Please set it with `/livelist setchannel`",
+                color=0xFF0000
+            )
+        )
 
     if success:
         await ctx.respond(

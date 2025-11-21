@@ -208,7 +208,8 @@ async def on_error(event: lightbulb.CommandErrorEvent) -> None:
             )
             .add_field(
                 name="Auto-Reporting",
-                value="A Bug report has been automatically filed and sent to the maintainer.",
+                value="A Bug report has been automatically filed and sent to the maintainer.\n\n"
+                "To learn about the latest bug patches and features, use `/news`!",
             )
         )
 
