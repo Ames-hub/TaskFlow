@@ -38,6 +38,7 @@ async def report_bug(event):
             directory = tb_line[tb_line.find("\"") + 1:tb_line.rfind("\"")]
             if "cogs" in directory:
                 is_command = True
+                err_directory = "File not Found"
                 try:
                     with open(directory, 'r') as f:
                         lines = f.readlines()
@@ -217,7 +218,7 @@ async def on_error(event: lightbulb.CommandErrorEvent) -> None:
             bug_id = await report_bug(event)
             save_traceback(bug_id, event.exception)
         except Exception as err:
-            logging.error(f"Failed to alert maintainer and report bug: {err}", exc_info=err)
+            logging.error(f"Failed to save traceback and report bug: {err}", exc_info=err)
 
         raise event.exception
     
