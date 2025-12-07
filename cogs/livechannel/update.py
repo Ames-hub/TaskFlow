@@ -12,7 +12,7 @@ plugin = lightbulb.Plugin(__name__)
 @lightbulb.add_checks(
     lightbulb.guild_only
 )
-@lightbulb.command(name='send', description="Send the live list to the channel.")
+@lightbulb.command(name='update', description="Send the live list to the channel.")
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def command(ctx: lightbulb.SlashContext):
     success = False

@@ -263,7 +263,7 @@ class livetasks:
             current_embed.add_field(name="Tasks could not compile", value=failed_text)
             logging.warning(
                 f"Tried to compile some tasks for guild {guild_id} but {failed_compile_count} tasks couldn't compile. Please debug.\n"
-                f"Problematic ID(s)/v: {failed_compile_ids}"
+                f"Problematic ID(s): {failed_compile_ids}"
             )
 
         # Clean up: remove any totally empty fields
