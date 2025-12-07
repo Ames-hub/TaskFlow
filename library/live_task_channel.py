@@ -121,11 +121,11 @@ class livetasks:
         try:
             for single_embed in embed:
                 await plugin.bot.rest.create_message(embed=single_embed, channel=task_channel)
-        except hikari.errors.NotFoundError:
+        except hikari.NotFoundError:
             logging.info(f"Task channel for guild {guild_id} not found. Disabling live task list.")
             dataMan().clear_taskchannel(guild_id)
             return False
-        except hikari.errors.ForbiddenError:
+        except hikari.ForbiddenError:
             return False
 
         return True
@@ -140,6 +140,29 @@ class livetasks:
                     color=0x00FF00,
                 )
             ]
+
+        # SORT completed tasks by priority
+        completed_tasks = sorted(
+            completed_tasks,
+            key=lambda t: plugin.bot.d['priority_map']['numeric'][t['priority']],
+            reverse=True
+        )
+
+        # GROUP incomplete tasks by category AND SORT
+        category_sorted_tasks = {}
+        for task_id in incomplete_tasks:
+            task = incomplete_tasks[task_id]
+            category = task['category'] or ""
+            if category not in category_sorted_tasks:
+                category_sorted_tasks[category] = []
+            category_sorted_tasks[category].append(task)
+
+        for category in category_sorted_tasks:
+            category_sorted_tasks[category] = sorted(
+                category_sorted_tasks[category],
+                key=lambda t: plugin.bot.d['priority_map']['numeric'][t['priority']],
+                reverse=True,
+            )
 
         guild_id = int(guild_id)
 
@@ -221,15 +244,7 @@ class livetasks:
                 failed_compile_count += 1
                 failed_compile_ids.append(task[3])
 
-        # Add incomplete tasks
-        category_sorted_tasks = {}
-        for task in incomplete_tasks:
-            task = incomplete_tasks[task]
-            category = task['category'] or ""
-            if category not in category_sorted_tasks:
-                category_sorted_tasks[category] = []
-            category_sorted_tasks[category].append(task)
-
+        # Add incomplete tasks (NOW using the sorted dict, instead of rebuilding)
         for category in sorted(category_sorted_tasks.keys(), key=lambda x: x != ""):
             for task in category_sorted_tasks[category]:
                 if safe_add_task(task) is False:
@@ -275,7 +290,19 @@ class livetasks:
         deadline = task['deadline']
         guild_id = task['guild_id']
         category = task['category']
-        priority = plugin.bot.d['priority_map']['numeric'][task['priority']]  # Convert to text
+        priority_text = plugin.bot.d['priority_map']['numeric'][task['priority']]  # Convert to text
+
+        # Same emoji map as above
+        priority_emoji_map = {
+            "Urgent": "\U0001f525",
+            "High": "\u2b06\ufe0f",
+            "Medium": "\U0001f538",
+            "Low": "\U0001f53d",
+            "None": "\u26aa",
+        }
+
+        # Assign emoji
+        priority_emoji = priority_emoji_map.get(priority_text, "\u26aa")
 
         if style in ["classic"]:
             completed_text = f"Completed: {'❌' if not completed else '✅'}"
@@ -355,30 +382,42 @@ class livetasks:
 
         if custom_live_text is None:
             if style == "classic":
-                segment += f"{task_name} - ID: {identifier} | {priority} Priority\n"
-                segment += f"{task_desc if task_desc is not None else "No description provided"}\n{completed_text} | Added by: <@{added_by}> | {len(contributors)} helping\n"
-                if assigned_user:
-                    segment += f"Assigned to <@{assigned_user}>\n"
-                if deadline_txt:
-                    segment += f"{deadline_txt}\n"
-                segment += "\n"
+                segment += (
+                    f"{task_name} - ID: {identifier}\n"
+                )
+                segment += (
+                    f"{task_desc if task_desc is not None else 'No description provided'}\n"
+                    f"{completed_text} | Added by: <@{added_by}> | {len(contributors)} helping\n"
+                    f"Priority: {priority_emoji} {priority_text}\n\n"
+                )
+
             elif style == "minimal":
-                segment += f"({identifier}) {' ' if show_x else ''}{completed_text} {task_name} | {priority} Priority\n"
-                if deadline_txt:
-                    segment += f"{deadline_txt}\n"
-                segment += "\n"
+                segment += (
+                    f"({identifier}) {priority_emoji} "
+                    f"{' ' if show_x else ''}{completed_text} {task_name}\n"
+                )
+
             elif style == "pinned":
-                segment += f"- ({identifier}) {priority} Priority. {task_name} {' ' if show_x else ''}{completed_text} {q_or_s}{task_desc}{q_or_s} {len(contributors)} people helping.\nAdded by <@{added_by}>\n"
-                if assigned_user:
-                    segment += f"Assigned to <@{assigned_user}>\n"
-                if deadline_txt:
-                    segment += f"{deadline_txt}\n"
+                segment += (
+                    f"- ({identifier}) {priority_emoji} {priority_text}. "
+                    f"{task_name} {' ' if show_x else ''}{completed_text} "
+                    f"{q_or_s}{task_desc}{q_or_s} {len(contributors)} people helping. "
+                    f"Added by <@{added_by}>\n"
+                )
+
             elif style == "pinned-minimal":
-                segment += f"- ({identifier}) {' ' if show_x else ''}{completed_text} {task_name}\n"
+                segment += (
+                    f"- ({identifier}) {priority_emoji} {priority_text} "
+                    f"{' ' if show_x else ''}{completed_text} {task_name}\n"
+                )
+
             elif style == "compact":
-                segment += f"({identifier}) {priority} Priority. {task_name} {completed_text} {' ' if show_x else ''}{q_or_s}{task_desc}{q_or_s} {len(contributors)} helping. <@{added_by}>\n"
-                if deadline_txt:
-                    segment += f"{deadline_txt}\n"
+                segment += (
+                    f"({identifier}) {priority_emoji} {priority_text}. "
+                    f"{task_name} {completed_text} {' ' if show_x else ''}"
+                    f"{q_or_s}{task_desc}{q_or_s} {len(contributors)} helping. <@{added_by}>\n"
+                )
+
             else:
                 raise ValueError("Invalid style")
         else:
