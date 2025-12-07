@@ -11,7 +11,7 @@ plugin = lightbulb.Plugin(__name__)
 @lightbulb.app_command_permissions(dm_enabled=False)
 @lightbulb.option(
     name='task_id',
-    description="What's the ID of the task you want to mark as done?",
+    description="What's the ID of the task you'd like to contribute to?",
     required=True,
     type=hikari.OptionType.INTEGER
 )
