@@ -36,13 +36,14 @@ async def command(ctx: lightbulb.SlashContext, task_id:int):
         user_id=int(ctx.author.id)
     )
 
-    if success:
+    if success is True:
         await ctx.respond(
             hikari.Embed(
                 title="Now contributing to task!",
                 description=f"You are now contributing to task {task_id}."
             )
         )
+        await livetasks.update_for_guild(int(ctx.guild_id))
     elif success == -1:
         await ctx.respond(
             hikari.Embed(
@@ -71,8 +72,6 @@ async def command(ctx: lightbulb.SlashContext, task_id:int):
                 description="Sorry, something went wrong while trying to do that!"
             )
         )
-
-    await livetasks.update_for_guild(int(ctx.guild_id))
 
 def load(bot: lightbulb.BotApp) -> None:
     bot.add_plugin(plugin)

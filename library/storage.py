@@ -2034,9 +2034,12 @@ class dataMan:
         assert type(task_id) is int, "Task ID must be an integer"
 
         # Ensure the user is not already contributing
-        if user_id in self.get_contributors(task_id):
+        all_contributors = self.get_contributors(task_id)
+        if user_id in all_contributors:
             return -1
-        if self.get_is_task_completed(task_id) is True:
+        
+        task_done = self.get_is_task_completed(task_id)
+        if task_done is True:
             if self.get_allow_late_contrib(guild_id) is False:
                 return -2
 
