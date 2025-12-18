@@ -165,7 +165,10 @@ async def create_cmd(ctx: lightbulb.SlashContext):
                 "You will be able to control who's helping, and have access to coordination tools."
             )
         )
-        await task_incharge.send(embed)
+        try:
+            await task_incharge.send(embed)
+        except hikari.ForbiddenError:
+            pass
 
     if task_id is not False:
         embed = (
