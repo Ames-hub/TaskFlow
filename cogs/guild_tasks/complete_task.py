@@ -1,7 +1,8 @@
 from library.live_task_channel import livetasks
-from library.perms import perms
 from cogs.guild_tasks.group import group
+from library import tferror as tferrors
 from library.storage import dataMan
+from library.perms import perms
 import lightbulb
 import hikari
 
@@ -45,22 +46,22 @@ async def command(ctx: lightbulb.SlashContext, task_id:int):
     )
 
     if success:
-        await ctx.respond(
-            hikari.Embed(
-                title="Task complete!",
-                description=f"Task {task_id} has been marked as done. Nice."
-            )
+        embed = hikari.Embed(
+            title="Task complete!",
+            description=f"Task {task_id} has been marked as done. Nice."
         )
     else:
-        await ctx.respond(
-            hikari.Embed(
-                title="Failed to complete task!",
-                description="Sorry, something went wrong!"
-            )
+        embed = hikari.Embed(
+            title="Failed to complete task!",
+            description="Sorry, something went wrong!"
         )
 
-    await livetasks.update_for_guild(int(ctx.guild_id))
+    try:
+        await livetasks.update_for_guild(int(ctx.guild_id))
+    except tferrors.livelist.no_channel:
+        pass  # No warning about no livelist
 
+    await ctx.respond(embed)
 
 def load(bot: lightbulb.BotApp) -> None:
     bot.add_plugin(plugin)
