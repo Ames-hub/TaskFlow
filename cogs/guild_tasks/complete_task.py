@@ -56,12 +56,13 @@ async def command(ctx: lightbulb.SlashContext, task_id:int):
             description="Sorry, something went wrong!"
         )
 
+    await ctx.respond(embed)
+
     try:
         await livetasks.update_for_guild(int(ctx.guild_id))
     except tferrors.livelist.no_channel:
         pass  # No warning about no livelist
 
-    await ctx.respond(embed)
 
 def load(bot: lightbulb.BotApp) -> None:
     bot.add_plugin(plugin)

@@ -462,9 +462,12 @@ class sqlite_storage:
         template_data = dataMan().get_task_template(template_id, guild_id)
         if template_data is False:
             return False
-        if template_data is None:
+        if template_data is None or not template_data:
             return None
-        unique_template_id = template_data['id']
+        try:
+            unique_template_id = template_data['id']
+        except KeyError:
+            return None  # Likely doesn't exist if this happens.
         task_name = template_data['task_name']
         task_desc = template_data['task_desc']
         task_cat = template_data['task_category']
