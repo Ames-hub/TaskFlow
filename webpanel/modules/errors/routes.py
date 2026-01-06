@@ -17,6 +17,7 @@ async def update_user_on_bug(bug_id:int, message:str=None):
         raise ValueError("Bug report not found.")
 
     dmc = await botapp.rest.create_dm_channel(report["reporter_id"])
+    maintainer_dmc = await botapp.rest.create_dm_channel(botapp.d['PRIMARY_MAINTAINER_ID'])
 
     embed = (
         hikari.Embed(
@@ -44,6 +45,8 @@ async def update_user_on_bug(bug_id:int, message:str=None):
         )
 
     await dmc.send(embed)
+    # send me a copy too so I know what it they received for certain (call me a paranoid maintainer)
+    await maintainer_dmc.send(embed)
 
 router = APIRouter()
 templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "templates"))
