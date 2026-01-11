@@ -10,6 +10,7 @@ class views:
     def __init__(self, guild_id):
         self.guild_id = guild_id
         self.task_data = self.get_task_data()
+        self.too_many_options = len(self.task_data) > 25
 
     def get_task_data(self):
         return dataMan().get_todo_items(only_keys=['id', 'name', 'description', 'completed'], guild_id=int(self.guild_id), filter_for='*')
@@ -32,7 +33,7 @@ class views:
         if len(task_list) > 1024:
             task_list = task_list[:985] + "... (This list is too long to display)"
 
-        return (
+        embed = (
             hikari.Embed(
                 description="The server's task list"
             )
@@ -40,6 +41,16 @@ class views:
                 name="Global tasks",
                 value=task_list
             )
+        )
+
+        if self.too_many_options:
+            embed.add_field(
+                name="Trunciated",
+                value="There are more than 25 tasks in this server, due to discord's limits, we can only show the most recent 25 tasks in the select menu.",
+            )
+
+        return (
+            embed
         )
 
     # noinspection PyMethodParameters
@@ -58,9 +69,21 @@ class views:
                 )
             )
 
-        # noinspection PyUnusedLocal
+        if viewself.too_many_options:
+            old_tasks_data_options = tasks_data_options
+
+            # Organises old tasks by ID number (lowest ID first)
+            old_tasks_data_options.sort(key=lambda option: int(option.value))
+
+            tasks_data_options = []
+            # Delete until we have 25 left. Lowest IDs are the oldest tasks, so we remove from the start
+            for option in old_tasks_data_options:
+                tasks_data_options.append(option)
+
+            # Remove all after the first 25
+            tasks_data_options = tasks_data_options[-25:]
+
         class Menu_Init(miru.View):
-            # noinspection PyMethodParameters
             @miru.text_select(
                 placeholder="Toggle",
                 options=tasks_data_options,
@@ -78,9 +101,10 @@ class views:
                     dm.mark_todo_not_finished(name_or_id=task_id, guild_id=viewself.guild_id)
 
                 await livetasks.update_for_guild(int(ctx.guild_id))
-                await ctx.edit_response(viewself.gen_init_embed())
 
-            # noinspection PyUnusedLocal
+                embed = viewself.gen_init_embed()
+                await ctx.edit_response(embed)
+
             @miru.button(label="Exit", style=hikari.ButtonStyle.DANGER)
             async def stop_button(self, ctx: miru.ViewContext, button: miru.Button) -> None:
                 await ctx.edit_response(
