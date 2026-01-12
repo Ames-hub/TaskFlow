@@ -207,6 +207,7 @@ async def create_cmd(ctx: lightbulb.SlashContext):
             )
         )
 
+    await livetasks.update_for_guild(ctx.guild_id)
     await ctx.respond(embed)
 
 def load(bot: lightbulb.BotApp) -> None:

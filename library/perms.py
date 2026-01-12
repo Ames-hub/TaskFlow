@@ -39,7 +39,12 @@ class perms:
         owner_id = perms.get_guild_owner_id(guild_id)
 
         if owner_id == member.id:
-            return hikari.Permissions.all_permissions()
+            return [
+                # All the major permissions
+                hikari.Permissions.ADMINISTRATOR,
+                hikari.Permissions.MANAGE_GUILD,
+                hikari.Permissions.MANAGE_ROLES,
+                ]
 
         perms_list = []
         roles = await member.fetch_roles()
