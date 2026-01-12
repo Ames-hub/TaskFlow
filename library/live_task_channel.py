@@ -76,11 +76,12 @@ class livetasks:
     @staticmethod
     async def update_for_guild(guild_id, bypass_cooldown=False):
         if not bypass_cooldown:
-            last_cooldown = plugin.bot.d['livelist_cooldown'].get(str(guild_id), datetime.now())
-            if datetime.now() - timedelta(seconds=5) > last_cooldown:
-                return True
-            else:
-                plugin.bot.d['livelist_cooldown'][str(guild_id)] = datetime.now()
+            last = plugin.bot.d['livelist_cooldown'].get(str(guild_id), datetime.min)
+
+            if datetime.now() - last < timedelta(seconds=5):
+                return -1  # still on cooldown
+
+            plugin.bot.d['livelist_cooldown'][str(guild_id)] = datetime.now()
 
         incomplete_tasks = dataMan().get_todo_items(
             guild_id=int(guild_id), filter_for="incompleted"

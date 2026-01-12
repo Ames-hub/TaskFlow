@@ -171,12 +171,21 @@ async def create_cmd(ctx: lightbulb.SlashContext):
             pass
 
     if task_id is not False:
+        embed_desc = (
+            f"**Name:** {task_name} | ID: {task_id}\n"
+            f"**Description:** {task_desc}\n"
+        )
+
+        if deadline_obj:
+            embed_desc += f"**Deadline:** {deadline_obj}\n"
+
+        if category:
+            embed_desc += f"**Category:** {category}"
+
         embed = (
             hikari.Embed(
                 title=f"New task added! ({task_id})",
-                description=f"**Name:** {task_name} | ID: {task_id}\n**Description:** {task_desc}\n"
-                            f"**Deadline:** {deadline_obj}\n" if deadline_obj else ""
-                            f"**Category:** {category}" if category else ""
+                description=embed_desc
             )
         )
         if category_exists is False and category is not None:
@@ -192,6 +201,8 @@ async def create_cmd(ctx: lightbulb.SlashContext):
                     value="The live task list channel could not be updated. Please check that I have permission to "
                           "view and send messages in the channel, and that the channel still exists."
                 )
+            if livelist_updated == -1:
+                embed.title = f"New task added! ({task_id}) [❄️]"  # Snowflake emoji to indicate cooldown
         except tferror.livelist.no_channel:
             if random.choice([True, False]):
                 embed.add_field(
@@ -207,7 +218,6 @@ async def create_cmd(ctx: lightbulb.SlashContext):
             )
         )
 
-    await livetasks.update_for_guild(ctx.guild_id)
     await ctx.respond(embed)
 
 def load(bot: lightbulb.BotApp) -> None:
