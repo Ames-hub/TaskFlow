@@ -1,7 +1,8 @@
 from library.live_task_channel import livetasks
-from library.perms import perms
 from cogs.guild_tasks.group import group
 from library.storage import dataMan
+from library.perms import perms
+from library import tferror
 import lightbulb
 import hikari
 
@@ -43,7 +44,10 @@ async def command(ctx: lightbulb.SlashContext, task_id:int):
                 description=f"You are now contributing to task {task_id}."
             )
         )
-        await livetasks.update_for_guild(int(ctx.guild_id))
+        try:
+            await livetasks.update_for_guild(int(ctx.guild_id))
+        except tferror.livelist.no_channel:
+            pass
     elif success == -1:
         await ctx.respond(
             hikari.Embed(

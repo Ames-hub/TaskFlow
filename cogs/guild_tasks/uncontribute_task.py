@@ -2,6 +2,7 @@ from library.live_task_channel import livetasks
 from cogs.guild_tasks.group import group
 from library.storage import dataMan
 from library.perms import perms
+from library import tferror
 import lightbulb
 import hikari
 
@@ -65,7 +66,10 @@ async def command(ctx: lightbulb.SlashContext, task_id:int):
             )
         )
 
-    await livetasks.update_for_guild(int(ctx.guild_id))
+    try:
+        await livetasks.update_for_guild(int(ctx.guild_id))
+    except tferror.livelist.no_channel:
+        pass
 
 def load(bot: lightbulb.BotApp) -> None:
     bot.add_plugin(plugin)

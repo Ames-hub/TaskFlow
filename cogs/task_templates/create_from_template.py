@@ -2,6 +2,7 @@ from library.live_task_channel import livetasks
 from cogs.task_templates.group import group
 from library.storage import dataMan
 from library.perms import perms
+from library import tferror
 import lightbulb
 import hikari
 
@@ -43,7 +44,10 @@ async def create_cmd(ctx: lightbulb.SlashContext, template_name_or_id):
             ),
             flags=hikari.MessageFlag.EPHEMERAL
         )
-        await livetasks.update_for_guild(ctx.guild_id)
+        try:
+            await livetasks.update_for_guild(ctx.guild_id)
+        except tferror.livelist.no_channel:
+            pass
     elif success == -1:
         await ctx.respond(
             embed=hikari.Embed(

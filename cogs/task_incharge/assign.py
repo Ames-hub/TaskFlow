@@ -3,6 +3,7 @@ from cogs.task_incharge.group import group
 from library.storage import dataMan
 from library.perms import perms
 from library import tferror
+from library import shared
 import lightbulb
 import hikari
 
@@ -95,22 +96,12 @@ async def assign_cmd(ctx: lightbulb.SlashContext, task_id:int, user:hikari.User)
         except tferror.livelist.no_channel:
             pass  # We don't care if we can't update the live list here.
 
-        guild = await ctx.bot.rest.fetch_guild(ctx.guild_id)
+        guild = ctx.get_guild()
+        if not guild:
+            guild = await ctx.bot.rest.fetch_guild(ctx.guild_id)
         task_name = tasks_list[task_id]['name']
-        embed = (
-            hikari.Embed(
-                title="Role assignment!",
-                description=f"You have been assigned as the in-charge for the task '{task_name}' (Task ID {task_id}) by {ctx.author.mention}."
-                f"\n\nThis happened in the server '{guild.name}'.",
-                color=0x00FF00
-            )
-            .add_field(
-                name="What's this mean?",
-                value="Being in-charge means you are primarily responsible for this task. "
-                "You will be able to control who's helping, and have access to coordination tools."
-            )
-        )
-        await task_incharge.send(embed)
+        incharge_assigned_embed = shared.gen_incharge_assigned_embed(guild.name, task_name, task_id, int(ctx.author.id))
+        await task_incharge.send(incharge_assigned_embed)
     elif success == -1:
         await ctx.respond(
             hikari.Embed(

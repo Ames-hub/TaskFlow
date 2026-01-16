@@ -29,6 +29,52 @@ class livetasks:
         return completed_tasks
 
     @staticmethod
+    async def task_announcement(guild_id, message, ping_list:list[int], task_id, annoucer_id:int=None):
+        """
+        A Function to send a message to the live task channel of a guild.
+        """
+        guild_id = int(guild_id)
+        task_id = int(task_id)
+        annoucer_id = int(annoucer_id)
+
+        task_channel = dataMan().get_taskchannel(int(guild_id))
+
+        if task_channel is None:
+            raise tferror.livelist.no_channel()
+
+        if annoucer_id is not None:
+            announcer_mention = f"<@{annoucer_id}>"
+            message = f"{message}\n(Announced by {announcer_mention})"
+
+        embed = (
+            hikari.Embed(
+                title="Announcement",
+                description=f"Are you involved with task ID {task_id}? Then this message is for you!",
+                color=0x00FF00,
+            )
+            .add_field(
+                value=message
+            )
+        )
+
+        mention_text = None
+        if ping_list:
+            mention_text = " ".join([f"<@{user_id}>" for user_id in ping_list])
+            embed.add_field(name="Mentions", value=mention_text, inline=False)
+
+        try:
+            await plugin.bot.rest.create_message(
+                embed=embed,
+                channel=task_channel,
+            )
+        except hikari.NotFoundError:
+            logging.info(f"Task channel for guild {guild_id} not found. Disabling live task list.")
+            dataMan().clear_taskchannel(guild_id)
+            return False
+        except hikari.ForbiddenError:
+            return False
+
+    @staticmethod
     async def update_to_target(guild_id, target_user_id=None, target_channel_id: int = None):
         """
         A Function to update the live task list to a target channel or user.

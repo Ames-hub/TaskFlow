@@ -4,6 +4,7 @@ from cogs.guild_tasks.group import group
 from library.storage import dataMan
 from library.perms import perms
 from library import tferror
+from library import shared
 import lightbulb
 import hikari
 import random
@@ -151,20 +152,11 @@ async def create_cmd(ctx: lightbulb.SlashContext):
             guild_id=ctx.guild_id
         )
 
-        guild = await ctx.bot.rest.fetch_guild(ctx.guild_id)
-        embed = (
-            hikari.Embed(
-                title="Role assignment!",
-                description=f"You have been assigned as the in-charge for the new task '{task_name}' (Task ID {task_id}) by {ctx.author.mention}."
-                f"\n\nThis happened in the server '{guild.name}'.",
-                color=0x00FF00
-            )
-            .add_field(
-                name="What's this mean?",
-                value="Being in-charge means you are primarily responsible for this task. "
-                "You will be able to control who's helping, and have access to coordination tools."
-            )
-        )
+        guild = ctx.get_guild()
+        if guild is None:
+            guild = await ctx.bot.rest.fetch_guild(ctx.guild_id)
+
+        embed = shared.gen_incharge_assigned_embed(guild.name, task_name, task_id, ctx.author.id)
         try:
             await task_incharge.send(embed)
         except hikari.ForbiddenError:

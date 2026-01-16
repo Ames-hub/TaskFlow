@@ -2,6 +2,7 @@ from library.live_task_channel import livetasks
 from cogs.guild_tasks.group import group
 from library.storage import dataMan
 from library.perms import perms
+from library import tferror
 import lightbulb
 import hikari
 
@@ -56,7 +57,10 @@ async def delete_task_cmd(ctx: lightbulb.SlashContext, task_id:int):
                 description="Task deleted",
             )
         )
-        await livetasks.update_for_guild(int(ctx.guild_id))
+        try:
+            await livetasks.update_for_guild(int(ctx.guild_id))
+        except tferror.livelist.no_channel:
+            pass
     else:
         await ctx.respond(
             hikari.Embed(

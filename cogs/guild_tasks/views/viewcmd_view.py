@@ -1,6 +1,7 @@
 from library.live_task_channel import livetasks
 from library.storage import dataMan
 from library.perms import perms
+from library import tferror
 import hikari
 import miru
 import io
@@ -145,7 +146,10 @@ class view_cmd_view:
                         attachment=embed['attached']
                     )
 
-                await livetasks.update_for_guild(ctx.guild_id)
+                try:
+                    await livetasks.update_for_guild(ctx.guild_id)
+                except tferror.livelist.no_channel:
+                    pass
 
             @miru.button(label="Toggle Done", style=hikari.ButtonStyle.SUCCESS, disabled=buttons_disabled)
             async def tgl_done_button(self, ctx: miru.ViewContext, button: miru.Button) -> None:
@@ -166,7 +170,10 @@ class view_cmd_view:
                         attachment=embed['attached']
                     )
 
-                await livetasks.update_for_guild(ctx.guild_id)
+                try:
+                    await livetasks.update_for_guild(ctx.guild_id)
+                except tferror.livelist.no_channel:
+                    pass
 
             # Define a new Button that when pressed will stop the view
             # and invalidate all the buttons in this view

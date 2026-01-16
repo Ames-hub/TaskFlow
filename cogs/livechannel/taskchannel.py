@@ -2,6 +2,7 @@ from library.live_task_channel import livetasks
 from cogs.livechannel.group import group
 from library.storage import dataMan
 from library.perms import perms
+from library import tferror
 import lightbulb
 import hikari
 
@@ -44,13 +45,24 @@ async def command(ctx: lightbulb.SlashContext):
 
     try:
         await livetasks.update_for_guild(ctx.guild_id)
-    except hikari.errors.ForbiddenError:
+    except hikari.ForbiddenError:
         # Set it back to None
         dataMan().clear_taskchannel(int(ctx.guild_id))
 
         # Alert user
         await ctx.author.send(
             "I do not have permission to send messages in the task channel, so I rolled back changes."
+        )
+    except tferror.livelist.no_channel:  # Shouldn't be possible, but its worth covering anyway.
+        await ctx.respond(
+            hikari.Embed(
+                title="???",
+                description="Something went rather wrong when I tried to do that. Maybe try running the command again?"
+            )
+            .add_field(
+                name="Continued Problems",
+                value="If you still find problems, please contact support or file a bug report."
+            )
         )
 
 def load(bot: lightbulb.BotApp) -> None:
