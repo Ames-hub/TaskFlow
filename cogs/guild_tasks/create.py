@@ -186,7 +186,10 @@ async def create_cmd(ctx: lightbulb.SlashContext):
                 value=f"The category '{category}' has been added to your list of categories."
             )
         try:
-            livelist_updated = await livetasks.update_for_guild(ctx.guild_id)
+            try:
+                livelist_updated = await livetasks.update_for_guild(ctx.guild_id)
+            except tferror.livelist.no_channel:
+                livelist_updated = True  # No Channel. Don't pester them about the feature.
             if not livelist_updated:
                 embed.add_field(
                     name="Live task list update failed!",

@@ -36,7 +36,7 @@ class perms:
         member:hikari.Member = await plugin.bot.rest.fetch_member(guild=guild_id, user=user_id)
 
         # If the user is the owner of the guild, return all permissions.
-        owner_id = perms.get_guild_owner_id(guild_id)
+        owner_id = await perms.get_guild_owner_id(guild_id)
 
         if owner_id == member.id:
             return [

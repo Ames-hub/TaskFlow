@@ -2,6 +2,7 @@ from library.live_task_channel import livetasks
 from library.botapp import miru_client, botapp
 from library.parsing import parse_deadline
 from library.storage import dataMan
+from library import tferror
 import datetime
 import hikari
 import miru
@@ -100,7 +101,10 @@ class views:
                 else:
                     dm.mark_todo_not_finished(name_or_id=task_id, guild_id=viewself.guild_id)
 
-                await livetasks.update_for_guild(int(ctx.guild_id))
+                try:
+                    await livetasks.update_for_guild(int(ctx.guild_id))
+                except tferror.livelist.no_channel:
+                    pass
 
                 embed = viewself.gen_init_embed()
                 await ctx.edit_response(embed)
