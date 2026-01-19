@@ -435,7 +435,7 @@ class livetasks:
                 segment += (
                     f"{task_desc if task_desc is not None else 'No description provided'}\n"
                     f"{completed_text} | Added by: <@{added_by}> | {len(contributors)} helping\n"
-                    f"Priority: {priority_emoji} {priority_text}\n\n"
+                    f"Priority: {priority_emoji} {priority_text} - <@{assigned_user}> is in-charge.\n\n"
                 )
 
             elif style == "minimal":

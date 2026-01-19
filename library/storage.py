@@ -2168,7 +2168,10 @@ class dataMan:
                     dictionary[task_id] = {}
 
                 for dict_Key in only_keys:
-                    dictionary[task_id][dict_Key] = task[keys_crossref[dict_Key]]
+                    if dict_Key == "completed":
+                        dictionary[task_id][dict_Key] = bool(task[keys_crossref[dict_Key]])
+                    else:
+                        dictionary[task_id][dict_Key] = task[keys_crossref[dict_Key]]
 
             return dictionary
         else:
