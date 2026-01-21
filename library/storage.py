@@ -831,7 +831,6 @@ class sqlite_storage:
     @staticmethod
     def save_livelist_format(guild_id, live_format):
         conn = sqlite3.connect(guild_filepath)
-        print("A:", live_format)
         try:
             cur = conn.cursor()
             query = """
