@@ -79,6 +79,7 @@ class view:
 
                     success = dataMan().save_livelist_format(ctx.guild_id, live_format)
                     if success:
+                        dataMan().set_livechannel_style("custom", int(ctx.guild_id))
                         await ctx.edit_response(
                             hikari.Embed(
                                 description="Your live list format is set!"

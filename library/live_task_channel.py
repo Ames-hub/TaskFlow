@@ -355,6 +355,8 @@ class livetasks:
             completed_text = f"Completed: {'❌' if not completed else '✅'}"
         elif style in ["pinned", "compact", "minimal", "pinned-minimal"]:
             completed_text = f"{'❌' if not completed else '✅'}"
+        elif style == "custom":
+            pass
         else:
             raise ValueError("Invalid style")
 
@@ -389,7 +391,6 @@ class livetasks:
 
         contributors = dataMan().get_contributors(task_id=identifier)
         assigned_user = dataMan().get_task_incharge(task_id=identifier)
-        custom_live_text = dataMan().get_livelist_format(guild_id)
 
         deadline_txt = ""
         if not completed and deadline is not None:
@@ -427,7 +428,9 @@ class livetasks:
                     else f"-- **__{category}__** --\n\n"
                 )
 
-        if custom_live_text is None:
+        
+
+        if style != "custom":
             if style == "classic":
                 segment += (
                     f"{task_name} - ID: {identifier}\n"
@@ -464,13 +467,16 @@ class livetasks:
                     f"{task_name} {completed_text} {' ' if show_x else ''}"
                     f"{q_or_s}{task_desc}{q_or_s} {len(contributors)} helping. <@{added_by}>\n"
                 )
-
             else:
                 raise ValueError("Invalid style")
         else:
+            custom_live_text = dataMan().get_livelist_format(guild_id)
+            # if not custom_live_text:
+            #     dataMan().set_livechannel_style("minimal", guild_id=guild_id)
+            #     return False
             segment += f"{parse_livelist_format(custom_live_text, task_id=identifier)}\n"
             if deadline_txt:
-                segment += f"{deadline_txt}\n"
+                segment += f"{deadline_txt}"
 
         # Now deal with embed and fields safely under 1024 characters
         # If adding this segment overflows, move to the next page

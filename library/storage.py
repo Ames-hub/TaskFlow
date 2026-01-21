@@ -831,6 +831,7 @@ class sqlite_storage:
     @staticmethod
     def save_livelist_format(guild_id, live_format):
         conn = sqlite3.connect(guild_filepath)
+        print("A:", live_format)
         try:
             cur = conn.cursor()
             query = """
@@ -856,7 +857,7 @@ class sqlite_storage:
             query = "SELECT text_format FROM guild_livelist_formats WHERE guild_id = ? LIMIT 1"
             cur.execute(query, (int(guild_id),))
             data = cur.fetchone()
-            return data[0] if data is not None else None
+            return data[0] if data else None
         except sqlite3.Error as err:
             conn.rollback()
             logging.error("An error occurred Getting the show task completion", err)
@@ -1969,13 +1970,8 @@ class dataMan:
         :return:
         """
         assert type(style) is str, "Style must be a string"
-        assert style.lower() in ['classic', 'minimal', 'pinned', 'compact', 'pinned-minimal'], "Style must be valid"
+        assert style.lower() in ['classic', 'minimal', 'pinned', 'compact', 'pinned-minimal', 'custom'], "Style must be valid"
         assert type(guild_id) is int, "Guild ID must be an integer"
-
-        # As the new style is set (which is not custom), We remove the custom style (if it's set)
-        # So the custom doesn't over-ride preset.
-        self.save_livelist_format(guild_id, None)
-
         return self.storage.set_livechannel_style(style, guild_id)
 
     def get_category_exists(self, category_name) -> bool:

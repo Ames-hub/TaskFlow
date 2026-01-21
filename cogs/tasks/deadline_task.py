@@ -29,7 +29,8 @@ async def task() -> None:
     # Group the tasks by guild
     group_tasks = {}
     for task in task_list:
-        guild_id = task[7]
+        task = task_list[task]
+        guild_id = task['guild_id']
         if group_tasks.get(guild_id) is None:
             group_tasks[guild_id] = []
         group_tasks[guild_id].append(task)
@@ -50,9 +51,9 @@ async def task() -> None:
             logging.debug(f"DEADLINE MANAGER: CHECKING {guild_id} tasks for deadlines.")
 
         for task in group_tasks[guild_id]:
-            name = task[0]
-            completed = bool(task[2])
-            uuid = task[3]
+            name = task['name']
+            completed = task['completed']
+            uuid = task['uid']
             if completed:
                 continue
 
@@ -64,7 +65,7 @@ async def task() -> None:
                 if datetime.now() - botapp.d['dl_notif_cooldown'][uuid] < timedelta(hours=8):
                     continue
 
-            deadline: str = task[6]
+            deadline: str = task['deadline']
 
             if deadline is None:
                 continue

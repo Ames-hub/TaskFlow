@@ -97,3 +97,5 @@ This will help the developers identify and fix the issue more quickly.
 If you find you're having a lot of trouble with the bot and the guide does not help enough,
 please don't hesitate to ask for help.<br>
 You can find me on discord @friendlyfox.exe
+
+This bot is my 3rd biggest shame as a programmer, and yet its my biggest success. Life, hey?
