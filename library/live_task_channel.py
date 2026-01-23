@@ -431,6 +431,7 @@ class livetasks:
         
 
         if style != "custom":
+            incharge_text = f"- <@{assigned_user}> is in-charge." if assigned_user is not None else ""
             if style == "classic":
                 segment += (
                     f"{task_name} - ID: {identifier}\n"
@@ -438,7 +439,7 @@ class livetasks:
                 segment += (
                     f"{task_desc if task_desc is not None else 'No description provided'}\n"
                     f"{completed_text} | Added by: <@{added_by}> | {len(contributors)} helping\n"
-                    f"Priority: {priority_emoji} {priority_text} - <@{assigned_user}> is in-charge.\n\n"
+                    f"Priority: {priority_emoji} {priority_text} {incharge_text}\n\n"
                 )
 
             elif style == "minimal":
@@ -452,7 +453,7 @@ class livetasks:
                     f"- ({identifier}) {priority_emoji} {priority_text}. "
                     f"{task_name} {' ' if show_x else ''}{completed_text} "
                     f"{q_or_s}{task_desc}{q_or_s} {len(contributors)} people helping. "
-                    f"Added by <@{added_by}>\n"
+                    f"Added by <@{added_by}> {incharge_text}\n"
                 )
 
             elif style == "pinned-minimal":
@@ -465,7 +466,7 @@ class livetasks:
                 segment += (
                     f"({identifier}) {priority_emoji} {priority_text}. "
                     f"{task_name} {completed_text} {' ' if show_x else ''}"
-                    f"{q_or_s}{task_desc}{q_or_s} {len(contributors)} helping. <@{added_by}>\n"
+                    f"{q_or_s}{task_desc}{q_or_s} {len(contributors)} helping. <@{added_by}> {incharge_text}\n"
                 )
             else:
                 raise ValueError("Invalid style")

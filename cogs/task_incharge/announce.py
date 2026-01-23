@@ -20,10 +20,10 @@ plugin = lightbulb.Plugin(__name__)
     name='task_id',
     description='Enter the task ID to announce for',
     type=hikari.OptionType.INTEGER,
-    required=False,
+    required=True,
     default=None
 )
-@lightbulb.command(name='announce', description="Assign a member to a task as an in-charge", pass_options=True)
+@lightbulb.command(name='announce', description="Announce to the members contributing to a task some information", pass_options=True)
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def cmd(ctx: lightbulb.SlashContext, message, task_id):
     task_incharge = dataMan().get_task_incharge(task_id)
