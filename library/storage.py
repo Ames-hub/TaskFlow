@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from library import tferror
 import traceback
 import lightbulb
@@ -89,6 +89,7 @@ def modernize_db():
             'guild_id': 'INT DEFAULT NULL',
             'category': 'TEXT DEFAULT NULL',
             'priority': 'INT DEFAULT 2',
+            'add_date': 'DATETIME DEFAULT NULL',
         },
         'task_template_usage': {  # Used to know which tasks use which template
             'usage_id': 'INTEGER PRIMARY KEY AUTOINCREMENT',
@@ -1109,6 +1110,7 @@ class sqlite_storage:
             priority:int=2
             ):
         conn = sqlite3.connect(user_file if user_id is not None else guild_filepath)
+        date_now = datetime.now(timezone.utc)
         try:
             assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"
             assert type(name) is str and type(description) is str, "Name and description must be strings"
@@ -1118,10 +1120,10 @@ class sqlite_storage:
             cur = conn.cursor()
 
             query = """
-            INSERT INTO todo_items (name, description, completed, added_by, deadline, guild_id, category, priority)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO todo_items (name, description, completed, added_by, deadline, guild_id, category, priority, add_date)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
-            cur.execute(query, (name, description, False, added_by, deadline, guild_id, category, priority))
+            cur.execute(query, (name, description, False, added_by, deadline, guild_id, category, priority, date_now))
             conn.commit()
 
             if return_task_id:
@@ -1237,7 +1239,7 @@ class sqlite_storage:
 
         arguments = (uid,) if uid != "*" else ()
         query = f"""
-        SELECT name, description, completed, id, completed_on, added_by, deadline, guild_id, category, priority
+        SELECT name, description, completed, id, completed_on, added_by, deadline, guild_id, category, priority, add_date
         FROM todo_items
         {"WHERE guild_id = ?" if uid != "*" else ""}
         """
@@ -2154,6 +2156,7 @@ class dataMan:
                 "guild_id": 7,
                 "category": 8,
                 "priority": 9,
+                "add_date": 10
             }
             dictionary = {}
 
@@ -2183,6 +2186,7 @@ class dataMan:
                     "guild_id": task[7],
                     "category": task[8],
                     "priority": task[9],
+                    "add_date": task[10]
                 }
             return parsed_data
 

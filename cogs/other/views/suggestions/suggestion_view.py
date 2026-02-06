@@ -21,9 +21,17 @@ class main_view:
             )
             .add_field(
                 name="How to send a request",
-                value="1. You need to Click the button below, 'open request screen'.\n\n"
-                      "2. When you see the screen, describe your idea to the best of your ability. :)\n\n"
-                      "3. Once you're done, click the submit button!"
+                value="You need to Click the button below, 'open request screen'.\n\n"
+            )
+            .add_field(
+                name="Guidelines",
+                value=(
+                    "**Do**: Describe your idea in specifics, like 'A view command with options' isn't too helpful for me, as I still don't know what you want. "
+                    "But 'A view command with options A, B and C that do X, Y and Z' is much more helpful.\n\n"
+                    
+                    "**Do**: Understand that I will not implement every idea, and that if I don't implement your idea, it doesn't mean it's a bad one. "
+                    "Sometimes, it just isn't possible, or discord has limits, or its any other of the thousand possible reasons.\n\n"
+                )
             )
         )
 
