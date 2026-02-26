@@ -95,25 +95,27 @@ class livetasks:
             )
         )
 
-        embed = livetasks.gen_livetasklist_embed(completed_tasks, incomplete_tasks, guild_id)
+        embed_list = livetasks.gen_livetasklist_embed(completed_tasks, incomplete_tasks, guild_id)
 
-        if embed is False:
+        if embed_list is False:
             return False
 
         if target_user_id is not None:
             pm_channel = await plugin.bot.rest.create_dm_channel(target_user_id)
             try:
-                await pm_channel.send(embed=embed)
-            except hikari.errors.NotFoundError:
+                for single_embed in embed_list:
+                    await pm_channel.send(embed=single_embed)
+            except hikari.NotFoundError:
                 return False
-            except hikari.errors.ForbiddenError:
+            except hikari.ForbiddenError:
                 return False
-            except hikari.errors.BadRequestError:
+            except hikari.BadRequestError:
                 return False
         else:
             try:
-                await plugin.bot.rest.create_message(embed=embed, channel=target_channel_id)
-            except hikari.errors.NotFoundError:
+                for single_embed in embed_list:
+                    await plugin.bot.rest.create_message(embed=single_embed, channel=target_channel_id)
+            except hikari.NotFoundError:
                 logging.info(
                     f"Target channel for guild {guild_id} not found. Disabling live task list."
                 )

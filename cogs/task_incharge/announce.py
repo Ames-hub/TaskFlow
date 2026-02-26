@@ -1,5 +1,6 @@
 from library.live_task_channel import livetasks
 from cogs.task_incharge.group import group
+from library import tferror as tf
 from library.storage import dataMan
 from library import shared
 import lightbulb
@@ -45,7 +46,15 @@ async def cmd(ctx: lightbulb.SlashContext, message, task_id):
 
     contributors_list = dataMan().get_contributors(task_id)
 
-    await livetasks.task_announcement(ctx.guild_id, message, contributors_list, task_id, ctx.author.id)
+    try:
+        await livetasks.task_announcement(ctx.guild_id, message, contributors_list, task_id, ctx.author.id)
+    except tf.livelist.no_channel:
+        await ctx.edit_last_response(
+            hikari.Embed(
+                title="Can't announce!",
+                description="There is no live tasks channel, so we can't send this announcement."
+            )
+        )
 
 def load(bot: lightbulb.BotApp) -> None:
     bot.add_plugin(plugin)

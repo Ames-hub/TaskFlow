@@ -72,6 +72,8 @@ async def task() -> None:
             logging.error(err)
             # Alert the server of the fail
             task_channel_id = dataMan().get_taskchannel(guild_id)
+            if not task_channel_id:
+                continue
             try:
                 await botapp.rest.create_message(
                     task_channel_id,

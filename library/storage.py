@@ -164,7 +164,7 @@ def modernize_db():
             'received_date': "DATETIME DEFAULT (DATETIME('now', 'localtime'))",
             'resolved_date': 'DATETIME DEFAULT NULL',
             'severity': 'TEXT DEFAULT "medium"',
-            'expected_result': 'TEXT DEFAULT NULL DEFAULT "Not specified"',
+            'expected_result': 'TEXT DEFAULT NULL',
         },
         'bug_tracebacks': {
             'ticket_id': 'INTEGER NOT NULL REFERENCES bug_reports(bugid) PRIMARY KEY',
