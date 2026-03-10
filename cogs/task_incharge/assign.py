@@ -84,11 +84,13 @@ async def assign_cmd(ctx: lightbulb.SlashContext, task_id:int, user:hikari.User)
     )
 
     if success:
+        embed = hikari.Embed(
+            title="Assigned",
+            description=f"<@{task_incharge.id}> is now the designated in-charge for the task."
+        )
+
         await ctx.respond(
-            hikari.Embed(
-                title="Assigned",
-                description=f"<@{task_incharge.id}> is now the designated in-charge for the task."
-            )
+            embed
         )
         
         try:
@@ -101,7 +103,15 @@ async def assign_cmd(ctx: lightbulb.SlashContext, task_id:int, user:hikari.User)
             guild = await ctx.bot.rest.fetch_guild(ctx.guild_id)
         task_name = tasks_list[task_id]['name']
         incharge_assigned_embed = shared.gen_incharge_assigned_embed(guild.name, task_name, task_id, int(ctx.author.id))
-        await task_incharge.send(incharge_assigned_embed)
+        try:
+            await task_incharge.send(incharge_assigned_embed)
+        except hikari.ForbiddenError:
+            embed.add_field(
+                "Couldn't DM",
+                f"{task_incharge.mention} Has their DMs restricted."
+            )
+        return
+            
     elif success == -1:
         await ctx.respond(
             hikari.Embed(
