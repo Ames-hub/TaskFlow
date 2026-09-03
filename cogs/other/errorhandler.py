@@ -201,24 +201,37 @@ async def on_error(event: lightbulb.CommandErrorEvent) -> None:
         print(f"An error occurred while running a command: {event.exception}")
         logging.error(f"A ({type(event.exception)}) error occurred while {event.context.author.id} was running a command: {event.exception}", exc_info=event.exception)
 
-        await event.context.respond(
-            embed=hikari.Embed(
-                title="Error!",
-                description="An error occurred while running this command.",
-                colour=0xff0000,
+        try:
+            await event.context.respond(
+                embed=hikari.Embed(
+                    title="Error!",
+                    description="An error occurred while running this command.",
+                    colour=0xff0000,
+                )
+                .add_field(
+                    name="Auto-Reporting",
+                    value="A Bug report is about to be automatically filed and sent to the maintainer.\n\n"
+                    "To learn about the latest bug patches and features, use `/news`!",
+                )
             )
-            .add_field(
-                name="Auto-Reporting",
-                value="A Bug report has been automatically filed and sent to the maintainer.\n\n"
-                "To learn about the latest bug patches and features, use `/news`!",
-            )
-        )
+        except (hikari.errors.NotFoundError, hikari.errors.BadRequestError):
+            logging.warning("Could not notify user of the error; interaction token was already dead. Continuing to file the report.")
 
         try:
             bug_id = await report_bug(event)
             save_traceback(bug_id, event.exception)
         except Exception as err:
             logging.error(f"Failed to save traceback and report bug: {err}", exc_info=err)
+            try:
+                await event.bot.rest.create_message(
+                    channel=event.context.channel_id,
+                    content=hikari.Embed(
+                        title="Report Failed!",
+                        description="For some unknown reason, we were unable to file this bug report automatically."
+                    )
+                )
+            except (hikari.errors.NotFoundError, hikari.errors.BadRequestError):
+                logging.warning("Could not notify user of report failure; interaction token was already dead.")
 
         raise event.exception
     
