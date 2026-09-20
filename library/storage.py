@@ -144,6 +144,10 @@ def modernize_db():
             'guild_id': 'INTEGER NOT NULL PRIMARY KEY',
             'permission': 'TEXT DEFAULT NULL'
         },
+        "guild_do_transitory_tasks": {
+            'guild_id': 'INTEGER NOT NULL PRIMARY KEY',
+            'do_hide': 'BOOL DEFAULT FALSE'
+        },
         'task_templates': {
             'identifier': 'INTEGER PRIMARY KEY AUTOINCREMENT',
             'guild_id': 'INTEGER NOT NULL',
@@ -1111,6 +1115,7 @@ class sqlite_storage:
             ):
         conn = sqlite3.connect(user_file if user_id is not None else guild_filepath)
         date_now = datetime.now(timezone.utc)
+        add_date_timestamp = int(datetime.now().timestamp())
         try:
             assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"
             assert type(name) is str and type(description) is str, "Name and description must be strings"
@@ -1120,10 +1125,10 @@ class sqlite_storage:
             cur = conn.cursor()
 
             query = """
-            INSERT INTO todo_items (name, description, completed, added_by, deadline, guild_id, category, priority, add_date)
+            INSERT INTO todo_items (name, description, completed, added_by, deadline, guild_id, category, priority, add_date, add_date_timestamp)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
-            cur.execute(query, (name, description, False, added_by, deadline, guild_id, category, priority, date_now))
+            cur.execute(query, (name, description, False, added_by, deadline, guild_id, category, priority, date_now, add_date_timestamp))
             conn.commit()
 
             if return_task_id:
@@ -1502,6 +1507,47 @@ class dataMan:
     """
     def __init__(self):
         self.storage = sqlite_storage
+
+    @staticmethod
+    def make_guild_tasks_transitory(guild_id:int, value:bool):
+        conn = sqlite3.connect(guild_filepath)
+        try:
+            query = """
+                INSERT OR REPLACE INTO guild_do_transitory_tasks (guild_id, do_hide)
+                VALUES (?, ?)
+            """
+            cur = conn.cursor()
+            cur.execute(query, (int(guild_id), bool(value)))
+            conn.commit()
+        except sqlite3.Error as err:
+            conn.rollback()
+            logging.error(f"Error setting task transitory status for guild {guild_id}", err)
+            return False
+        finally:
+            conn.close()
+        return True
+
+    @staticmethod
+    def get_guild_tasks_transitory(guild_id:int):
+        conn = sqlite3.connect(guild_filepath)
+        try:
+            cur = conn.cursor()
+
+            query = """
+            SELECT do_hide
+            FROM guild_do_transitory_tasks
+            WHERE guild_id = ?
+            """
+            cur.execute(query, (guild_id,))
+            data = cur.fetchone()
+
+            return bool(data[0]) if data else None
+        except sqlite3.Error as err:
+            conn.rollback()
+            logging.error(f"Couldn't get task channel for guild {guild_id}", err)
+            return False
+        finally:
+            conn.close()
 
     @staticmethod
     def list_recurring_items(guild_id):

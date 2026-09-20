@@ -1,5 +1,5 @@
+from datetime import datetime, timedelta, timezone
 from library.parsing import parse_livelist_format
-from datetime import datetime, timedelta
 from library.storage import dataMan
 from library import tferror
 import lightbulb
@@ -190,6 +190,23 @@ class livetasks:
                 )
             ]
 
+        do_task_transitory = dataMan().get_guild_tasks_transitory(guild_id)
+        if do_task_transitory:
+            inbound_tasks = {}
+            today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            # Delete all tasks from this list that aren't from today.
+            for task in incomplete_tasks:
+                if task:
+                    task = incomplete_tasks[task]
+                    add_date = str(task['add_date']).split(" ")[0]
+                    if add_date == today:
+                        inbound_tasks[task['uid']] = task
+                    else:
+                        # mark it as done if its not already done
+                        if not task['completed']:
+                           dataMan().mark_todo_finished(task['uid'], guild_id=guild_id)
+            incomplete_tasks = inbound_tasks  # Update it
+
         # SORT completed tasks by priority
         completed_tasks = sorted(
             completed_tasks,
@@ -325,7 +342,7 @@ class livetasks:
 
         total_pages = len(embeds)
         for idx, embed in enumerate(embeds, start=1):
-            embed.set_footer(text=f"Page {idx} of {total_pages}")
+            embed.set_footer(text=f"Page {idx} of {total_pages}" if not do_task_transitory else f"Page {idx} of {total_pages} | Only today's tasks shown.")
 
         return embeds
 

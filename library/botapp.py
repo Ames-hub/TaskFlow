@@ -14,9 +14,10 @@ for intent in intents:
     intent_val += intent
 
 DEBUG = os.getenv('DEBUG', 'false').lower() == 'true'
+TOKEN = os.environ.get("TOKEN" if DEBUG is False else "DEBUG_TOKEN", None)
 
 botapp = lightbulb.BotApp(
-    token=os.environ.get("TOKEN" if DEBUG is False else "DEBUG_TOKEN", None),
+    token=TOKEN,
     intents=intent_val
 )
 tasks.load(botapp)
