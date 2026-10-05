@@ -1115,7 +1115,6 @@ class sqlite_storage:
             ):
         conn = sqlite3.connect(user_file if user_id is not None else guild_filepath)
         date_now = datetime.now(timezone.utc)
-        add_date_timestamp = int(datetime.now().timestamp())
         try:
             assert user_id is not None or guild_id is not None, "You must provide either a user_id or a guild_id"
             assert type(name) is str and type(description) is str, "Name and description must be strings"
@@ -1125,10 +1124,10 @@ class sqlite_storage:
             cur = conn.cursor()
 
             query = """
-            INSERT INTO todo_items (name, description, completed, added_by, deadline, guild_id, category, priority, add_date, add_date_timestamp)
+            INSERT INTO todo_items (name, description, completed, added_by, deadline, guild_id, category, priority, add_date)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
-            cur.execute(query, (name, description, False, added_by, deadline, guild_id, category, priority, date_now, add_date_timestamp))
+            cur.execute(query, (name, description, False, added_by, deadline, guild_id, category, priority, date_now))
             conn.commit()
 
             if return_task_id:

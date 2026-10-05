@@ -159,7 +159,7 @@ async def create_cmd(ctx: lightbulb.SlashContext):
         embed = shared.gen_incharge_assigned_embed(guild.name, task_name, task_id, ctx.author.id)
         try:
             await task_incharge.send(embed)
-        except hikari.ForbiddenError:
+        except (hikari.ForbiddenError, hikari.BadRequestError):
             pass
 
     if task_id is not False:

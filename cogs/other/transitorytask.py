@@ -18,16 +18,24 @@ async def roadmap(ctx: lightbulb.SlashContext):
     do_hide = bool(ctx.options.do_hide)
     success = dataMan().make_guild_tasks_transitory(ctx.guild_id, do_hide)
 
-    await ctx.respond(
-        hikari.Embed(
-            title="Transitory Status Changed",
-            description=(
-                "Tasks that are not from the current day will be hidden and marked complete in the live list."
-                if do_hide else
-                "All tasks from all days will be shown if applicable."
+    if success:
+        await ctx.respond(
+            hikari.Embed(
+                title="Transitory Status Changed",
+                description=(
+                    "Tasks that are not from the current day will be hidden and marked complete in the live list."
+                    if do_hide else
+                    "All tasks from all days will be shown if applicable."
+                )
             )
         )
-    )
+    else:
+        await ctx.respond(
+            hikari.Embed(
+                title="Transitory Error",
+                description="We were unable to change the status, please file a bug report."
+            )
+        )
 
 def load(bot: lightbulb.BotApp) -> None:
     bot.add_plugin(plugin)

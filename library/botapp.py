@@ -7,7 +7,7 @@ import os
 
 dotenv.load_dotenv('.env')
 
-intents = []
+intents = [hikari.Intents.GUILDS]
 # Calculates perm bits for the bot's intents.
 intent_val = 0
 for intent in intents:
